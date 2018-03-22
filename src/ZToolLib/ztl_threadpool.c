@@ -22,62 +22,60 @@
 #endif//WIN32
 
 #define ZTL_MAX_CACHE_NUM   256
-struct ztl_job_st{
-    struct ztl_job_st*  next;
-    ztl_dispatch_fn	    func;
-    void*		        arg;
-    ztl_free_fn		    afree;
+struct ztl_task_st{
+    struct ztl_task_st* next;
+    ztl_dispatch_fn     func;
+    void*               param;
+    ztl_free_fn         afree;
 };
-typedef struct ztl_job_st* ztl_job_t;
+typedef struct ztl_task_st ztl_task_t;
 
 struct ztl_thrpool_st {
-    uint32_t        thrnum;				// defaul num threads
-    uint32_t        maxthrnum;			// max num threads
-    uint32_t        activenum;			// active num thread
-    uint32_t        maxsize;			// max job num in job-list
-    int32_t         stop;				// running or stop flag
-    int32_t         flags;				// reserved varable
-    uint32_t        jobnum;				// current job num in job-list
+    uint32_t        thrnum;             // default num threads
+    uint32_t        maxthrnum;          // max num threads
+    uint32_t        activenum;          // active num threads
+    uint32_t        maxsize;            // max task num in task-list
+    int32_t         stop;               //running or stop flag
+    int32_t         flags;              // reserved variable
+    uint32_t        taskn;              // current task num in job-list
     void*           userdata;
-    ztl_job_t       head, tail;		// the job list head and tail
-    ztl_mempool_t*      cachejobs;	    // a lock free cache list
-    ztl_thread_mutex_t  lock;		    // thread pool lock
-    ztl_thread_cond_t   workcond;	    // thread condition for job active
-    ztl_thread_cond_t   waitcond;	    // thread condition for waiting
+    ztl_task_t      *head, *tail;       // the task list head and tail
+    ztl_mempool_t*      task_pool;      // a lock free cache list
+    ztl_thread_mutex_t  lock;           // thread pool lock
+    ztl_thread_cond_t   workcond;       // thread condition for job active
+    ztl_thread_cond_t   waitcond;       // thread condition for waiting
 };
 
-static void _append_job(ztl_thrpool_t* tp, ztl_job_t job)
+static void _append_task(ztl_thrpool_t* tp, ztl_task_t* task)
 {
-    if (NULL == tp->head)
-    {
-        tp->head = job;
-        tp->tail = job;
+    if (NULL == tp->head) {
+        tp->head = task;
+        tp->tail = task;
     }
-    else
-    {
-        tp->tail->next = job;
+    else {
+        tp->tail->next = task;
     }
-    tp->tail = job;
+    tp->tail = task;
 }
 
-static ztl_job_t _get_head_job(ztl_thrpool_t* tp)
+static ztl_task_t* _get_head_task(ztl_thrpool_t* tp)
 {
-    ztl_job_t job = NULL;
+    ztl_task_t* task = NULL;
     if (tp->head != NULL)
     {
-        job = tp->head;
-        if (job == tp->tail)
+        task = tp->head;
+        if (task == tp->tail)
             tp->tail = NULL;
         tp->head = tp->head->next;
-        ztl_atomic_dec(&tp->jobnum, 1);
+        ztl_atomic_dec(&tp->taskn, 1);
     }
-    return job;
+    return task;
 }
 
-/// get a job from thread pool's job list
-static ztl_job_t _get_job(ztl_thrpool_t* tp, int timeout)
+/// get a task from thread pool's task list
+static ztl_task_t* _get_task(ztl_thrpool_t* tp, int timeout)
 {
-    ztl_job_t job = NULL;
+    ztl_task_t* task = NULL;
 
     ztl_thread_mutex_lock(&tp->lock);
     if (tp->head == NULL)
@@ -85,25 +83,25 @@ static ztl_job_t _get_job(ztl_thrpool_t* tp, int timeout)
         ztl_thread_cond_wait(&tp->workcond, &tp->lock);
         if (tp->head == NULL)
         {
-            goto GET_JOB_END;
+            goto GET_TASK_END;
         }
     }
 
-    // get head job
-    job = _get_head_job(tp);
+    // get head task
+    task = _get_head_task(tp);
 
-GET_JOB_END:
+GET_TASK_END:
     ztl_thread_mutex_unlock(&tp->lock);
-    return job;
+    return task;
 }
 
-static void _release_job(ztl_thrpool_t* tp, ztl_job_t job)
+static void _release_task(ztl_thrpool_t* tp, ztl_task_t* task)
 {
-    if (job->afree)
-        job->afree(tp, job->arg);
+    if (task->afree)
+        task->afree(tp, task->param);
 
-    // append the job to cache list if
-    ztl_mp_free(tp->cachejobs, job);
+    // append the task to cache list if
+    ztl_mp_free(tp->task_pool, task);
 }
 
 /// thread pool's worker thread
@@ -112,18 +110,18 @@ static ztl_thread_result_t ZTL_THREAD_CALL _thrpool_worker_thread(void* arg)
     ztl_thrpool_t* tp = (ztl_thrpool_t*)arg;
     ztl_atomic_add(&tp->activenum, 1);
 
-    ztl_job_t job = NULL;
+    ztl_task_t* task = NULL;
     while (tp->stop == 0)
     {
-        if ((job = _get_job(tp, 100)) == NULL)
+        if ((task = _get_task(tp, 100)) == NULL)
             continue;
 
-        // execute acutal job
-        if (job->func)
-            job->func(tp, job->arg);
+        // execute actual task
+        if (task->func)
+            task->func(tp, task->param);
 
-        _release_job(tp, job);
-        job = NULL;
+        _release_task(tp, task);
+        task = NULL;
     }
 
     ztl_atomic_dec(&tp->activenum, 1);
@@ -168,11 +166,11 @@ ztl_thrpool_t* ztl_thrpool_create(int min_threads_num, int max_threads_num, int 
     tp->maxsize     = max_queue_size;
     tp->stop        = 0;
     tp->flags       = 0;
-    tp->jobnum      = 0;
+    tp->taskn       = 0;
     tp->userdata    = NULL;
     tp->head        = NULL;
     tp->tail        = NULL;
-    tp->cachejobs   = ztl_mp_create(sizeof(struct ztl_job_st), ZTL_MAX_CACHE_NUM);
+    tp->task_pool   = ztl_mp_create(sizeof(ztl_task_t), ZTL_MAX_CACHE_NUM);
 
     ztl_thread_cond_init(&tp->workcond, NULL);
     ztl_thread_cond_init(&tp->waitcond, NULL);
@@ -194,30 +192,31 @@ ztl_thrpool_t* ztl_thrpool_create(int min_threads_num, int max_threads_num, int 
 }
 
 /// dispatch a runnable task to the thread pool with argument "arg"
-int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* arg, ztl_free_fn afree)
+int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* param, ztl_free_fn afree)
 {
     if (thpool == NULL)
         return -1;
-    if (thpool->jobnum >= thpool->maxsize)
+    if (thpool->taskn >= thpool->maxsize)
         return -2;
 
-    ztl_job_t job = (ztl_job_t)ztl_mp_alloc(thpool->cachejobs);
-    job->func = func;
-    job->arg = arg;
-    job->afree = afree;
-    job->next = NULL;
+    ztl_task_t* task;
+    task = (ztl_task_t*)ztl_mp_alloc(thpool->task_pool);
+    task->next  = NULL;
+    task->func  = func;
+    task->param = param;
+    task->afree = afree;
 
     // apend the job at the tail of job list
     ztl_thread_mutex_lock(&thpool->lock);
-    _append_job(thpool, job);
-    uint32_t lOldJobN = ztl_atomic_add(&thpool->jobnum, 1);
+    _append_task(thpool, task);
+    uint32_t lOldTaskN = ztl_atomic_add(&thpool->taskn, 1);
     ztl_thread_mutex_unlock(&thpool->lock);
 
-    if (lOldJobN == 0)
+    if (lOldTaskN == 0)
     {
         ztl_thread_cond_signal(&thpool->workcond);
     }
-    else if (lOldJobN > (thpool->thrnum << 1) &&
+    else if (lOldTaskN > (thpool->thrnum << 1) &&
         ztl_atomic_add(&thpool->thrnum, 0) < thpool->maxthrnum)
     {
         _create_worker_thread(thpool);
@@ -232,23 +231,24 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_
         return -1;
     }
 
-    ztl_job_t job, nextJob;
+    ztl_task_t* task, *nexttask;
 
     ztl_thread_mutex_lock(&thpool->lock);
-    job = thpool->head;
-    if (NULL == job) {
+    task = thpool->head;
+    if (NULL == task) {
         goto REMOVE_END;
     }
 
     // if the first job
-    if ((NULL == cmp_func && job->arg == arg) || (NULL != cmp_func && cmp_func(job->arg, arg)))
+    if ((NULL == cmp_func && task->param == arg)
+        || (NULL != cmp_func && cmp_func(task->param, arg)))
     {
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(DEBUG)
         fprintf(stdout, "thrpool_remove1: remove %p(%d)\n", arg, *(int*)arg);
-#endif
-        ztl_atomic_dec(&thpool->jobnum, 1);
+#endif//debug
+        ztl_atomic_dec(&thpool->taskn, 1);
 
-        if (NULL == job->next)
+        if (NULL == task->next)
         {
             thpool->head = NULL;
             thpool->tail = NULL;
@@ -260,33 +260,34 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_
         goto REMOVE_END;
     }
 
-    nextJob = job->next;
-    while (nextJob)
+    nexttask = task->next;
+    while (nexttask)
     {
-        if ((NULL == cmp_func && nextJob->arg == arg) || (NULL != cmp_func && cmp_func(nextJob->arg, arg)))
+        if ((NULL == cmp_func && nexttask->param == arg) || 
+            (NULL != cmp_func && cmp_func(nexttask->param, arg)))
         {
 #ifdef _DEBUG
             fprintf(stdout, "thrpool_remove2: remove %p(%d)\n", arg, *(int*)arg);
 #endif
-            ztl_atomic_dec(&thpool->jobnum, 1);
+            ztl_atomic_dec(&thpool->taskn, 1);
 
-            job->next = nextJob->next;
-            if (nextJob == thpool->tail)
-                thpool->tail = job;
+            task->next = nexttask->next;
+            if (nexttask == thpool->tail)
+                thpool->tail = task;
             break;
         }
 
-        job = nextJob;
-        nextJob = nextJob->next;
+        task = nexttask;
+        nexttask = nexttask->next;
     }
 
-    job = nextJob;
+    task = nexttask;
 
 REMOVE_END:
     ztl_thread_mutex_unlock(&thpool->lock);
-    if (job)
+    if (nexttask)
     {
-        _release_job(thpool, job);
+        _release_task(thpool, nexttask);
         return 0;
     }
     return -1;
@@ -306,11 +307,11 @@ void* ztl_thrpool_get_data(ztl_thrpool_t* thpool)
 }
 
 /// get current task count
-int ztl_thrpool_jobnum(ztl_thrpool_t* thpool)
+int ztl_thrpool_tasknum(ztl_thrpool_t* thpool)
 {
     if (NULL == thpool)
         return 0;
-    return thpool->jobnum;
+    return thpool->taskn;
 }
 
 int ztl_thrpool_thrnum(ztl_thrpool_t* thpool)
@@ -364,18 +365,18 @@ int ztl_thrpool_destroy(ztl_thrpool_t* thpool)
     sleepms(1);
 
     ztl_thread_mutex_lock(&thpool->lock);
-    ztl_job_t job = NULL;
+    ztl_task_t* task = NULL;
     // free all the objects in the job list
-    while ((job = _get_head_job(thpool)) != NULL)
+    while ((task = _get_head_task(thpool)) != NULL)
     {
-        if (job->afree)
-            job->afree(thpool, job->arg);
+        if (task->afree)
+            task->afree(thpool, task->param);
 
-        ztl_mp_free(thpool->cachejobs, job);
+        ztl_mp_free(thpool->task_pool, task);
     }
     ztl_thread_mutex_unlock(&thpool->lock);
 
-    ztl_mp_destroy(thpool->cachejobs);
+    ztl_mp_destroy(thpool->task_pool);
 
     // free the thread pool
     ztl_thread_mutex_destroy(&thpool->lock);

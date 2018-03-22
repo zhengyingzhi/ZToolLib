@@ -148,6 +148,7 @@
     <ClInclude Include="ztl_logger.h" />
     <ClInclude Include="ztl_network.h" />
     <ClInclude Include="ztl_palloc.h" />
+    <ClInclude Include="ztl_producer_consumer.h" />
     <ClInclude Include="ztl_simple_event.h" />
     <ClInclude Include="ztl_threadpool.h" />
     <ClInclude Include="ztl_threads.h" />
@@ -166,6 +167,7 @@
     <ClCompile Include="ztl_logger.c" />
     <ClCompile Include="ztl_network.c" />
     <ClCompile Include="ztl_palloc.c" />
+    <ClCompile Include="ztl_producer_consumer.c" />
     <ClCompile Include="ztl_simple_event.c" />
     <ClCompile Include="ztl_threadpool.c" />
     <ClCompile Include="ztl_threads.c" />

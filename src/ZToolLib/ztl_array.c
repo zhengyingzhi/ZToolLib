@@ -59,20 +59,20 @@ void* ztl_array_push(ztl_array_t* arr)
 
         /* the array is full */
 
-        size = a->size * a->nalloc;
+        size = arr->eltsize * arr->nalloc;
 
-        p = a->pool;
+        p = arr->pool;
 
-        if ((uint8_t*)a->elts + size == p->d.last
-            && p->d.last + a->size <= p->d.end)
+        if ((uint8_t*)arr->elts + size == p->d.last
+            && p->d.last + arr->eltsize <= p->d.end)
         {
             /*
             * the array allocation is the last in the pool
             * and there is space for new allocation
             */
 
-            p->d.last += a->size;
-            a->nalloc++;
+            p->d.last += arr->eltsize;
+            arr->nalloc++;
 
         }
         else {
@@ -83,9 +83,9 @@ void* ztl_array_push(ztl_array_t* arr)
                 return NULL;
             }
 
-            memcpy(new, a->elts, size);
-            a->elts = new;
-            a->nalloc *= 2;
+            memcpy(new, arr->elts, size);
+            arr->elts = new;
+            arr->nalloc *= 2;
         }
     }
 

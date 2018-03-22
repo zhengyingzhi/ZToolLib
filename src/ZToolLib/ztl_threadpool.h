@@ -29,7 +29,7 @@ typedef bool (*ztl_compare_fn)(void*, void* );
 ztl_thrpool_t* ztl_thrpool_create(int min_threads_num, int max_threads_num, int max_queue_size);
 
 /// dispatch a new job to the thread pool with argument "arg"
-int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* arg, ztl_free_fn afree);
+int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* param, ztl_free_fn afree);
 
 /// remove the queued job from thread pool by passed func and argument "arg"
 int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_fn cmp_func, void* arg);
@@ -38,8 +38,8 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_
 void  ztl_thrpool_set_data(ztl_thrpool_t* thpool, void* userdata);
 void* ztl_thrpool_get_data(ztl_thrpool_t* thpool);
 
-/// get current jobs count in queue
-int ztl_thrpool_jobnum(ztl_thrpool_t* thpool);
+/// get current tasks count in queue
+int ztl_thrpool_tasknum(ztl_thrpool_t* thpool);
 
 /// return working threads number
 int ztl_thrpool_thrnum(ztl_thrpool_t* thpool);

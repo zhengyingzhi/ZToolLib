@@ -87,6 +87,9 @@
     <ClInclude Include="ztl_linklist.h">
       <Filter>Containers</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_producer_consumer.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -136,6 +139,9 @@
     </ClCompile>
     <ClCompile Include="ztl_buffer.c">
       <Filter>Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_producer_consumer.c">
+      <Filter>Threads</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

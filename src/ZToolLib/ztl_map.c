@@ -47,7 +47,7 @@ int ztl_map_add(ztl_map_t* pmap, uint64_t key, ztl_rbtree_node_t* nodeval)
 ztl_rbtree_node_t* ztl_map_del(ztl_map_t* pmap, uint64_t key)
 {
     ztl_rbtree_node_t* rbnode;
-    rbnode = ztl_connmap_find(pmap, key);
+    rbnode = ztl_map_find(pmap, key);
 
     if (rbnode) {
         ztl_rbtree_delete(&pmap->rbtree, rbnode);
@@ -58,7 +58,7 @@ ztl_rbtree_node_t* ztl_map_del(ztl_map_t* pmap, uint64_t key)
 ztl_rbtree_node_t* ztl_map_find(ztl_map_t* pmap, uint64_t key)
 {
     ztl_rbtree_node_t* rbnode;
-    rbnode = ztl_rbtree_find(&pmap->rbtree, key);
+    rbnode = _ztl_rbtree_find(&pmap->rbtree, key);
     if (rbnode) {
         return rbnode;
     }
