@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Threads">
+      <UniqueIdentifier>{9f8feb03-9a13-4760-99c0-71f40654d811}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Containers">
+      <UniqueIdentifier>{c9fc33e8-0bf4-4e1d-b54a-9b8cf0e7fb41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Memory">
+      <UniqueIdentifier>{5c75a754-0d76-46ff-9aee-74c2c8da2f7f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{91da1628-7cbe-4a19-933a-424329dba562}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="lockfreequeue.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_threads.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_base64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_map.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_rbtree.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_atomic.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_network.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_dyso.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_mempool.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_locks.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_palloc.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_simple_event.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_threadpool.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_bitset.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_array.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_buffer.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_linklist.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="lockfreequeue.c">
+      <Filter>Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_threads.c">
+      <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_map.c">
+      <Filter>Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_rbtree.c">
+      <Filter>Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_base64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_utils.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_logger.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_network.c">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_dyso.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_mempool.c">
+      <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_locks.c">
+      <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_palloc.c">
+      <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_simple_event.c">
+      <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_threadpool.c">
+      <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_array.c">
+      <Filter>Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_buffer.c">
+      <Filter>Containers</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
