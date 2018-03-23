@@ -96,6 +96,9 @@
     <ClInclude Include="ztl_unit_test.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_shm.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -154,6 +157,9 @@
     </ClCompile>
     <ClCompile Include="ztl_unit_test.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_shm.c">
+      <Filter>Memory</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

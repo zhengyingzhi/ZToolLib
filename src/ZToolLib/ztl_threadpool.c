@@ -221,7 +221,7 @@ int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* para
     return 0;
 }
 
-int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_fn cmp_func, void* arg)
+int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_fn cmp_func, void* param)
 {
     if (NULL == thpool) {
         return -1;
@@ -238,8 +238,8 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_
     }
 
     // if the first task
-    if ((NULL == cmp_func && task->param == arg) ||
-        (NULL != cmp_func && cmp_func(task->param, arg)))
+    if ((NULL == cmp_func && task->param == param) ||
+        (NULL != cmp_func && cmp_func(task->param, param)))
     {
         ztl_atomic_dec(&thpool->taskn, 1);
 
@@ -258,8 +258,8 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_
     nexttask = task->next;
     while (nexttask)
     {
-        if ((NULL == cmp_func && nexttask->param == arg) || 
-            (NULL != cmp_func && cmp_func(nexttask->param, arg)))
+        if ((NULL == cmp_func && nexttask->param == param) ||
+            (NULL != cmp_func && cmp_func(nexttask->param, param)))
         {
             ztl_atomic_dec(&thpool->taskn, 1);
 
@@ -288,15 +288,12 @@ REMOVE_END:
 
 void ztl_thrpool_set_data(ztl_thrpool_t* thpool, void* userdata)
 {
-    if (thpool)
-        thpool->userdata = userdata;
+    thpool->userdata = userdata;
 }
 
 void* ztl_thrpool_get_data(ztl_thrpool_t* thpool)
 {
-    if (thpool)
-        return thpool->userdata;
-    return NULL;
+    return thpool->userdata;
 }
 
 /// get current task count

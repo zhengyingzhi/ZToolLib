@@ -1,11 +1,13 @@
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "ztl_shm.h"
 
 #ifdef _MSC_VER
 #include <Windows.h>
-#include "win32_api_sim.hpp"
+#include "ztl_win32_ipc.h"
+
 #else
 
 #include <errno.h>
@@ -45,9 +47,9 @@ namespace ipcdetails
 #endif//__cplusplus
 
 #ifdef _MSC_VER
-bool get_file_size(void* aHandle, uint64_t& aSize)
+bool get_file_size(void* aHandle, uint64_t* apSize)
 {
-	return 0 != GetFileSizeEx(aHandle, (LARGE_INTEGER*)&aSize);
+	return 0 != GetFileSizeEx(aHandle, (LARGE_INTEGER*)apSize);
 }
 
 bool set_file_pointer_ex(void* aHandle, int64_t aDistance, int64_t* apNewFilePtr, unsigned long aMoveMethod)
@@ -76,40 +78,40 @@ bool create_directory(const char* apPath)
     return 0 != CreateDirectoryA(apPath, NULL);
 }
 
-bool get_os_opencreated(int& aOpenOrCreate)
+bool get_os_opencreated(int* aOpenOrCreate)
 {
-	switch (aOpenOrCreate)
+	switch (*aOpenOrCreate)
 	{
-	case ztl_open_only: aOpenOrCreate = OPEN_EXISTING; break;
+	case ztl_open_only:      *aOpenOrCreate = OPEN_EXISTING; break;
 	case ztl_create_only:
-	case ztl_open_or_create: aOpenOrCreate = OPEN_ALWAYS; break;
-	default: aOpenOrCreate = OPEN_ALWAYS;
+	case ztl_open_or_create: *aOpenOrCreate = OPEN_ALWAYS; break;
+	default: *aOpenOrCreate = OPEN_ALWAYS;
 	}
 	return true;
 }
 
-bool get_os_accessmode(int& aAccessMode)
+bool get_os_accessmode(int* aAccessMode)
 {
-	switch (aAccessMode)
+	switch (*aAccessMode)
 	{
-	case HShareMemory::read_only:  aAccessMode = GENERIC_READ; break;
-	case HShareMemory::read_write:
-	case HShareMemory::copy_on_write: aAccessMode = GENERIC_READ | GENERIC_WRITE; break;
-	default: aAccessMode = GENERIC_READ | GENERIC_WRITE;
+	case ztl_read_only:  *aAccessMode = GENERIC_READ; break;
+	case ztl_read_write:
+	case ztl_copy_on_write: *aAccessMode = GENERIC_READ | GENERIC_WRITE; break;
+	default: *aAccessMode = GENERIC_READ | GENERIC_WRITE;
 	}
 	return true;
 }
 
 #else /* linux platform */
 
-bool get_file_size(const char* apPath, uint64_t& aSize)
+bool get_file_size(const char* apPath, uint64_t* apSize)
 {
 	struct stat lStat;
 	if (stat(apPath, &lStat) < 0) {
 		return false;
 	}
 	else {
-		aSize = lStat.st_size;
+		*apSize = lStat.st_size;
 	}
 	return true;
 }
@@ -148,26 +150,26 @@ bool create_directory(const char* apPath)
     return false;
 }
 
-bool get_os_opencreated(int& aOpenOrCreate)
+bool get_os_opencreated(int* aOpenOrCreate)
 {
-	switch (aOpenOrCreate)
+	switch (*aOpenOrCreate)
 	{
-	case HShareMemory::open_only: aOpenOrCreate = O_RDONLY; break;
-	case HShareMemory::create_only:
-	case HShareMemory::open_or_create: aOpenOrCreate = O_CREAT | O_RDWR; break;
-	default: aOpenOrCreate = O_CREAT | O_RDWR;
+	case ztl_open_only: *aOpenOrCreate = O_RDONLY; break;
+	case ztl_create_only:
+	case ztl_open_or_create: *aOpenOrCreate = O_CREAT | O_RDWR; break;
+	default: *aOpenOrCreate = O_CREAT | O_RDWR;
 	}
 	return true;
 }
 
-bool get_os_accessmode(int& aAccessMode)
+bool get_os_accessmode(int* aAccessMode)
 {
-	switch (aAccessMode)
+	switch (*aAccessMode)
 	{
-	case HShareMemory::read_only:  aAccessMode = PROT_READ; break;
-	case HShareMemory::read_write:
-	case HShareMemory::copy_on_write: aAccessMode = PROT_WRITE | PROT_READ; break;
-	default: aAccessMode = PROT_READ;
+	case ztl_read_only:  *aAccessMode = PROT_READ; break;
+	case ztl_read_write:
+	case ztl_copy_on_write: *aAccessMode = PROT_WRITE | PROT_READ; break;
+	default: *aAccessMode = PROT_READ;
 	}
 	return true;
 }
@@ -194,20 +196,21 @@ int get_key_from_file(const char* filename)
 
 #endif
 
-void get_directory(std::string& aDirection, const char* apFilePath)
+void get_directory(char* aDirection, const char* apFilePath)
 {
 	const char* lpFileName = apFilePath + strlen(apFilePath);
 	while (lpFileName != apFilePath)
 	{
 		if (*lpFileName == '/' || *lpFileName == '\\')
 		{
-			aDirection = std::string(apFilePath, lpFileName - apFilePath);
+			strncpy(aDirection, apFilePath, lpFileName - apFilePath);
 			break;
 		}
 		--lpFileName;
 	}
 }
-void get_filename(std::string& aFileName, const char* apFilePath)
+
+void get_filename(char* aFileName, const char* apFilePath)
 {
     const char* lpFileName = apFilePath + strlen(apFilePath);
     while (lpFileName != apFilePath)
@@ -219,7 +222,7 @@ void get_filename(std::string& aFileName, const char* apFilePath)
         }
         --lpFileName;
     }
-    aFileName = std::string(lpFileName);
+    strcpy(aFileName, lpFileName);
 }
 
 #ifdef _MSC_VER
@@ -228,10 +231,10 @@ bool truncate_file(void* aHandle, size_t aRemaningSize)
 bool truncate_file(int aHandle, size_t aRemaningSize)
 #endif//_MSC_VER
 {
-	const std::size_t lDataSize = 1024;
-	static char lData[lDataSize];
+	const size_t lDataSize = 1024;
+	static char lData[1024];
 
-	std::size_t lWriteSize = 0;
+	size_t lWriteSize = 0;
 	unsigned long lWritten = 0;
 	while (aRemaningSize > 0)
 	{
@@ -259,110 +262,122 @@ typedef enum {
 	ZTL_SHT_SHMOPEN = 3
 }ztl_shm_type_t;
 
+static int _PrivOpenOrCreate(ztl_shm_t* zshm, const char* apName, int aOpenOrCreate, int aAccessMode);
 
 ztl_shm_t* ztl_shm_create(const char* apName, int aOpenOrCreate, int aAccessMode, bool aIsUseHugepage)
 {
+    ztl_shm_t* lpshm;
+
+    lpshm = (ztl_shm_t*)malloc(sizeof(ztl_shm_t));
+
 	if (NULL != apName) 
 	{
-		m_Name = apName;
+        strncpy(lpshm->m_Name, apName, sizeof(lpshm->m_Name) - 1);
 	}
 
-	if (!m_Name.empty())
+	if (lpshm->m_Name[0])
 	{
-		std::string sDirectory;
-		ipcdetails::get_directory(sDirectory, apName);
+		char sDirectory[256] = "";
+		get_directory(sDirectory, apName);
 
 #ifdef __linux__
-		if (sDirectory.empty())
+		if (!sDirectory[0])
 		{
 			// shm_open not support with hugetlb
-			m_ShmType = m_Hugepage ? ST_SHM_SEGMENT : ST_SHM_SHMOPEN;
+            lpshm->m_ShmType = lpshm->m_Hugepage ? ZTL_SHT_SEGMENT : ZTL_SHT_SHMOPEN;
 		}
 		else
 		{
-			m_ShmType = ST_SHM_FILEMAP;
-			ipcdetails::create_directory(sDirectory.c_str());
+            lpshm->m_ShmType = lpshm->ZTL_SHT_FILEMAP;
+			create_directory(sDirectory);
 		}
 #else
-		m_ShmType = ST_SHM_FILEMAP;
-		ipcdetails::create_directory(sDirectory.c_str());
-#endif
+        lpshm->m_ShmType = ZTL_SHT_FILEMAP;
+		create_directory(sDirectory);
+#endif//__linux__
 
-		PrivOpenOrCreate(m_Name.c_str(), aOpenOrCreate, aAccessMode);
+		_PrivOpenOrCreate(lpshm, lpshm->m_Name, aOpenOrCreate, aAccessMode);
 	}
 	else
 	{
 		// TODO: check windows system could work with empty name
-		m_ShmType  = ST_SHM_ANON;
+        lpshm->m_ShmType  = ZTL_SHT_ANON;
 	}
+
+    return lpshm;
 }
 
-HShareMemory::HShareMemory(const char* apNameKey, int aOpenOrCreate, const bool aIsUseHugepage/* = false*/)
-	: m_Size(0), m_Hugepage(aIsUseHugepage), 
-	m_OpenOrCreate(aOpenOrCreate), m_ShmType(ST_SHM_SEGMENT),
-	m_Handle(INVALID_HANDLE_VALUE), m_pAddress(NULL)
+
+ztl_shm_t* ztl_shm_segment_create(const char* apNameKey, int aOpenOrCreate, const bool aIsUseHugepage)
 {
-	if (NULL != apNameKey)
-	{
-		m_Name = apNameKey;
-	}
+    ztl_shm_t* lpshm;
 
-	if (!m_Name.empty())
-	{
-		m_ShmType = ST_SHM_SEGMENT;
-	}
-	else
-	{
-		m_ShmType  = ST_SHM_ANON;
-	}
-	m_Mode = read_write;
+    lpshm = (ztl_shm_t*)malloc(sizeof(ztl_shm_t));
+    if (NULL != apNameKey)
+    {
+        strncpy(lpshm->m_Name, apNameKey, sizeof(lpshm->m_Name) - 1);
+    }
+
+    if (lpshm->m_Name[0])
+    {
+        lpshm->m_ShmType = ZTL_SHT_SEGMENT;
+    }
+    else
+    {
+        lpshm->m_ShmType = ZTL_SHT_ANON;
+    }
+    lpshm->m_Mode = ztl_read_write;
+
+    return lpshm;
 }
 
-HShareMemory::~HShareMemory()
+void ztl_shm_release(ztl_shm_t* zshm)
 {
 #ifdef _WIN32
-	if (NULL != m_pAddress) {
-		UnmapViewOfFile(m_pAddress);
+	if (NULL != zshm->m_pAddress) {
+		UnmapViewOfFile(zshm->m_pAddress);
 	}
-	if (NULL != m_FileMapping) {
-		CloseHandle(m_FileMapping);
+	if (NULL != zshm->m_FileMapping) {
+		CloseHandle(zshm->m_FileMapping);
 	}
-	if (m_Handle != INVALID_HANDLE_VALUE) {
-		CloseHandle(m_Handle);
+	if (zshm->m_Handle != INVALID_HANDLE_VALUE) {
+		CloseHandle(zshm->m_Handle);
 	}
 #else
-	if (ST_SHM_SEGMENT != m_ShmType)
+	if (ZTL_SMT_SEGMENT != zshm->m_ShmType)
 	{
-		if (NULL != m_pAddress) {
-			munmap(m_pAddress, m_Size);
+		if (NULL != zshm->m_pAddress) {
+			munmap(zshm->m_pAddress, zshm->m_Size);
 		}
 
-		if (INVALID_HANDLE_VALUE != m_Handle) {
-			close(m_Handle);
+		if (INVALID_HANDLE_VALUE != zshm->m_Handle) {
+			close(zshm->m_Handle);
 		}
 	}
 	else
 	{
-		if (NULL != m_pAddress) {
-			shmdt(m_pAddress);
+		if (NULL != zshm->m_pAddress) {
+			shmdt(zshm->m_pAddress);
 		}
 
-		if (INVALID_HANDLE_VALUE != m_Handle) {
-			shmctl(m_Handle, IPC_RMID, NULL);
+		if (INVALID_HANDLE_VALUE != zshm->m_Handle) {
+			shmctl(zshm->m_Handle, IPC_RMID, NULL);
 		}
 	}
 #endif//_WIN32
+
+    free(zshm);
 }
 
 /* static function to remmove file */
-bool HShareMemory::Remove(const char* apName)
+bool ztl_shm_remove(const char* apName)
 {
 #ifdef _WIN32
-	return ipcdetails::unlink_file(apName);
+	return unlink_file(apName);
 #else
-	string sDirectory;
-	ipcdetails::get_directory(sDirectory, apName);
-	if (sDirectory.empty())
+    char sDirectory[256];
+	get_directory(sDirectory, apName);
+	if (!sDirectory[0])
 	{
 		return 0 == shm_unlink(apName);
 	}
@@ -371,57 +386,57 @@ bool HShareMemory::Remove(const char* apName)
 		// remove the file
 		return 0 == unlink(apName);
 	}
-#endif
+#endif//_WIN32
 }
 
-int HShareMemory::Truncate(uint64_t aSize)
+int ztl_shm_truncate(ztl_shm_t* zshm, uint64_t aSize)
 {
 
 #ifdef _WIN32
 	uint64_t lFileSize;
-	if (ST_SHM_ANON == m_ShmType || ST_SHM_SEGMENT == m_ShmType) {
-		m_Size = aSize;
+	if (ZTL_SHT_ANON == zshm->m_ShmType || ZTL_SHT_SEGMENT == zshm->m_ShmType) {
+        zshm->m_Size = aSize;
 		return 0;
 	}
 
-	if (!ipcdetails::get_file_size(m_Handle, lFileSize))
+	if (!get_file_size(zshm->m_Handle, &lFileSize))
 	{
 		//perror("get_file_size");
 		return -2;
 	}
 
 	//avoid unused variable warnings in 32 bit systems
-	if (aSize > uint64_t(INT_MAX))
+	if (aSize > (uint64_t)INT_MAX)
 	{
 		return -3;
 	}
 
 	if (aSize > lFileSize)
 	{
-		if (!ipcdetails::set_file_pointer_ex(m_Handle, lFileSize, NULL, 0)) {
+		if (!set_file_pointer_ex(zshm->m_Handle, lFileSize, NULL, 0)) {
 			return -4;
 		}
 
 		//We will write zeros in the end of the file
 		//since set_end_of_file does not guarantee this
 
-		std::size_t lRemaining = size_t(aSize - lFileSize);
-		ipcdetails::truncate_file(m_Handle, lRemaining);
+		size_t lRemaining = (size_t)(aSize - lFileSize);
+		truncate_file(zshm->m_Handle, lRemaining);
 	}
 	else
 	{
-		if (!ipcdetails::set_file_pointer_ex(m_Handle, aSize, NULL, 0)) {
+		if (!set_file_pointer_ex(zshm->m_Handle, aSize, NULL, 0)) {
 			return -6;
 		}
 
-		if (!ipcdetails::set_end_of_file(m_Handle)) {
+		if (!set_end_of_file(zshm->m_Handle)) {
 			return -7;
 		}
 	}
 #else
-	if (ST_SHM_SHMOPEN == m_ShmType || ST_SHM_FILEMAP == m_ShmType)
+	if (ZTL_SHT_SHMOPEN == zshm->m_ShmType || ZTL_SHT_FILEMAP == zshm->m_ShmType)
 	{
-		if (m_OpenOrCreate != open_only && 0 != ftruncate(m_Handle, aSize))
+		if (zshm->m_OpenOrCreate != open_only && 0 != ftruncate(zshm->m_Handle, aSize))
 		{
 			perror("ftruncate");
 			return -1;
@@ -429,14 +444,14 @@ int HShareMemory::Truncate(uint64_t aSize)
 	}
 #endif
 
-	m_Size = aSize;
+    zshm->m_Size = aSize;
 	return 0;
 }
 
 
-int HShareMemory::MapRegion(int aAccessMode)
+int ztl_shm_map_region(ztl_shm_t* zshm, int aAccessMode)
 {
-	if (m_pAddress != NULL)
+	if (zshm->m_pAddress != NULL)
 	{
 		return 0;
 	}
@@ -446,7 +461,7 @@ int HShareMemory::MapRegion(int aAccessMode)
 #ifdef _WIN32
 
 	// if open handle failed before
-	if (INVALID_HANDLE_VALUE == m_Handle && ST_SHM_FILEMAP == m_ShmType)
+	if (INVALID_HANDLE_VALUE == zshm->m_Handle && ZTL_SHT_FILEMAP == zshm->m_ShmType)
 	{
 		return -1;
 	}
@@ -454,12 +469,12 @@ int HShareMemory::MapRegion(int aAccessMode)
 	int lMapAccess = FILE_MAP_ALL_ACCESS;
 	switch (aAccessMode) 
 	{
-	case read_only:  
+	case ztl_read_only:
 		lProtMode = PAGE_READONLY;
 		lMapAccess = FILE_MAP_READ;
 		break;
-	case read_write:
-	case copy_on_write:
+	case ztl_read_write:
+	case ztl_copy_on_write:
 		lProtMode = PAGE_READWRITE;
 		lMapAccess = FILE_MAP_ALL_ACCESS;
 		break;
@@ -468,45 +483,45 @@ int HShareMemory::MapRegion(int aAccessMode)
 	}
 
 	LARGE_INTEGER lInteger;
-	lInteger.QuadPart = m_Size;
+	lInteger.QuadPart = zshm->m_Size;
 	
-	HANDLE lpMapping = OpenFileMappingA(lMapAccess, FALSE, m_Name.c_str());
-	if (NULL == lpMapping && m_OpenOrCreate != open_only) {
-		lpMapping = CreateFileMappingA(m_Handle, NULL, lProtMode, lInteger.HighPart, lInteger.LowPart, m_Name.c_str());
+	HANDLE lpMapping = OpenFileMappingA(lMapAccess, FALSE, zshm->m_Name);
+	if (NULL == lpMapping && zshm->m_OpenOrCreate != ztl_open_only) {
+		lpMapping = CreateFileMappingA(zshm->m_Handle, NULL, lProtMode, lInteger.HighPart, lInteger.LowPart, zshm->m_Name);
 	}
 
 	if (NULL == lpMapping)
 	{
-		fprintf(stderr, "CreateFileMappingA [%s] failed %d!\n", m_Name.c_str(), GetLastError());
+		fprintf(stderr, "CreateFileMappingA [%s] failed %d!\n", zshm->m_Name, GetLastError());
 		return -3;
 	}
 
-	m_pAddress = MapViewOfFileEx(lpMapping,
+    zshm->m_pAddress = MapViewOfFileEx(lpMapping,
 		lMapAccess,
 		0, 0,
-		SIZE_T(m_Size), NULL);
+		(SIZE_T)(zshm->m_Size), NULL);
 	
-	m_FileMapping = lpMapping;
+    zshm->m_FileMapping = lpMapping;
 	//CloseHandle(lpMapping);
 
 #else
 
-	if (INVALID_HANDLE_VALUE == m_Handle)
+	if (INVALID_HANDLE_VALUE == zshm->m_Handle)
 	{
 		// if open handle failed before
-		if ((ST_SHM_FILEMAP == m_ShmType) || ST_SHM_SHMOPEN == m_ShmType)
+		if ((ZTL_SHT_FILEMAP == zshm->m_ShmType) || ZTL_SHT_SHMOPEN == zshm->m_ShmType)
 		{
 			return -1;
 		}
 	}
 
 	int lAccessMode = aAccessMode;
-	ipcdetails::get_os_accessmode(lAccessMode);
+	get_os_accessmode(&lAccessMode);
 	lProtMode = lAccessMode;
 
-	if (ST_SHM_SEGMENT == m_ShmType)
+	if (ZTL_SHT_SEGMENT == zshm->m_ShmType)
 	{
-		int lShmKey = ipcdetails::get_key_from_file(m_Name.c_str());
+		int lShmKey = get_key_from_file(zshm->m_Name);
 		int lShmFlag = SHM_R;
 		if (m_OpenOrCreate != open_only)
 			lShmFlag |= IPC_CREAT | IPC_EXCL;
@@ -514,28 +529,28 @@ int HShareMemory::MapRegion(int aAccessMode)
 			lShmFlag |= SHM_W;
 
 		// with hugetlb flag
-		if (m_Hugepage)
+		if (zshm->m_Hugepage)
 			lShmFlag |= SHM_HUGETLB;
 
-		m_Handle = shmget(lShmKey, m_Size, lShmFlag);
-		if (m_Handle == INVALID_HANDLE_VALUE && errno == EEXIST && m_OpenOrCreate != open_only)
+        zshm->m_Handle = shmget(lShmKey, m_Size, lShmFlag);
+		if (zshm->m_Handle == INVALID_HANDLE_VALUE && errno == EEXIST && zshm->m_OpenOrCreate != open_only)
 		{
 			lShmFlag = SHM_R;
 			if (lAccessMode != read_only)
 				lShmFlag |= SHM_W;
 			if (m_Hugepage)
 				lShmFlag |= SHM_HUGETLB;
-			m_Handle = shmget(lShmKey, m_Size, lShmFlag);
+            zshm->m_Handle = shmget(lShmKey, m_Size, lShmFlag);
 		}
 
-		if (INVALID_HANDLE_VALUE == m_Handle)
+		if (INVALID_HANDLE_VALUE == zshm->m_Handle)
 		{
 			perror("shmget");
 			return -1;
 		}
 		
-		m_pAddress = shmat(m_Handle, 0, 0);
-		if (NULL == m_pAddress)
+        zshm->m_pAddress = shmat(m_Handle, 0, 0);
+		if (NULL == zshm->m_pAddress)
 		{
 			perror("shmat");
 			return -1;
@@ -545,18 +560,18 @@ int HShareMemory::MapRegion(int aAccessMode)
 	{
 		int lHandle = m_Handle;
 		int lMapFlag = MAP_SHARED | MAP_NORESERVE;
-		if (ST_SHM_ANON == m_ShmType && m_Hugepage)
+		if (ZTL_SHT_ANON == m_ShmType && m_Hugepage)
 		{
 			lMapFlag |= MAP_HUGETLB | MAP_ANONYMOUS;
 			lHandle = -1;
 		}
 
 		// map it to the address space
-		m_pAddress = mmap(NULL, m_Size, lProtMode, lMapFlag, lHandle, 0);
+        zshm->m_pAddress = mmap(NULL, zshm->m_Size, lProtMode, lMapFlag, lHandle, 0);
 		if (MAP_FAILED == m_pAddress)
 		{
 			perror("mmap");
-			m_pAddress = NULL;
+            zshm->m_pAddress = NULL;
 			return -1;
 		}
 	}
@@ -564,64 +579,64 @@ int HShareMemory::MapRegion(int aAccessMode)
 	return 0;
 }
 
-int HShareMemory::Detach()
+int ztl_shm_detach(ztl_shm_t* zshm)
 {
-	if (NULL != m_pAddress)
+	if (NULL != zshm->m_pAddress)
 	{
 #ifdef _WIN32
-		UnmapViewOfFile(m_pAddress);
+		UnmapViewOfFile(zshm->m_pAddress);
 #else
-		if (ST_SHM_SEGMENT == m_ShmType) {
-			shmdt(m_pAddress);
+		if (ZTL_SHT_SEGMENT == zshm->m_ShmType) {
+			shmdt(zshm->m_pAddress);
 		}
 		else {
-			munmap(m_pAddress, m_Size);
+			munmap(zshm->m_pAddress, zshm->m_Size);
 		}
 #endif//_WIN32
-		m_pAddress = NULL;
+        zshm->m_pAddress = NULL;
 		return 0;
 	}
 	return -1;
 }
 
-void* HShareMemory::GetAddress() const
+void* ztl_shm_get_address(ztl_shm_t* zshm)
 {
-	return m_pAddress;
+	return zshm->m_pAddress;
 }
 
-const char* HShareMemory::GetName() const
+const char* ztl_shm_get_name(ztl_shm_t* zshm)
 {
-	return m_Name.c_str();
+	return zshm->m_Name;
 }
 
-uint64_t HShareMemory::GetSize() const
+uint64_t ztl_shm_get_size(ztl_shm_t* zshm)
 {
-	return m_Size;
+	return zshm->m_Size;
 }
 
-int HShareMemory::GetMode() const
+int ztl_shm_get_mode(ztl_shm_t* zshm)
 {
-	return m_Mode;
+	return zshm->m_Mode;
 }
 
-int HShareMemory::FlushToFile(bool aIsAsyncFlag, void* apAddr/* = NULL*/, uint64_t aSize/* = 0*/)
+int ztl_shm_flush_to_file(ztl_shm_t* zshm, bool aIsAsyncFlag, void* apAddr, uint64_t aSize)
 {
-	if (aSize > m_Size) {
+	if (aSize > zshm->m_Size) {
 		return -1;
 	}
 
-	if (0 == aSize)	aSize = m_Size;
-	if (NULL == apAddr) apAddr = m_pAddress;
+	if (0 == aSize)	aSize = zshm->m_Size;
+	if (NULL == apAddr) apAddr = zshm->m_pAddress;
 	
-	if (apAddr < m_pAddress || 
-		((char*)apAddr + aSize) > ((char*)m_pAddress + m_Size)) {
+	if (apAddr < zshm->m_pAddress ||
+		((char*)apAddr + aSize) > ((char*)zshm->m_pAddress + zshm->m_Size)) {
 		return -1;
 	}
 
-	if (ST_SHM_FILEMAP == m_ShmType)
+	if (ZTL_SHT_FILEMAP == zshm->m_ShmType)
 	{
 #ifdef _WIN32
-		FlushViewOfFile(apAddr, SIZE_T(aSize));
+		FlushViewOfFile(apAddr, (SIZE_T)(aSize));
 #else
 		int lFlag = aIsAsyncFlag ? MS_ASYNC : MS_SYNC;
 		return msync(apAddr, aSize, lFlag);
@@ -630,28 +645,28 @@ int HShareMemory::FlushToFile(bool aIsAsyncFlag, void* apAddr/* = NULL*/, uint64
 	return 0;
 }
 
-int HShareMemory::PrivOpenOrCreate(const char* apName, int aOpenOrCreate, int aAccessMode)
+static int _PrivOpenOrCreate(ztl_shm_t* zshm, const char* apName, int aOpenOrCreate, int aAccessMode)
 {
 	int lRet = 0;
 
 #ifdef _WIN32
 
-	ipcdetails::get_os_opencreated(aOpenOrCreate);
-	ipcdetails::get_os_accessmode(aAccessMode);
+	get_os_opencreated(&aOpenOrCreate);
+	get_os_accessmode(&aAccessMode);
 
 	int lShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
-	if (aOpenOrCreate != open_only) {
+	if (aOpenOrCreate != ztl_open_only) {
 		lShareMode |= FILE_SHARE_DELETE;
 	}
 
-	if (ST_SHM_FILEMAP == m_ShmType)
+	if (ZTL_SHT_FILEMAP == zshm->m_ShmType)
 	{
-		m_Handle = CreateFileA(apName,
+		zshm->m_Handle = CreateFileA(apName,
 			aAccessMode,
 			lShareMode,
 			NULL, aOpenOrCreate, FILE_ATTRIBUTE_NORMAL, 0);
 
-		if (INVALID_HANDLE_VALUE == m_Handle)
+		if (INVALID_HANDLE_VALUE == zshm->m_Handle)
 		{
 			fprintf(stderr, "CreateFileA %s failed %d\n", apName, GetLastError());
 			lRet = -1;
@@ -660,33 +675,33 @@ int HShareMemory::PrivOpenOrCreate(const char* apName, int aOpenOrCreate, int aA
 
 #else
 
-	ipcdetails::get_os_opencreated(aOpenOrCreate);
+	get_os_opencreated(aOpenOrCreate);
 
 	int lDoSysCall = 0;
 	int lUnixPerm = 0664;
 
-	if (ST_SHM_FILEMAP == m_ShmType)
+	if (ZTL_SHT_FILEMAP == zshm->m_ShmType)
 	{
 		lDoSysCall = 1;
-		m_Handle = open(apName, aOpenOrCreate, lUnixPerm);
+        zshm-> = open(apName, aOpenOrCreate, lUnixPerm);
 		
 		// if successful, change real permissions
-		if (m_Handle >= 0)
+		if (zshm->m_Handle >= 0)
 		{
-			::fchmod(m_Handle, lUnixPerm);
+			fchmod(zshm->m_Handle, lUnixPerm);
 		}
 	}
 	else
 	{
 		// try to create a share memory
-		if (ST_SHM_SHMOPEN == m_ShmType)
+		if (ZTL_SHT_SHMOPEN == zshm->m_ShmType)
 		{
 			lDoSysCall = 1;
-			m_Handle = shm_open(apName, aOpenOrCreate, lUnixPerm);
+            zshm->m_Handle = shm_open(apName, aOpenOrCreate, lUnixPerm);
 		}
 	}
 
-	if (m_Handle < 0 && lDoSysCall)
+	if (zshm->m_Handle < 0 && lDoSysCall)
 	{
 		char lErrBuf[512] = "";
 		sprintf(lErrBuf, "open [%s] failed", apName);
@@ -695,7 +710,7 @@ int HShareMemory::PrivOpenOrCreate(const char* apName, int aOpenOrCreate, int aA
 	}
 #endif//_WIN32
 
-	m_Mode = aAccessMode;
+	zshm->m_Mode = aAccessMode;
 	return lRet;
 }
 

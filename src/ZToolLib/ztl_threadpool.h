@@ -29,11 +29,11 @@ typedef bool (*ztl_compare_fn)(void*, void* );
 ztl_thrpool_t* ztl_thrpool_create(int min_threads_num, int max_threads_num, int max_queue_size);
 
 /// dispatch a new task to the thread pool with argument 'arg'
-/// return 0 success, -1 the pending task is full
+/// return 0 success, -1 the task queue is full
 int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* param, ztl_free_fn afree);
 
 /// remove the queued job from thread pool by passed func and argument "arg"
-int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_fn cmp_func, void* arg);
+int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_fn cmp_func, void* param);
 
 /// set or get user data related this thrpool
 void  ztl_thrpool_set_data(ztl_thrpool_t* thpool, void* userdata);
