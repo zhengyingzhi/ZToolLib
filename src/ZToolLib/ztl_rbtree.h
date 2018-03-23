@@ -24,7 +24,7 @@ struct ztl_rbtree_node_s {
     ztl_rbtree_node_t*    left;
     ztl_rbtree_node_t*    right;
     ztl_rbtree_node_t*    parent;
-	void*                 udata;
+    void*                 udata;
     uint8_t               color;
     uint8_t               data;
 };

@@ -90,6 +90,12 @@
     <ClInclude Include="ztl_producer_consumer.h">
       <Filter>Threads</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_malloc.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_unit_test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -142,6 +148,12 @@
     </ClCompile>
     <ClCompile Include="ztl_producer_consumer.c">
       <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_malloc.c">
+      <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_unit_test.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

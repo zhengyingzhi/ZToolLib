@@ -34,7 +34,8 @@ extern "C" {
 extern ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool bAsyncLog);
 
 /// create a udp log parameter
-extern ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t outType, const char* udpip, uint16_t udpport);
+extern ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t outType, 
+    const char* udpip, uint16_t udpport, int issender);
 
 /// close the logger
 extern void ztl_log_close(ztl_log_t* logger);

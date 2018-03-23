@@ -24,7 +24,7 @@ typedef pthread_attr_t                  ztl_thread_attr_t;
 #define ztl_thread_mutexattr_init       pthread_mutexattr_init
 #define ztl_thread_mutexattr_settype    pthread_mutexattr_settype
 #define ztl_thread_mutexattr_destroy    pthread_mutexattr_destroy
-#define ztl_THREAD_MUTEX_ADAPTIVE_NP    PTHREAD_MUTEX_ADAPTIVE_NP
+#define ZTL_THREAD_MUTEX_ADAPTIVE_NP    PTHREAD_MUTEX_ADAPTIVE_NP
 
 #define ztl_thread_cond_init            pthread_cond_init
 #define ztl_thread_cond_destroy         pthread_cond_destroy
@@ -40,6 +40,7 @@ typedef pthread_attr_t                  ztl_thread_attr_t;
 
 #define ztl_thread_self                 pthread_self
 #define ztl_thread_create               pthread_create
+#define ztl_thread_join                 pthread_join
 
 #define ZTL_THREAD_CALL
 typedef ztl_thread_result_t (ZTL_THREAD_CALL* ztl_thread_func_t)(void* args);
@@ -58,7 +59,7 @@ typedef ztl_thread_result_t (ZTL_THREAD_CALL* ztl_thread_func_t)(void* args);
 extern "C" {
 #endif
 
-typedef unsigned ztl_thread_t;
+typedef void* ztl_thread_t;
 typedef unsigned ztl_thread_result_t;
 
 #define ZTL_THREAD_CALL __stdcall
@@ -103,8 +104,10 @@ int ztl_thread_attr_setstacksize(ztl_thread_attr_t * attr, size_t stacksize );
 /// create a new thread, return 0 if success
 int ztl_thread_create(ztl_thread_t * thr, ztl_thread_attr_t * attr, ztl_thread_func_t myfunc, void * args );
 
+int ztl_thread_join(ztl_thread_t thr, void **retval);
+
 /// get thread id
-ztl_thread_t ztl_thread_self();
+unsigned int ztl_thread_self();
 
 
 

@@ -1,10 +1,12 @@
 /*
 * Copyright (C) Yingzhi Zheng
-* Copyright (C) zhengyingzhi112@163.com
+* Copyright (C) <zhengyingzhi112@163.com>
 */
 
 #ifndef _LOCK_FREE_QUEUE_H_
 #define _LOCK_FREE_QUEUE_H_
+
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {

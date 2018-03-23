@@ -36,14 +36,16 @@ void DebugBreak() {}
 int64_t query_tick_count();
 int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd);
 
-/// get current date, return length, fmt like "%04d/%02d/%02d"
-int current_date(char* chDate, int nLen, const char* fmt);
 
-/// get current time, return length
+
+/// get current date, return length, fmtDelimiter like '-', '/', return length
+int current_date(char* chDate, int nLen, char fmtDelimiter);
+
+/// get current time, like 14:23:50.187940, return length
 int current_time(char* chTime, int nLen, bool bMicroSec);
 
-/// get current date time
-int cur_date_time(char* chBuf, int nLen, const char* fmt, bool bMicroSec);
+/// get current date time like 2017/12/12 14:23:50.187940, return length
+int cur_date_time(char* chBuf, int nLen, char fmtDelimiter, bool bMicroSec);
 
 /// get time of day
 #ifdef _WIN32
@@ -53,10 +55,10 @@ void gettimeofday(struct timeval *tp, void* reserve);
 #endif//_WIN32
 
 /// convert a long long value to string, return length
-int ll2string(char* dst, size_t dstlen, long long value);
+int ll2string(char* dst, size_t dstlen, int64_t value);
 
 /// convert previous len data to an integer
-int atoi_n(const char* pszData, int len);
+int64_t atoi_n(const char* pszData, int len);
 
 /// print memory by hex
 void print_mem(void* pm, unsigned int size, int nperline);
@@ -68,7 +70,7 @@ void random_string(char* buf, int size, bool onlyhexchar);
 void lefttrim(char* buf);
 void righttrim(char* buf);
 
-/// parse string within k,K,m,M,g,G to numeric
+/// parse string within k,K,m,M,g,G to numeric, 2K ->> 2048
 int64_t parse_size(const char* str, int len);
 
 /// get cpu core number

@@ -10,7 +10,7 @@ extern "C" {
 /// maximum number of threads allowed in a pool
 #define ZTL_MAX_THR_IN_POOL 128
 
-/// exported types
+/// the exported types
 typedef struct ztl_thrpool_st ztl_thrpool_t;
 
 /// "dispatch_fn" declares a typed function pointer.
@@ -28,7 +28,8 @@ typedef bool (*ztl_compare_fn)(void*, void* );
 /// "threadpool", else it returns NULL.
 ztl_thrpool_t* ztl_thrpool_create(int min_threads_num, int max_threads_num, int max_queue_size);
 
-/// dispatch a new job to the thread pool with argument "arg"
+/// dispatch a new task to the thread pool with argument 'arg'
+/// return 0 success, -1 the pending task is full
 int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* param, ztl_free_fn afree);
 
 /// remove the queued job from thread pool by passed func and argument "arg"
@@ -44,6 +45,9 @@ int ztl_thrpool_tasknum(ztl_thrpool_t* thpool);
 /// return working threads number
 int ztl_thrpool_thrnum(ztl_thrpool_t* thpool);
 
+/// return the pending tasks in the queue to process
+int ztl_thrpool_pending(ztl_thrpool_t* thpool);
+
 /// wait all threads exit
 int ztl_thrpool_join(ztl_thrpool_t* thpool);
 
@@ -52,7 +56,7 @@ int ztl_thrpool_stop(ztl_thrpool_t* thpool);
 
 /// destroy the threadpool, causing all threads in it to commit suicide,
 /// and then frees all the memory associated with the thread pool
-int ztl_thrpool_destroy(ztl_thrpool_t* thpool);
+int ztl_thrpool_release(ztl_thrpool_t* thpool);
 
 #ifdef __cplusplus
 }

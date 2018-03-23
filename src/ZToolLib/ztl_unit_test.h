@@ -6,45 +6,45 @@
 
 /* ZuString */
 
-char* CuStrAlloc(int size);
-char* CuStrCopy(const char* old);
+char* ZuStrAlloc(int size);
+char* ZuStrCopy(const char* old);
 
-#define ZU_ALLOC(TYPE)		((TYPE*) malloc(sizeof(TYPE)))
+#define ZU_ALLOC(TYPE)      ((TYPE*) malloc(sizeof(TYPE)))
 
-#define HUGE_STRING_LEN	8192
-#define STRING_MAX		256
-#define STRING_INC		256
+#define HUGE_STRING_LEN     8192
+#define STRING_MAX          256
+#define STRING_INC          256
 
 typedef struct
 {
-	int length;
-	int size;
-	char* buffer;
-} CuString;
+    int length;
+    int size;
+    char* buffer;
+} ZuString;
 
-void CuStringInit(CuString* str);
-CuString* CuStringNew(void);
-void CuStringRead(CuString* str, const char* path);
-void CuStringAppend(CuString* str, const char* text);
-void CuStringAppendChar(CuString* str, char ch);
-void CuStringAppendFormat(CuString* str, const char* format, ...);
-void CuStringInsert(CuString* str, const char* text, int pos);
-void CuStringResize(CuString* str, int newSize);
+void ZuStringInit(ZuString* str);
+ZuString* ZuStringNew(void);
+void ZuStringRead(ZuString* str, const char* path);
+void ZuStringAppend(ZuString* str, const char* text);
+void ZuStringAppendChar(ZuString* str, char ch);
+void ZuStringAppendFormat(ZuString* str, const char* format, ...);
+void ZuStringInsert(ZuString* str, const char* text, int pos);
+void ZuStringResize(ZuString* str, int newSize);
 
 /* ZuTest */
 
-typedef struct ZuTest ZuTest;
+typedef struct tagZuTest ZuTest;
 
 typedef void (*ZuTestFunction)(ZuTest *);
 
-struct CuTest
+struct tagZuTest
 {
-	const char*     name;
-	ZuTestFunction  function;
-	int             failed;
-	int             ran;
-	const char*     message;
-	jmp_buf*        jumpBuf;
+    const char*     name;
+    ZuTestFunction  function;
+    int             failed;
+    int             ran;
+    const char*     message;
+    jmp_buf*        jumpBuf;
 };
 
 void ZuTestInit(ZuTest* t, const char* name, ZuTestFunction function);
@@ -93,9 +93,9 @@ void ZuAssertPtrEquals_LineMsg(ZuTest* tc,
 
 typedef struct
 {
-	int count;
-	int failCount;
-	ZuTest* list[ZTL_MAX_TEST_CASES];
+    int count;
+    int failCount;
+    ZuTest* list[ZTL_MAX_TEST_CASES];
 
 } ZuSuite;
 

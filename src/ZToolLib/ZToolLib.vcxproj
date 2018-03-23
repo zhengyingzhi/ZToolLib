@@ -142,6 +142,7 @@
     <ClInclude Include="ztl_buffer.h" />
     <ClInclude Include="ztl_dyso.h" />
     <ClInclude Include="ztl_linklist.h" />
+    <ClInclude Include="ztl_malloc.h" />
     <ClInclude Include="ztl_mempool.h" />
     <ClInclude Include="ztl_atomic.h" />
     <ClInclude Include="lockfreequeue.h" />
@@ -152,6 +153,7 @@
     <ClInclude Include="ztl_simple_event.h" />
     <ClInclude Include="ztl_threadpool.h" />
     <ClInclude Include="ztl_threads.h" />
+    <ClInclude Include="ztl_unit_test.h" />
     <ClInclude Include="ztl_utils.h" />
     <ClInclude Include="ztl_base64.h" />
     <ClInclude Include="ztl_locks.h" />
@@ -163,6 +165,7 @@
     <ClCompile Include="ztl_buffer.c" />
     <ClCompile Include="ztl_dyso.c" />
     <ClCompile Include="lockfreequeue.c" />
+    <ClCompile Include="ztl_malloc.c" />
     <ClCompile Include="ztl_mempool.c" />
     <ClCompile Include="ztl_logger.c" />
     <ClCompile Include="ztl_network.c" />
@@ -171,6 +174,7 @@
     <ClCompile Include="ztl_simple_event.c" />
     <ClCompile Include="ztl_threadpool.c" />
     <ClCompile Include="ztl_threads.c" />
+    <ClCompile Include="ztl_unit_test.c" />
     <ClCompile Include="ztl_utils.c" />
     <ClCompile Include="ztl_base64.c" />
     <ClCompile Include="ztl_locks.c" />

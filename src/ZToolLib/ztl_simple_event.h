@@ -12,7 +12,7 @@ typedef struct ztl_simevent_st ztl_simevent_t;
 ztl_simevent_t* ztl_simevent_create();
 
 /// destroy the event object
-void ztl_simevent_destroy(ztl_simevent_t* sev);
+void ztl_simevent_release(ztl_simevent_t* sev);
 
 /// notify the waitor
 void ztl_simevent_signal(ztl_simevent_t* sev);

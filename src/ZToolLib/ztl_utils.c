@@ -25,59 +25,68 @@
 int64_t query_tick_count()
 {
 #ifdef WIN32
-	LARGE_INTEGER counter;
-	QueryPerformanceCounter(&counter);
-	return counter.QuadPart;
+    LARGE_INTEGER counter;
+    QueryPerformanceCounter(&counter);
+    return counter.QuadPart;
 #else
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return tv.tv_sec * 1000000 + tv.tv_usec;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000000 + tv.tv_usec;
 #endif//WIN32
 }
 
 int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd)
 {
 #ifdef WIN32
-	LARGE_INTEGER freq;
-	QueryPerformanceFrequency(&freq);
-	if (aTickCountEnd == 0)
-		return (int32_t)((double)aTickCountBeg / (double)(freq.QuadPart) * 1000000);
-	else
-		return (int32_t)((double)(aTickCountEnd - aTickCountBeg) / (double)(freq.QuadPart) * 1000000);
+    LARGE_INTEGER freq;
+    QueryPerformanceFrequency(&freq);
+    if (aTickCountEnd == 0)
+        return (int32_t)((double)aTickCountBeg / (double)(freq.QuadPart) * 1000000);
+    else
+        return (int32_t)((double)(aTickCountEnd - aTickCountBeg) / (double)(freq.QuadPart) * 1000000);
 #else
-	if (aTickCountEnd == 0)
-		return aTickCountBeg;
-	return aTickCountEnd - aTickCountBeg;
+    if (aTickCountEnd == 0)
+        return aTickCountBeg;
+    return aTickCountEnd - aTickCountBeg;
 #endif//WIN32
 }
 
-static const double FLARRAY_EXP[] = {0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001, 0.000000001, 0.0000000001};
-static const double FLARRAY_INT[] = {1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0, 10000000.0, 100000000.0, 1000000000.0};
-
 
 /// get current data, return length
-int current_date(char* chDate, int nLen, const char* fmt /* = NULL*/)
+int current_date(char* chDate, int nLen, char fmtDelimiter)
 {
     time_t now = time(NULL);
-    struct tm* ptm = localtime(&now);
-    if (fmt == NULL || *fmt == '\0')
-        return snprintf(chDate, nLen, "%04d/%02d/%02d", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
-    else
-        return snprintf(chDate, nLen, fmt, ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
+
+    struct tm ltm;
+#ifdef _MSC_VER
+    localtime_s(&ltm, &now);
+#else
+    localtime_r(&now, &ltm);
+#endif//_MSC_VER
+
+    if (fmtDelimiter == 0) {
+        return snprintf(chDate, nLen, "%04d%02d%02d", ltm.tm_year + 1900, ltm.tm_mon + 1, ltm.tm_mday);
+    }
+    else {
+        return snprintf(chDate, nLen, "%04d%c%02d%c%02d", ltm.tm_year + 1900, fmtDelimiter,
+            ltm.tm_mon + 1, fmtDelimiter,
+            ltm.tm_mday);
+    }
 }
 
 /// get current time, return length
 int current_time(char* chTime, int nLen, bool bMicroSec/* = true*/)
 {
     int len;
-#ifdef WIN32
-    FILETIME ftLocal;
-    SYSTEMTIME stLocal;
+#ifdef _WIN32
+    FILETIME    ftLocal;
+    SYSTEMTIME  stLocal;
     GetSystemTimeAsFileTime(&ftLocal);
     FileTimeToSystemTime(&ftLocal, &stLocal);
+
     if (bMicroSec)
     {
-        __int64 it = ftLocal.dwHighDateTime;
+        int64_t it = ftLocal.dwHighDateTime;
         it = it << 32;
         it |= ftLocal.dwLowDateTime;
         it /= 10; // convert from 100 nano-sec periods to micro-seconds
@@ -113,18 +122,18 @@ int current_time(char* chTime, int nLen, bool bMicroSec/* = true*/)
 }
 
 /// get current date time
-int cur_date_time(char* chBuf, int nLen, const char* fmt, bool bMicroSec/* = true*/)
+int cur_date_time(char* chBuf, int nLen, char fmtDelimiter, bool bMicroSec/* = true*/)
 {
-	int len = current_date(chBuf, nLen, fmt);
-	chBuf[len] = ' ';
-	return len + current_time(chBuf + len + 1, nLen - len, bMicroSec);
+    int len = current_date(chBuf, nLen, fmtDelimiter);
+    chBuf[len] = ' ';
+    return len + current_time(chBuf + len + 1, nLen - len, bMicroSec);
 }
 
 /// get time of day
 #ifdef _WIN32
 void gettimeofday(struct timeval *tp, void* reserve)
 {
-	__int64  intervals;
+    int64_t intervals;
     FILETIME ft;
 
     GetSystemTimeAsFileTime(&ft);
@@ -175,7 +184,7 @@ static uint32_t digits10(uint64_t v)
     return 12 + digits10(v / 1000000000000UL);
 }
 
-int ll2string(char* dst, size_t dstlen, long long svalue)
+int ll2string(char* dst, size_t dstlen, int64_t svalue)
 {
     static const char digits[201] =
         "0001020304050607080910111213141516171819"
@@ -188,7 +197,7 @@ int ll2string(char* dst, size_t dstlen, long long svalue)
 
     /* The main loop works with 64bit unsigned integers for simplicity, so
     * we convert the number here and remember if it is negative. */
-    /* ‘⁄’‚¿Ô◊ˆ’˝∏∫∫≈µƒ≈–∂œ¥¶¿Ì */
+    /* Âú®ËøôÈáåÂÅöÊ≠£Ë¥üÂè∑ÁöÑÂà§Êñ≠Â§ÑÁêÜ */
     if (svalue < 0) {
         if (svalue != LLONG_MIN) {
             value = -svalue;
@@ -212,10 +221,10 @@ int ll2string(char* dst, size_t dstlen, long long svalue)
     dst[next] = '\0';
     next--;
     while (value >= 100) {
-        //◊ˆ÷µµƒªªÀ„  
+        //ÂÅöÂÄºÁöÑÊç¢ÁÆó  
         int const i = (value % 100) << 1;
         value /= 100;
-        //iÀ˘¥˙±Ìµƒ”‡ ˝÷µ”√digits◊÷∑˚ ˝◊È÷–µƒ∂‘”¶ ˝◊÷¥˙ÃÊ¡À  
+        //iÊâÄ‰ª£Ë°®ÁöÑ‰ΩôÊï∞ÂÄºÁî®digitsÂ≠óÁ¨¶Êï∞ÁªÑ‰∏≠ÁöÑÂØπÂ∫îÊï∞Â≠ó‰ª£Êõø‰∫Ü  
         dst[next] = digits[i + 1];
         dst[next - 1] = digits[i];
         next -= 2;
@@ -237,9 +246,9 @@ int ll2string(char* dst, size_t dstlen, long long svalue)
 }
 
 /// convert previous len data to an integer
-int atoi_n(const char* pszData, int len)
+int64_t atoi_n(const char* pszData, int len)
 {
-    int val = 0;
+    int64_t val = 0;
     int isigned = 1;
     int i = 0;
     while (i++ < len) {

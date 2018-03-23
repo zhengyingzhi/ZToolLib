@@ -30,8 +30,8 @@
 
 /// @brief  atomically substracts a_count from the variable pointed by a_ptr
 /// @return the value that had previously been in memory
-#define ztl_atomic_dec(ptr, count)      (InterlockedExchangeAdd((uint32_t*)(ptr), -(count)))
-#define ztl_atomic_dec64(ptr, count)    (InterlockedExchangeAdd64((uint64_t*)(ptr), -(count)))
+#define ztl_atomic_dec(ptr, count)      (InterlockedExchangeAdd((uint32_t*)(ptr), -((int32_t)count)))
+#define ztl_atomic_dec64(ptr, count)    (InterlockedExchangeAdd64((uint64_t*)(ptr), -((int32_t)count)))
 
 /// @brief  atomically set a_count to the variable pointed by a_ptr
 /// @return the value that had previously been in memory

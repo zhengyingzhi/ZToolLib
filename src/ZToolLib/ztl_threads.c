@@ -74,9 +74,9 @@ int ztl_thread_cond_broadcast(ztl_thread_cond_t * cond)
     return 0 == rv ? GetLastError() : 0;
 }
 
-ztl_thread_t ztl_thread_self()
+unsigned int ztl_thread_self()
 {
-    return GetCurrentThreadId();
+    return (unsigned int)GetCurrentThreadId();
 }
 
 int ztl_thread_attr_init(ztl_thread_attr_t * attr)
@@ -107,15 +107,29 @@ int ztl_thread_create(ztl_thread_t * thr, ztl_thread_attr_t * attr,
 {
     // _beginthreadex returns 0 on an error
     HANDLE h = 0;
+    unsigned int lthr;
 
     if (NULL != attr) {
-        h = (HANDLE)_beginthreadex(NULL, attr->stacksize, myfunc, args, 0, thr);
+        h = (HANDLE)_beginthreadex(NULL, attr->stacksize, myfunc, args, 0, &lthr);
     }
     else {
-        h = (HANDLE)_beginthreadex(NULL, 0, myfunc, args, 0, thr);
+        h = (HANDLE)_beginthreadex(NULL, 0, myfunc, args, 0, &lthr);
     }
 
-    return h > 0 ? 0 : GetLastError();
+    if (h) {
+        *thr = h;
+        return 0;
+    }
+    return GetLastError();
+}
+
+int ztl_thread_join(ztl_thread_t thr, void **retval)
+{
+    (void)retval;
+    if (thr) {
+        WaitForSingleObject(thr, INFINITE);
+    }
+    return 0;
 }
 
 #endif//_MSC_VER
