@@ -131,7 +131,7 @@ char* ztl_mp_alloc(ztl_mempool_t* mp)
     ztl_bufnode_t*  pnode;
     ztl_memblock_t* theblock;
 
-    ztl_spinlock(&mp->freelock, 1, ZTL_LOCK_SPIN);
+    ztl_spinlock(&mp->alloclock, 1, ZTL_LOCK_SPIN);
     if (mp->nFreeCount > 0)
     {
         // get memory from freenodes list firstly

@@ -4,28 +4,62 @@
 #include "ztl_array.h"
 
 
+int _ztl_array_init(ztl_array_t* array, ztl_pool_t* pool, uint32_t num, size_t eltsize)
+{
+    /*
+    * set "array->nelts" before "array->elts", otherwise MSVC thinks
+    * that "array->nelts" may be used without having been initialized
+    */
+
+    array->nelts    = 0;
+    array->nalloc   = num;
+    array->eltsize  = eltsize;
+    array->pool     = pool;
+
+    if (pool)
+        array->elts = ztl_palloc(pool, num * eltsize);
+    else
+        array->elts = malloc(num * eltsize);
+
+    if (array->elts == NULL) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
 ztl_array_t* ztl_array_create(ztl_pool_t* pool, uint32_t num, size_t eltsize)
 {
     ztl_array_t* array;
 
     if (pool)
-        array = (ztl_array_t*)ztl_palloc(pool, sizeof(ztl_array_t));
+        array = (ztl_array_t*)ztl_pcalloc(pool, sizeof(ztl_array_t));
     else
-        array = (ztl_array_t*)malloc(sizeof(ztl_array_t));
+        array = (ztl_array_t*)calloc(1, sizeof(ztl_array_t));
 
     if (array == NULL) {
         return NULL;
     }
 
-    if (ztl_array_init(array, pool, num, eltsize) != 0) {
+    array->const_obj = 0;
+
+    if (_ztl_array_init(array, pool, num, eltsize) != 0) {
+        free(array);
         return NULL;
     }
 
     return array;
 }
 
+int ztl_array_init(ztl_array_t* array, ztl_pool_t* pool, uint32_t num, size_t eltsize)
+{
+    array->const_obj = 1;
 
-void ztl_array_destroy(ztl_array_t* arr)
+    return _ztl_array_init(array, pool, num, eltsize);
+}
+
+void ztl_array_release(ztl_array_t* arr)
 {
     ztl_pool_t* pool;
 
@@ -44,48 +78,149 @@ void ztl_array_destroy(ztl_array_t* arr)
     else {
         if (arr->elts)
             free(arr->elts);
-        free(arr);
+
+        /* the array object was not malloced from os */
+        if (!arr->const_obj)
+            free(arr);
     }
 }
 
+void ztl_array_clear(ztl_array_t* arr)
+{
+    if (arr->pool)
+    {
+        ztl_pool_t* pool = arr->pool;
+        if ((uint8_t*)arr->elts + arr->eltsize * arr->nalloc == pool->d.last) {
+            pool->d.last -= arr->eltsize * arr->nalloc;
+        }
+
+        if ((uint8_t*)arr + sizeof(ztl_array_t) == pool->d.last) {
+            pool->d.last = (uint8_t*)arr;
+        }
+    }
+    arr->nelts = 0;
+}
+
+bool ztl_array_reserve(ztl_array_t* arr, uint32_t reserve_num)
+{
+    void        *enew;
+    size_t      size;
+
+    if (reserve_num > arr->nalloc)
+    {
+        ztl_pool_t* pool;
+        pool = arr->pool;
+
+        size = arr->eltsize * arr->nalloc;
+
+        if (pool)
+        {
+            if ((uint8_t*)arr->elts + reserve_num == pool->d.last
+                && pool->d.last + arr->eltsize <= pool->d.end)
+            {
+                /*
+                * the array allocation is the last in the pool
+                * and there is space for new allocation
+                */
+
+                pool->d.last += arr->eltsize;
+                arr->nalloc++;
+
+            }
+            else {
+                /* allocate a new array */
+
+                enew = ztl_palloc(pool, reserve_num * arr->eltsize);
+                if (enew == NULL) {
+                    return false;
+                }
+
+                memcpy(enew, arr->elts, size);
+                arr->elts = enew;
+                arr->nalloc = reserve_num;
+            }
+        }
+        else
+        {
+            enew = realloc(arr->elts, reserve_num * arr->eltsize);
+            if (enew == NULL) {
+                return false;
+            }
+
+            arr->nalloc = reserve_num;
+        }
+    }
+
+    return true;
+}
+
+bool ztl_array_push_back(ztl_array_t* arr, void* elem)
+{
+    char* lpaddr;
+    lpaddr = (char*)ztl_array_push(arr);
+    if (!lpaddr) {
+        return false;
+    }
+
+    switch (arr->eltsize)
+    {
+    case 1:
+        *(uint8_t*)lpaddr = *(uint8_t*)elem;
+        break;
+    case 2:
+        *(uint16_t*)lpaddr = *(uint16_t*)elem;
+        break;
+    case 3:
+        *(uint16_t*)lpaddr = *(uint16_t*)elem;
+        *(uint8_t*)(lpaddr + 2) = *(uint8_t*)((char*)elem + 2);
+        break;
+    case 4:
+        *(uint32_t*)lpaddr = *(uint32_t*)elem;
+        break;
+    case 5:
+        *(uint32_t*)lpaddr = *(uint32_t*)elem;
+        *(uint8_t*)(lpaddr + 4) = *(uint8_t*)((char*)elem + 4);
+        break;
+    case 6:
+        *(uint32_t*)lpaddr = *(uint32_t*)elem;
+        *(uint16_t*)(lpaddr + 4) = *(uint16_t*)((char*)elem + 4);
+        break;
+    case 7:
+        *(uint32_t*)lpaddr = *(uint32_t*)elem;
+        *(uint16_t*)(lpaddr + 4) = *(uint16_t*)((char*)elem + 4);
+        *(uint8_t*)(lpaddr + 6) = *(uint8_t*)((char*)elem + 6);
+        break;
+    case 8:
+        *(uint8_t*)lpaddr = *(uint8_t*)elem;
+        break;
+    default:
+        memcpy(lpaddr, elem, arr->eltsize);
+    }
+
+    return true;
+}
+
+void* ztl_array_pop_back(ztl_array_t* arr)
+{
+    void* elem = NULL;
+    if (arr->nelts > 0) {
+        elem = (uint8_t*)arr->elts + arr->nelts * arr->eltsize;
+        arr->nelts--;
+    }
+
+    return elem;
+}
 
 void* ztl_array_push(ztl_array_t* arr)
 {
-    void        *elt, *new;
-    size_t       size;
-    ztl_pool_t  *p;
+    void *elt;
 
     if (arr->nelts == arr->nalloc) {
 
         /* the array is full */
-
-        size = arr->eltsize * arr->nalloc;
-
-        p = arr->pool;
-
-        if ((uint8_t*)arr->elts + size == p->d.last
-            && p->d.last + arr->eltsize <= p->d.end)
-        {
-            /*
-            * the array allocation is the last in the pool
-            * and there is space for new allocation
-            */
-
-            p->d.last += arr->eltsize;
-            arr->nalloc++;
-
-        }
-        else {
-            /* allocate a new array */
-
-            new = ztl_palloc(p, 2 * size);
-            if (new == NULL) {
-                return NULL;
-            }
-
-            memcpy(new, arr->elts, size);
-            arr->elts = new;
-            arr->nalloc *= 2;
+        
+        if (!ztl_array_reserve(arr, arr->nalloc << 1)) {
+            return NULL;
         }
     }
 
@@ -98,44 +233,14 @@ void* ztl_array_push(ztl_array_t* arr)
 
 void* ztl_array_push_n(ztl_array_t* arr, uint32_t n)
 {
-    void        *elt, *new;
-    size_t       size;
-    uint32_t   nalloc;
-    ztl_pool_t  *p;
-
-    size = n * arr->eltsize;
+    void *elt;
 
     if (arr->nelts + n > arr->nalloc) {
 
         /* the array is full */
 
-        p = arr->pool;
-
-        if ((uint8_t*)arr->elts + arr->eltsize * arr->nalloc == p->d.last
-            && p->d.last + size <= p->d.end)
-        {
-            /*
-            * the array allocation is the last in the pool
-            * and there is space for new allocation
-            */
-
-            p->d.last += size;
-            arr->nalloc += n;
-
-        }
-        else {
-            /* allocate a new array */
-
-            nalloc = 2 * ((n >= arr->nalloc) ? n : arr->nalloc);
-
-            new = ztl_palloc(p, nalloc * arr->eltsize);
-            if (new == NULL) {
-                return NULL;
-            }
-
-            memcpy(new, arr->elts, arr->nelts * arr->eltsize);
-            arr->elts = new;
-            arr->nalloc = nalloc;
+        if (!ztl_array_reserve(arr, arr->nalloc << 1)) {
+            return NULL;
         }
     }
 

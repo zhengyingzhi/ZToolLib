@@ -270,6 +270,11 @@ ztl_shm_t* ztl_shm_create(const char* apName, int aOpenOrCreate, int aAccessMode
 
     lpshm = (ztl_shm_t*)malloc(sizeof(ztl_shm_t));
 
+    memset(lpshm, 0, sizeof(ztl_shm_t));
+    lpshm->m_OpenOrCreate = aOpenOrCreate;
+    lpshm->m_Mode = aAccessMode;
+    lpshm->m_Hugepage = aIsUseHugepage;
+
 	if (NULL != apName) 
 	{
         strncpy(lpshm->m_Name, apName, sizeof(lpshm->m_Name) - 1);
@@ -313,6 +318,12 @@ ztl_shm_t* ztl_shm_segment_create(const char* apNameKey, int aOpenOrCreate, cons
     ztl_shm_t* lpshm;
 
     lpshm = (ztl_shm_t*)malloc(sizeof(ztl_shm_t));
+
+    memset(lpshm, 0, sizeof(ztl_shm_t));
+    lpshm->m_OpenOrCreate = aOpenOrCreate;
+    lpshm->m_Mode = ztl_read_write;
+    lpshm->m_Hugepage = aIsUseHugepage;
+
     if (NULL != apNameKey)
     {
         strncpy(lpshm->m_Name, apNameKey, sizeof(lpshm->m_Name) - 1);

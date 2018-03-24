@@ -30,35 +30,25 @@ static const char* levels[10]	= {
     "CRITI", "", ""
 };
 
-// if we want to reduce memory space, 
-// we can define MICRO: "NO_ASYNC_LOG" when compile this file
-#ifdef NO_ASYNC_LOG
-#define ARR_SIZE    1
-#define LOGBUF_SZ   4096
-#else
-#define ARR_SIZE    1024
-#define LOGBUF_SZ   4096
-#endif//USE_SYNC_LOG
-
-#define USED        '1'
-#define UNUSE       '0'
-
+#define ZTL_LOG_QUEUE_SIZE  8192
+#define ZTL_LOGBUF_SIZE     4096
 #define ZTL_LOG_FLUSH_COUNT 1024
-#define ZTL_UDP_LOG_TYPE    1
+#define ZTL_LOG_TYPE_NONE   0
+#define ZTL_LOG_TYPE_UDP    1
 
 typedef void(*OutputFunc)(FILE* logfp, char* buf, int length);
 
 typedef struct 
 {
-    uint16_t        type : 2;       // UDP_LOG_TYPE
+    uint16_t        type : 2;       // ZTL_LOG_TYPE_UDP
     uint16_t        size : 14;      // the udp message size 16384
     uint32_t        sequence;       // the udp message sequence
-}ztl_log_udp_header_t;
-#define ZTL_UDP_LOG_OFFSET  sizeof(ztl_log_udp_header_t)
+}ztl_log_header_t;
+#define ZTL_LOG_HEAD_OFFSET sizeof(ztl_log_header_t)
 
 struct ztl_log_st {
     FILE*       logfp;                  // log file pointer
-    int         level;                  // log level
+    int         log_level;              // log level
     int         outputType;             // log output type
     int         bAsyncLog;              // is use async log
     int         running;                // is running for async log thread
@@ -67,12 +57,8 @@ struct ztl_log_st {
 
     ztl_thread_t    thr;                // the thread handle
 
-    char        filename[256];          // the filename
-    char        logArray[ARR_SIZE][LOGBUF_SZ];  // a ring buf, 16M
-    char        dataFlag[ARR_SIZE];     // has data flag
-    uint32_t    wtIndex;                // write index
-    uint32_t    rdIndex;                // read index for log thread
-    uint32_t    itemCount;              // the count of log message
+    char                filename[256];  // the filename
+    uint32_t            itemCount;      // the pending count of log message
 
     lfqueue_t*          queue;
     ztl_mempool_t*      pool;
@@ -125,23 +111,16 @@ static ztl_log_t* _InitNewLogger()
 {
     ztl_log_t* log;
     log = (ztl_log_t*)malloc(sizeof(ztl_log_t));
+    memset(log, 0, sizeof(ztl_log_t));
 
     log->logfp      = NULL;
-    log->level      = ZTL_LOG_NONE;
+    log->log_level  = ZTL_LOG_INFO;
     log->outputType = ZTL_WritFile;
     log->bAsyncLog  = true;
     log->running    = 1;
     log->bExited    = 0;
 
-    log->wtIndex    = 0;
-    log->rdIndex    = 0;
-    log->itemCount  = 0;
     memset(log->filename, 0, sizeof(log->filename));
-    memset(log->dataFlag, UNUSE, sizeof(log->dataFlag));
-
-    for (int i = 0; i < ARR_SIZE; ++i) {
-        memset(log->logArray[i], 0, LOGBUF_SZ);
-    }
 
     log->sequence= 0;
     log->udpsock = 0;
@@ -151,20 +130,28 @@ static ztl_log_t* _InitNewLogger()
     return log;
 }
 
-static bool _WaitLogMsg(ztl_log_t* log)
+static char* _WaitLogMsg(ztl_log_t* log)
 {
-    if (log->itemCount == 0)
+    char* lpBuff = NULL;
+    
+    do 
     {
-        ztl_thread_cond_wait(&log->cond, &log->lock);
-    }
-    return true;
+        if (lfqueue_pop(log->queue, (void**)&lpBuff) != 0) {
+            ztl_thread_cond_wait(&log->cond, &log->lock);
+            continue;
+        }
+        ztl_atomic_dec(&log->itemCount, 1);
+        break;
+    } while (log->running);
+
+    return lpBuff;
 }
 
 static int _MakeLogLineTime(char* buf, int level)
 {
     int lLength = 0;
     lLength += current_time(buf + lLength, 16, true);
-    lLength += sprintf(buf + lLength, " [%s] ", levels[level]);
+    lLength += sprintf(buf + lLength, " [%u] [%s] ", ztl_thread_self(), levels[level]);
     return lLength;
 }
 
@@ -173,34 +160,22 @@ static ztl_thread_result_t ZTL_THREAD_CALL _LogWorkThread(void* arg)
 {
     ztl_log_t* log = (ztl_log_t*)arg;
 
-    char* pBuf = NULL;
-    unsigned int rdIdx = 0;
+    ztl_log_header_t* lpHead;
+    char* lpBuf;
+
     while (log->running)
     {
-        if (!_WaitLogMsg(log))
+        lpBuf = _WaitLogMsg(log);
+        if (!lpBuf) {
             continue;
-
-        rdIdx = log->rdIndex;
-        if (log->wtIndex != rdIdx)
-        {
-            // check current data of this rdIdx could be log
-            if (log->dataFlag[rdIdx] == UNUSE)
-            {
-                sleepms(1);
-                continue;
-            }
-
-            // write log msg
-            pBuf = log->logArray[rdIdx];
-             log->pfLogFunc(log->logfp, pBuf, 0);
-
-            // update rdIndex after write msg finined
-            pBuf[0] = '\0';
-            log->rdIndex = CountToIndex(rdIdx + 1);
-            log->dataFlag[rdIdx] = UNUSE;
-            --log->itemCount;
         }
-    }//while
+
+        lpHead = (ztl_log_header_t*)lpBuf;
+
+        log->pfLogFunc(log->logfp, lpBuf + ZTL_LOG_HEAD_OFFSET, lpHead->size - ZTL_LOG_HEAD_OFFSET);
+
+        ztl_mp_free(log->pool, lpBuf);
+    }
 
     // set the log thread as exited
     log->bExited = 1;
@@ -211,7 +186,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _LogWorkThread(void* arg)
 static ztl_thread_result_t ZTL_THREAD_CALL _UdpLogWorkThread(void* arg)
 {
     ztl_log_t* log = (ztl_log_t*)arg;
-    ztl_log_udp_header_t* lpHead;
+    ztl_log_header_t* lpHead;
     char lBuffer[4096] = "";
     int  lSize, rv;
     uint32_t lSequence = 0;
@@ -228,14 +203,14 @@ static ztl_thread_result_t ZTL_THREAD_CALL _UdpLogWorkThread(void* arg)
             break;
         }
 
-        lpHead = (ztl_log_udp_header_t*)lBuffer;
-        if (lpHead->type != ZTL_UDP_LOG_TYPE) {
+        lpHead = (ztl_log_header_t*)lBuffer;
+        if (lpHead->type != ZTL_LOG_TYPE_UDP) {
             continue;
         }
         if (lpHead->sequence > 0 && lpHead->sequence <= lSequence) {
             continue;
         }
-        if (lpHead->size > LOGBUF_SZ) {
+        if (lpHead->size > ZTL_LOGBUF_SIZE) {
             continue;
         }
 
@@ -249,7 +224,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _UdpLogWorkThread(void* arg)
         }
 
         lBuffer[rv] = '\0';
-        log->pfLogFunc(log->logfp, lBuffer + ZTL_UDP_LOG_OFFSET, rv - ZTL_UDP_LOG_OFFSET);
+        log->pfLogFunc(log->logfp, lBuffer + ZTL_LOG_HEAD_OFFSET, rv - ZTL_LOG_HEAD_OFFSET);
     }
 
     log->bExited = 1;
@@ -263,7 +238,7 @@ static int _ztl_log_createfile(ztl_log_t* log)
         // create a file
         char lRealFileName[512] = "";
         char lDate[32] = "";
-        current_date(lDate, sizeof(lDate), '/');
+        current_date(lDate, sizeof(lDate), 0);
 
         const char* psep = strchr(log->filename, '.');
         if (psep) {
@@ -326,6 +301,9 @@ ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool b
 #endif//_WIN32
         ztl_thread_cond_init(&log->cond, NULL);
 
+        log->queue  = lfqueue_create(ZTL_LOG_QUEUE_SIZE, NULL);
+        log->pool   = ztl_mp_create(ZTL_LOGBUF_SIZE, 256, 1);
+
         // create log thread
         ztl_thread_create(&log->thr, NULL, _LogWorkThread, log);
     }
@@ -362,7 +340,10 @@ ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t outType,
     // init udp component
     memset(&log->udpaddr, 0, sizeof(log->udpaddr));
     make_sockaddr(&log->udpaddr, udpip, udpport);
-    set_snd_buffsize(udpfd, 4 * 1024 * 1024);
+    if (issender)
+        set_snd_buffsize(udpfd, 4 * 1024 * 1024);
+    else
+        set_rcv_buffsize(udpfd, 4 * 1024 * 1024);
     connect(udpfd, (struct sockaddr*)&log->udpaddr, sizeof(log->udpaddr));
 
     log->issender= issender;
@@ -410,8 +391,10 @@ void ztl_log_close(ztl_log_t* log)
     {
         close_socket(log->udpsock);
 
-        void* retval;
-        ztl_thread_join(log->thr, &retval);
+        if (log->thr) {
+            void* retval;
+            ztl_thread_join(log->thr, &retval);
+        }
 
         log->udpsock = -1;
     }
@@ -426,8 +409,16 @@ void ztl_log_close(ztl_log_t* log)
 
     if (log->logfp && log->logfp != stderr && log->logfp != stdout)
     {
+        fflush(log->logfp);
         fclose(log->logfp);
         log->logfp = NULL;
+    }
+
+    if (log->queue) {
+        lfqueue_release(log->queue);
+    }
+    if (log->pool) {
+        ztl_mp_release(log->pool);
     }
 
     free(log);
@@ -436,22 +427,26 @@ void ztl_log_close(ztl_log_t* log)
 void ztl_log_set_level(ztl_log_t* log, ztl_log_level_t minLevel)
 {
     if (log)
-        log->level = minLevel;
+        log->log_level = minLevel;
+}
+
+extern ztl_log_level_t ztl_log_get_level(ztl_log_t* log)
+{
+    if (log)
+        return log->log_level;
+    return ZTL_LOG_NONE;
 }
 
 void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
 {
-    if (!log || log->level > level || 0 == log->running)
+    if (!log || log->log_level > level || 0 == log->running)
         return;
 
-    char    lBuffer[LOGBUF_SZ] = "";
+    char    lBuffer[ZTL_LOGBUF_SIZE] = "";
     char*   lpBuff;
     int     lLength;
 
-    lLength = 0;
-    if (log->udpsock > 0 && log->issender) {
-        lLength += ZTL_UDP_LOG_OFFSET;
-    }
+    lLength = ZTL_LOG_HEAD_OFFSET;
 
     if (log->bAsyncLog) {
         lpBuff = ztl_mp_alloc(log->pool);
@@ -465,45 +460,42 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
 
     va_list args;
     va_start(args, fmt);
-    vsnprintf(lpBuff + lLength, LOGBUF_SZ - lLength, fmt, args);
+    vsnprintf(lpBuff + lLength, ZTL_LOGBUF_SIZE - lLength, fmt, args);
     va_end(args);
 
+    ztl_log_header_t* lpHead;
+    lpHead          = (ztl_log_header_t*)lpBuff;
+    lpHead->type    = ZTL_LOG_TYPE_NONE;
+    lpHead->size    = lLength - ZTL_LOG_HEAD_OFFSET;
+    lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
+
     if (log->bAsyncLog) {
+        lfqueue_push(log->queue, lpBuff);
         if (ztl_atomic_add(&log->itemCount, 1) == 0) {
             ztl_thread_cond_signal(&log->cond);
         }
     }
-    else if (log->udpsock > 0 && log->issender)
-    {
-        ztl_log_udp_header_t* lpHead;
-        lpHead = (ztl_log_udp_header_t*)lpBuff;
-        lpHead->type = ZTL_UDP_LOG_TYPE;
-        lpHead->size = lLength;
-        lpHead->sequence = ztl_atomic_add(&log->sequence, 1) + 1;
-
+    else if (log->udpsock > 0 && log->issender) {
+        lpHead->type = ZTL_LOG_TYPE_UDP;
         udp_send(log->udpsock, lpBuff, lLength, &log->udpaddr);
     }
-    else
-    {
+    else {
         if (log->pfLogFunc)
-            log->pfLogFunc(log->logfp, lpBuff, lLength);
+            log->pfLogFunc(log->logfp, lpBuff + ZTL_LOG_HEAD_OFFSET, lLength - ZTL_LOG_HEAD_OFFSET);
     }
 
 }
 
 void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
 {
-    if (!log || log->level > level || 0 == log->running)
+    if (!log || log->log_level > level || 0 == log->running)
         return;
 
-    char    lBuffer[LOGBUF_SZ] = "";
+    char    lBuffer[ZTL_LOGBUF_SIZE] = "";
     char*   lpBuff;
     int     lLength;
 
-    lLength = 0;
-    if (log->udpsock > 0 && log->issender) {
-        lLength += ZTL_UDP_LOG_OFFSET;
-    }
+    lLength = ZTL_LOG_HEAD_OFFSET;
 
     if (log->bAsyncLog) {
         lpBuff = ztl_mp_alloc(log->pool);
@@ -515,31 +507,56 @@ void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
     // format log message's header and content
     lLength += _MakeLogLineTime(lpBuff + lLength, level);
 
-    len = ztl_min((LOGBUF_SZ - lLength), len);
+    len = ztl_min((ZTL_LOGBUF_SIZE - lLength), len);
     memcpy(lpBuff + lLength, line, len);
     lLength += len;
+    
+    ztl_log_header_t* lpHead;
+    lpHead          = (ztl_log_header_t*)lpBuff;
+    lpHead->type    = ZTL_LOG_TYPE_NONE;
+    lpHead->size    = lLength - ZTL_LOG_HEAD_OFFSET;
+    lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
 
-    if (log->bAsyncLog) {
+    if (log->bAsyncLog)
+    {
         if (ztl_atomic_add(&log->itemCount, 1) == 0) {
             ztl_thread_cond_signal(&log->cond);
         }
     }
     else if (log->udpsock > 0 && log->issender)
     {
-        ztl_log_udp_header_t* lpHead;
-        lpHead = (ztl_log_udp_header_t*)lpBuff;
-        lpHead->type = ZTL_UDP_LOG_TYPE;
-        lpHead->size = lLength;
-        lpHead->sequence = ztl_atomic_add(&log->sequence, 1) + 1;
-
+        lpHead->type = ZTL_LOG_TYPE_UDP;
         udp_send(log->udpsock, lpBuff, lLength, &log->udpaddr);
     }
     else
     {
         if (log->pfLogFunc)
-            log->pfLogFunc(log->logfp, lpBuff, lLength);
+            log->pfLogFunc(log->logfp, lpBuff + ZTL_LOG_HEAD_OFFSET, lLength - ZTL_LOG_HEAD_OFFSET);
     }
 }
 
 
+static int ztl_set_stderr(FILE* fp)
+{
+#ifdef _WIN32
+    return SetStdHandle(STD_ERROR_HANDLE, fp);
+#else
+    return dup2(fp, STDERR_FILENO);
+#endif//_WIN32
+}
 
+int zlt_log_redirect_stderr(ztl_log_t* log)
+{
+    if (log->logfp == stderr) {
+        return 0;
+    }
+
+    /* file log always exists when we are called */
+    if (ztl_set_stderr(log->logfp) == 0) {
+        ztl_log(log, ZTL_LOG_CRITICAL, "ztl_set_stderr() failed\r\n");
+
+        return -1;
+    }
+
+    return 0;
+}

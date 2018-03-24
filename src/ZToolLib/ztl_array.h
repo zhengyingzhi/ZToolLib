@@ -10,8 +10,9 @@
 typedef struct {
     void*       elts;
     uint32_t    nelts;
-    size_t      eltsize;
     uint32_t    nalloc;
+    uint32_t    eltsize   : 30;
+    uint32_t    const_obj : 2;
     ztl_pool_t* pool;
 }ztl_array_t;
 
@@ -19,38 +20,42 @@ typedef struct {
 extern "C" {
 #endif
 
+/* create a dynamic array
+ * @pool the alloc pool, which could null
+ * @num  the initial array size
+ * @eltsize each elem size, like sizeof(int)
+ * @return the new array object
+ */
 ztl_array_t* ztl_array_create(ztl_pool_t* pool, uint32_t num, size_t eltsize);
-void  ztl_array_destroy(ztl_array_t* arr);
+
+/* init an existed array
+ * @pool the alloc pool, which could null
+ * @return 0-success
+ */
+int ztl_array_init(ztl_array_t* arr, ztl_pool_t* pool, uint32_t num, size_t eltsize);
+
+/* release the array
+ */
+void ztl_array_release(ztl_array_t* arr);
+
+/* clear the array */
+void ztl_array_clear(ztl_array_t* arr);
+
+/* reserve the array */
+bool ztl_array_reserve(ztl_array_t* arr, uint32_t reserve_num);
+
+/* push an element at tail */
+bool ztl_array_push_back(ztl_array_t* arr, void* elem);
+/* pop an element from tail */
+void* ztl_array_pop_back(ztl_array_t* arr);
+
+/* get the new pushed element's address */
 void* ztl_array_push(ztl_array_t* arr);
 void* ztl_array_push_n(ztl_array_t* arr, uint32_t n);
 
 #define ztl_array_at(arr, pos)  ((uint8_t*)arr->elts + arr->nelts * arr->eltsize)
 #define ztl_array_size(arr)     ((arr)->nelts)
 #define ztl_array_isempty(arr)  ((arr)->nelts == 0)
-
-static int ztl_array_init(ztl_array_t* array, ztl_pool_t* pool, uint32_t num, size_t eltsize)
-{
-    /*
-    * set "array->nelts" before "array->elts", otherwise MSVC thinks
-    * that "array->nelts" may be used without having been initialized
-    */
-
-    array->nelts    = 0;
-    array->eltsize  = eltsize;
-    array->nalloc   = num;
-    array->pool     = pool;
-
-    if (pool)
-        array->elts = ztl_palloc(pool, num * eltsize);
-    else
-        array->elts = malloc(num * eltsize);
-
-    if (array->elts == NULL) {
-        return -1;
-    }
-
-    return 0;
-}
 
 #ifdef __cplusplus
 }

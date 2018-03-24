@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 typedef enum
 {
@@ -21,7 +22,7 @@ typedef enum
     ZTL_LOG_INFO,
     ZTL_LOG_NOTICE,
     ZTL_LOG_WARN,
-    ZTL_LOG_CRITI
+    ZTL_LOG_CRITICAL
 }ztl_log_level_t;
 
 typedef struct ztl_log_st ztl_log_t;
@@ -43,10 +44,17 @@ extern void ztl_log_close(ztl_log_t* logger);
 /// set the minimum log level
 extern void ztl_log_set_level(ztl_log_t* logger, ztl_log_level_t minLevel);
 
+extern ztl_log_level_t ztl_log_get_level(ztl_log_t* logger);
+
+/// redirect stderr to logger
+extern int zlt_log_redirect_stderr(ztl_log_t* logger);
+
 /// log a piece of msg
 extern void ztl_log(ztl_log_t* logger, ztl_log_level_t level, const char* fmt, ...);
 
 extern void ztl_log2(ztl_log_t* logger, ztl_log_level_t level, const char* line, int len);
+
+#define ztl_log_error(log,level,...)    ztl_log(log, level, __VA_ARGS__)
 
 
 #ifdef __cplusplus

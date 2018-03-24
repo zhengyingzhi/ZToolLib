@@ -8,22 +8,8 @@ static void* ztl_palloc_small(ztl_pool_t *pool, size_t size, uint32_t align);
 static void* ztl_palloc_block(ztl_pool_t *pool, size_t size);
 static void* ztl_palloc_large(ztl_pool_t *pool, size_t size);
 
-void* ztl_alloc(size_t size)
-{
-    void  *p;
-    p = malloc(size);
-    return p;
-}
-
-void* ztl_calloc(size_t size)
-{
-    void* p;
-    p = calloc(1, size);
-    return p;
-}
-
 #define ztl_free  free
-#define ztl_memalign(alignment, size)  ztl_alloc(size)
+#define ztl_memalign(alignment, size)  malloc(size)
 
 ztl_pool_t* ztl_create_pool(size_t size)
 {
@@ -192,7 +178,7 @@ static void* ztl_palloc_large(ztl_pool_t *pool, size_t size)
     uint32_t           n;
     ztl_pool_large_t  *large;
 
-    p = ztl_alloc(size);
+    p = malloc(size);
     if (p == NULL) {
         return NULL;
     }

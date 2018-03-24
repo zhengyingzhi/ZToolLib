@@ -5,12 +5,34 @@
 
 #include "ztl_buffer.h"
 
+
+void* _ztl_buffer_default_alloc(void* ctxdata, void* oldaddr, uint32_t size)
+{
+    (void)ctxdata;
+    if (oldaddr)
+        oldaddr = realloc(oldaddr, size);
+    else
+        oldaddr = malloc(size);
+    return oldaddr;
+}
+void _ztl_buffer_default_dealloc(void* ctxdata, void* addr)
+{
+    (void)ctxdata;
+    if (addr) {
+        free(addr);
+    }
+}
+
+
 void ztl_buffer_init(ztl_buffer_t* zbuf)
 {
     zbuf->data      = NULL;
     zbuf->size      = 0;
     zbuf->capacity  = 0;
-    zbuf->isalloc   = 0;
+    zbuf->const_addr= 0;
+    zbuf->alloc     = _ztl_buffer_default_alloc;
+    zbuf->dealloc   = _ztl_buffer_default_dealloc;
+    zbuf->ctx       = zbuf;
 }
 
 void ztl_buffer_init_byaddr(ztl_buffer_t* zbuf, void* addr, uint32_t capacity)
@@ -18,20 +40,39 @@ void ztl_buffer_init_byaddr(ztl_buffer_t* zbuf, void* addr, uint32_t capacity)
     zbuf->data      = addr;
     zbuf->size      = 0;
     zbuf->capacity  = capacity;
-    zbuf->isalloc   = 0;
+    zbuf->const_addr= 1;
+
+    zbuf->alloc     = _ztl_buffer_default_alloc;
+    zbuf->dealloc   = _ztl_buffer_default_dealloc;
+    zbuf->ctx       = zbuf;
 }
 
 
-void ztl_buffer_release(ztl_buffer_t* zbuf)
+void ztl_buffer_set_alloc_func(ztl_buffer_t* zbuf, 
+    ztl_buffer_alloc_pt alloc_func,
+    ztl_buffer_dealloc_pt dealloc_func, void* ctxdata)
 {
-    if (zbuf->data && zbuf->isalloc) {
-        free(zbuf->data);
+    if (zbuf && alloc_func) {
+        zbuf->alloc   = alloc_func;
+        zbuf->dealloc = dealloc_func;
+        zbuf->ctx     = ctxdata;
     }
 }
 
-void ztl_buffer_reserve(ztl_buffer_t* zbuf, uint32_t capacity)
+void ztl_buffer_release(ztl_buffer_t* zbuf)
+{
+    if (!zbuf->const_addr) {
+        zbuf->dealloc(zbuf->ctx, zbuf->data);
+    }
+}
+
+bool ztl_buffer_reserve(ztl_buffer_t* zbuf, uint32_t capacity)
 {
     void* data;
+
+    if (zbuf->const_addr) {
+        return false;
+    }
 
     if (capacity > zbuf->capacity)
     {
@@ -48,28 +89,46 @@ void ztl_buffer_reserve(ztl_buffer_t* zbuf, uint32_t capacity)
 #endif
             capacity++;
         }
-        data = realloc(zbuf->data, capacity);
-        assert(data != NULL);
+
+        data = zbuf->alloc(zbuf->ctx, zbuf->data, capacity);
+        if (data == NULL) {
+            return false;
+        }
 
         zbuf->data = data;
         zbuf->capacity = capacity;
     }
+
+    return true;
 }
 
-void ztl_buffer_compact(ztl_buffer_t* zbuf)
+bool ztl_buffer_compact(ztl_buffer_t* zbuf)
 {
     void* data;
 
+    if (zbuf->const_addr) {
+        return false;
+    }
+
     if (zbuf->capacity > zbuf->size)
     {
-        data = realloc(zbuf->data, zbuf->size);
+        data = zbuf->alloc(zbuf->ctx, zbuf->data, zbuf->size);
         if (zbuf->size)
             assert(data != NULL);
         zbuf->data = data;
         zbuf->capacity = zbuf->size;
     }
+
+    return true;
 }
 
+
+void ztl_buffer_append(ztl_buffer_t* zbuf, void* adata, uint32_t asize)
+{
+    ztl_buffer_reserve(zbuf, zbuf->size + asize);
+    memcpy((char *)zbuf->data + zbuf->size, adata, asize);
+    zbuf->size += asize;
+}
 
 void ztl_buffer_insert(ztl_buffer_t* zbuf, uint32_t pos, void* adata, uint32_t asize)
 {

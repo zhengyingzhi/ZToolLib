@@ -204,7 +204,8 @@ unsigned int close_handle(void* handle)
 	return CloseHandle(handle);
 }
 
-void *create_file(const char *name, unsigned long access, unsigned long creation_flags, unsigned long attributes, interprocess_security_attributes *psec)
+void *create_file(const char *name, unsigned long access, unsigned long creation_flags, 
+    unsigned long attributes, interprocess_security_attributes *psec)
 {
 	for (unsigned int attempt = 0; attempt < error_sharing_violation_tries; ++attempt) {
 		void * const handle = CreateFileA(name, access,

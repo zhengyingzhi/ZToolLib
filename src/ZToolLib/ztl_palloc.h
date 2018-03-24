@@ -2,6 +2,7 @@
 #define _ZTL_PALLOC_H_INCLUDED_
 
 #include <string.h>
+#include <stdlib.h>
 #include "ztl_utils.h"
 
 #ifdef __cplusplus
@@ -63,9 +64,6 @@ struct ztl_pool_s {
     ztl_pool_cleanup_t   *cleanup;
 };
 
-
-void *ztl_alloc(size_t size);
-void *ztl_calloc(size_t size);
 
 ztl_pool_t *ztl_create_pool(size_t size);
 void ztl_destroy_pool(ztl_pool_t *pool);
