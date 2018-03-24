@@ -9,7 +9,7 @@
 
 #include "ztl_utils.h"
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #include <Windows.h>
 #include <process.h>
 
@@ -20,12 +20,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <pthread.h>
-#endif//WIN32
+#endif//_MSC_VER
 
 /// high perf counter
 int64_t query_tick_count()
 {
-#ifdef WIN32
+#ifdef _MSC_VER
     LARGE_INTEGER counter;
     QueryPerformanceCounter(&counter);
     return counter.QuadPart;
@@ -33,12 +33,12 @@ int64_t query_tick_count()
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec * 1000000 + tv.tv_usec;
-#endif//WIN32
+#endif//_MSC_VER
 }
 
 int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd)
 {
-#ifdef WIN32
+#ifdef _MSC_VER
     LARGE_INTEGER freq;
     QueryPerformanceFrequency(&freq);
     if (aTickCountEnd == 0)
@@ -49,7 +49,7 @@ int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd)
     if (aTickCountEnd == 0)
         return aTickCountBeg;
     return aTickCountEnd - aTickCountBeg;
-#endif//WIN32
+#endif//_MSC_VER
 }
 
 
@@ -79,7 +79,7 @@ int current_date(char* chDate, int nLen, char fmtDelimiter)
 int current_time(char* chTime, int nLen, bool bMicroSec/* = true*/)
 {
     int len;
-#ifdef _WIN32
+#ifdef _MSC_VER
     FILETIME    ftLocal;
     SYSTEMTIME  stLocal;
     GetSystemTimeAsFileTime(&ftLocal);
@@ -118,7 +118,7 @@ int current_time(char* chTime, int nLen, bool bMicroSec/* = true*/)
     {
         len = snprintf(chTime, nLen, "%02d:%02d:%02d", ptm.tm_hour, ptm.tm_min, ptm.tm_sec);
     }
-#endif//WIN32
+#endif//_MSC_VER
     return len;
 }
 
@@ -131,7 +131,7 @@ int cur_date_time(char* chBuf, int nLen, char fmtDelimiter, bool bMicroSec/* = t
 }
 
 /// get time of day
-#ifdef _WIN32
+#ifdef _MSC_VER
 void gettimeofday(struct timeval *tp, void* reserve)
 {
     int64_t intervals;
@@ -159,7 +159,7 @@ void gettimeofday(struct timeval *tp, void* reserve)
     tp->tv_usec = (long) ((intervals % 10000000) / 10);
 }
 
-#endif//_WIN32
+#endif//_MSC_VER
 
 
 /* Return the number of digits of 'v' when converted to string in radix 10.
@@ -387,9 +387,9 @@ void lefttrim(char* buf)
         return;
 
     int i;
-    int len = strlen(buf);
+    int len = (int)strlen(buf);
     for (i = 0; i < len; ++i) {
-        if (buf[i] != ' ')
+        if (buf[i] != ' ' && buf[i] != '\r' && buf[i] != '\n' && buf[i] != '\t')
             break;
     }
     if (i > 0)
@@ -403,8 +403,11 @@ void righttrim(char* buf)
         return;
 
     int i;
-    for (i = strlen(buf) - 1; i >= 0 && buf[i] == ' '; --i)
+    for (i = (int)strlen(buf) - 1; i >= 0; --i) {
+        if (buf[i] != ' ' && buf[i] != '\r' && buf[i] != '\n' && buf[i] != '\t')
+            break;
         buf[i] = '\0';
+    }
     return;
 }
 

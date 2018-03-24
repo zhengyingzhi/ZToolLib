@@ -473,12 +473,12 @@ ntquery_mem_t* nt_query_mem_deleter_query_mem(nt_query_mem_deleter* obj)
 
 unsigned long nt_query_mem_deleter_name_information_size(nt_query_mem_deleter* obj)
 {
-    return obj->m_size - rename_offset - SystemTimeOfDayInfoLength * 2;
+    return (unsigned long)(obj->m_size - rename_offset - SystemTimeOfDayInfoLength * 2);
 }
 
 unsigned long nt_query_mem_deleter_rename_information_size(nt_query_mem_deleter* obj)
 {
-    return obj->m_size;
+    return (unsigned long)(obj->m_size);
 }
 
 

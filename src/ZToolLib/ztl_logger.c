@@ -471,7 +471,7 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
     ztl_log_header_t* lpHead;
     lpHead          = (ztl_log_header_t*)lpBuff;
     lpHead->type    = ZTL_LOG_TYPE_NONE;
-    lpHead->size    = lLength - ZTL_LOG_HEAD_OFFSET;
+    lpHead->size    = (uint16_t)(lLength - ZTL_LOG_HEAD_OFFSET);
     lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
 
     if (log->bAsyncLog) {
@@ -525,7 +525,7 @@ void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
     ztl_log_header_t* lpHead;
     lpHead          = (ztl_log_header_t*)lpBuff;
     lpHead->type    = ZTL_LOG_TYPE_NONE;
-    lpHead->size    = lLength - ZTL_LOG_HEAD_OFFSET;
+    lpHead->size    = (uint16_t)(lLength - ZTL_LOG_HEAD_OFFSET);
     lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
 
     if (log->bAsyncLog)

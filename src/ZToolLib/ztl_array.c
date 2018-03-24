@@ -13,7 +13,7 @@ int _ztl_array_init(ztl_array_t* array, ztl_pool_t* pool, uint32_t num, size_t e
 
     array->nelts    = 0;
     array->nalloc   = num;
-    array->eltsize  = eltsize;
+    array->eltsize  = (uint32_t)eltsize;
     array->pool     = pool;
 
     if (pool)

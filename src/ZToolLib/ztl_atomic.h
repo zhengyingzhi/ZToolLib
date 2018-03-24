@@ -1,6 +1,6 @@
 /*
-* Copyright (C) Yingzhi Zheng
-* Copyright (C) zhengyingzhi112@163.com
+* Copyright (C) Yingzhi Zheng.
+* Copyright (C) <zhengyingzhi112@163.com>
 */
 
 #ifndef _ZTL_ATOMIC_H_INCLUDE_
@@ -10,7 +10,12 @@
 
 #ifdef _MSC_VER
 
+#ifndef _WIN64
 #define ztl_cpu_pause()     __asm { pause }
+#else
+#define ztl_cpu_pause()     
+#endif
+
 #define ztl_sched_yield     SwitchToThread
 #else
 

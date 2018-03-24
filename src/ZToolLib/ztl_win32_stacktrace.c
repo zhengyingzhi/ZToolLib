@@ -219,7 +219,7 @@ void LogStackTrace()
             stack.Params[2],
             stack.Params[3]
             );
-        EMLOG_INFO(lBuffer);
+        fprintf(stderr, lBuffer);
 
         if (!result) {
             break;

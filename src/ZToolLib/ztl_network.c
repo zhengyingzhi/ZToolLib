@@ -428,7 +428,7 @@ int net_connect_nonb(sockhandle_t connfd, const char* ip, uint16_t port, int tim
     // use select to check writable event
     FD_ZERO(&wtfds);
     FD_SET(connfd, &wtfds);
-    if ((rv = select(connfd + 1, NULL, &wtfds, NULL, ptv)) == 0)
+    if ((rv = select((int)(connfd + 1), NULL, &wtfds, NULL, ptv)) == 0)
     {
         rv = -1;
         goto conn_done;
@@ -451,7 +451,7 @@ int net_connect_nonb(sockhandle_t connfd, const char* ip, uint16_t port, int tim
     else
     {
 #if defined(_DEBUG) || defined(DEBUG)
-        fprintf(stderr, "select error: sockfd not set [%d]", connfd);
+        fprintf(stderr, "select error: sockfd not set [%d]", (int)connfd);
 #endif//DEBUG
     }
 
@@ -515,8 +515,9 @@ int tcp_readn(sockhandle_t sockfd, char* buf, int count)
 /// make a simple tcp server, if new event, the callback functions will be invoked
 int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb)
 {
-    int maxfd = listenfd + 1;
-    int rv, ns;
+    int rv;
+    sockhandle_t maxfd = listenfd + 1;
+    sockhandle_t ns;
     fd_set rdfds0, wtfds0;
     fd_set rdfds, wtfds;
     FD_ZERO(&rdfds0);
@@ -530,10 +531,10 @@ int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb)
         memcpy(&rdfds, &rdfds0, sizeof(fd_set));
         memcpy(&wtfds, &wtfds0, sizeof(fd_set));
 
-        if ((rv = select(maxfd, &rdfds, &wtfds, NULL, NULL)) < 0)
+        if ((rv = select((int)maxfd, &rdfds, &wtfds, NULL, NULL)) < 0)
             break;
 
-        for (int i = 1; i < maxfd; ++i)
+        for (sockhandle_t i = 1; i < maxfd; ++i)
         {
             if (FD_ISSET(i, &rdfds) && i != listenfd)
             {
@@ -591,7 +592,8 @@ static int echo_func(sockhandle_t ns, int isoutev)
 
 int tcp_echo_server(const char* listenip, uint16_t listenport)
 {
-    int rv, listenfd;
+    int rv;
+    sockhandle_t listenfd;
     listenfd = create_socket(SOCK_STREAM);
     rv = tcp_listen(listenfd, listenip, listenport, true, 32);
     if (rv < 0) {
@@ -604,21 +606,16 @@ int tcp_echo_server(const char* listenip, uint16_t listenport)
 }
 
 /// a udp receiver, return udp socket descriptor
-int udp_receiver(const char* localip, uint16_t localport, bool reuseaddr)
+sockhandle_t udp_receiver(const char* localip, uint16_t localport, bool reuseaddr)
 {
     int rv = 0;
-    int udpFd = create_socket(SOCK_DGRAM);
+    sockhandle_t udpFd = create_socket(SOCK_DGRAM);
     if (udpFd < 0) {
         return -1;
     }
 
     if (reuseaddr) {
-        int on = 1;
-        rv = setsockopt(udpFd, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof on);
-        if (rv < 0) {
-            close_socket(udpFd);
-            return rv;
-        }
+        set_reuseaddr(udpFd, true);
     }
 
     // bind to the addr
@@ -652,7 +649,7 @@ int udp_recv(sockhandle_t sockfd, char* buf, int size, struct sockaddr_in* froma
     FD_ZERO(&readfds);
     FD_SET(sockfd, &readfds);
     int rv = 0;
-    rv = select(sockfd + 1, &readfds, NULL, NULL, ptv);
+    rv = select((int)(sockfd + 1), &readfds, NULL, NULL, ptv);
 
     // timeout or error
     if (rv > 0)
@@ -685,14 +682,14 @@ int udp_sendex(sockhandle_t sockfd, const char* buf, int len, const char* ip, ui
 /// make a udp echo server
 int udp_echo_server(const char* localip, uint16_t localport, pfonrecv msgcallback)
 {
-    int udpfd;
+    sockhandle_t udpfd;
     udpfd = udp_receiver(localip, localport, true);
     if (udpfd < 0) {
-        return udpfd;
+        return -1;
     }
 
     bool lResult = true;
-    int  rv;
+    int  rv = 0;
     char buf[4096] = "";
     struct sockaddr_in fromaddr;
 
@@ -720,8 +717,9 @@ int udp_echo_server(const char* localip, uint16_t localport, pfonrecv msgcallbac
 /// make a pair of socket descriptors, type is SOCK_STREAM or SOCK_DGRAM
 int make_sockpair(sockhandle_t sockfds[], int type)
 {
-    int lsock, rv;
-    int connfd, newfd;
+    int rv;
+    sockhandle_t lsock;
+    sockhandle_t connfd, newfd;
     socklen_t addrlen;
     struct sockaddr_in addr;
     struct sockaddr_in fromaddr;
@@ -730,9 +728,8 @@ int make_sockpair(sockhandle_t sockfds[], int type)
     newfd = -1;
 
     lsock = socket(AF_INET, type, 0);
-    if (lsock < 0)
-    {
-        return lsock;
+    if (lsock < 0) {
+        return -1;
     }
 
     // bind to port 0

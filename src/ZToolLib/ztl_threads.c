@@ -98,7 +98,7 @@ int ztl_thread_attr_setdetachstate(ztl_thread_attr_t * attr, int detachstate)
 
 int ztl_thread_attr_setstacksize(ztl_thread_attr_t * attr, size_t stacksize)
 {
-    attr->stacksize = stacksize;
+    attr->stacksize = (int)stacksize;
     return 0;
 }
 

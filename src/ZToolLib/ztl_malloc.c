@@ -102,7 +102,7 @@ static uint32_t _used_memory = 0;
 static int      _zmalloc_thread_safe = 0;
 
 static void ztl_malloc_default_oom(uint32_t size) {
-    fprintf(stderr, "zmalloc: Out of memory trying to allocate %Iu bytes\n",  /* %zu -> %Iu */
+    fprintf(stderr, "zmalloc: Out of memory trying to allocate %u bytes\n",  /* %zu -> %Iu */
         size);
     fflush(stderr);
     abort();
@@ -181,14 +181,14 @@ void* ztl_realloc(void *ptr, uint32_t size)
  * malloc itself, given that in that case we store a header with this
  * information as the first bytes of every allocation. */
 #ifndef ZTL_HAVE_MALLOC_SIZE
-size_t ztl_malloc_size(void *ptr)
+uint32_t ztl_malloc_size(void *ptr)
 {
     void *realptr = (char*)ptr-PREFIX_SIZE;
     size_t size = *((size_t*)realptr);
     /* Assume at least that all the allocations are padded at sizeof(PORT_LONG) by
      * the underlying allocator. */
     if (size&(sizeof(ZTL_PORT_LONG)-1)) size += sizeof(ZTL_PORT_LONG)-(size&(sizeof(ZTL_PORT_LONG)-1));
-    return size+PREFIX_SIZE;
+    return (uint32_t)(size + PREFIX_SIZE);
 }
 #endif//ZTL_HAVE_MALLOC_SIZE
 
@@ -211,15 +211,15 @@ void ztl_free(void *ptr)
 }
 
 char *ztl_strdup(const char* str) {
-    size_t len = strlen(str)+1;
+    uint32_t len = (uint32_t)strlen(str) + 1;
     char *p = ztl_malloc(len);
 
     memcpy(p, str, len);
     return p;
 }
 
-size_t ztl_malloc_used_memory(void) {
-    size_t um;
+uint32_t ztl_malloc_used_memory(void) {
+    uint32_t um;
 
     if (_zmalloc_thread_safe) {
         um = ztl_atomic_add(&_used_memory, 0);

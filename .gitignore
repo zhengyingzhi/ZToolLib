@@ -50,3 +50,15 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+build/objs/ZToolLib.Test/Debug/ZToolLib.Test.tlog/CL.command.1.tlog
+build/objs/ZToolLib.Test/Debug/ZToolLib.Test.log
+build/objs/ZToolLib.Test/Debug/ZToolLib.Test.Build.CppClean.log
+build/objs/ZToolLib.Test/Debug/ZToolLib.Test.tlog/CL.write.1.tlog
+*.tlog
+build/objs/ZToolLib/Debug/ZToolLib.Build.CppClean.log
+build/msvc/ZToolLib.sdf
+build/msvc/ZToolLib.opensdf
+build/objs/ZToolLib/Debug/ZToolLib.log
+build/objs/ZToolLib.Test/Debug/ZToolLib.Test.vcxprojResolveAssemblyReference.cache
+build/msvc/.vs/ZToolLib/v14/.suo
+src/ZToolLib.Test/test_ztl_log2_20180323.log

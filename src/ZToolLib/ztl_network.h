@@ -157,7 +157,7 @@ int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb);
 int tcp_echo_server(const char* listenip, uint16_t listenport);
 
 /// create a udp receiver, return the udp socket descriptor
-int udp_receiver(const char* localip, uint16_t localport, bool reuseaddr);
+sockhandle_t udp_receiver(const char* localip, uint16_t localport, bool reuseaddr);
 
 /// udp recv data with timeout, and fromaddr could be null
 /// @returns 0 timeout, -1 error, else received length, timeout is micro-seconds

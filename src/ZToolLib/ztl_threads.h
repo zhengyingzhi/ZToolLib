@@ -1,7 +1,7 @@
 #ifndef _ZTL_THREADS_H_
 #define _ZTL_THREADS_H_
 
-#ifndef WIN32
+#ifndef _MSC_VER
 
 /// linux pthread
 
@@ -120,6 +120,6 @@ unsigned int ztl_thread_self();
 }
 #endif
 
-#endif//WIN32
+#endif//_MSC_VER
 
 #endif//_ZTL_THREADS_H_

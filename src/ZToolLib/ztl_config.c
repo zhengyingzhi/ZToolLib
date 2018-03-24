@@ -62,6 +62,12 @@ static bool ztl_boolvalue_loopup(const char* desc);
 ztl_config_t* ztl_config_open(const char* filename, char comment, char delimiter)
 {
     ztl_config_t* zconf;
+
+    if (comment == 0)
+        comment = '#';
+    if (delimiter == 0)
+        delimiter = ' ';
+
     zconf = (ztl_config_t*)malloc(sizeof(ztl_config_t));
     memset(zconf, 0, sizeof(ztl_config_t));
 
@@ -104,18 +110,58 @@ void ztl_config_close(ztl_config_t* zconf)
     free(zconf);
 }
 
-bool ztl_config_read_str(ztl_config_t* zconf, const char* key, char** outval, uint32_t* outlen)
+bool ztl_config_set_item(ztl_config_t* zconf, const char* key, const char* val, bool overwrite)
+{
+    ztl_pair_value_t* lpitem;
+    uint32_t keylen = (uint32_t)strlen(key);
+    uint32_t vallen = (uint32_t)strlen(val);
+
+    if (keylen == 0 || vallen == 0) {
+        return false;
+    }
+
+    for (uint32_t i = 0; i < zconf->count; ++i)
+    {
+        if (strcmp(zconf->items[i].key, key) == 0) {
+            if (overwrite) {
+                char* lpcopy = (char*)ztl_pcalloc(zconf->pool, strlen(val) + 1);
+                memcpy(lpcopy, val, strlen(val));
+                zconf->items[i].value = lpcopy;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    if (zconf->count >= zconf->nalloc) {
+        zconf->nalloc *= 2;
+        zconf->items = realloc(zconf->items, zconf->nalloc * sizeof(ztl_pair_value_t));
+    }
+    lpitem = &zconf->items[zconf->count++];
+
+    lpitem->key = (char*)ztl_pcalloc(zconf->pool, keylen + 1);
+    lpitem->value = (char*)ztl_pcalloc(zconf->pool, vallen + 1);
+    memcpy(lpitem->key, key, keylen);
+    memcpy(lpitem->value, val, vallen);
+
+    return true;
+}
+
+bool ztl_config_read_str(ztl_config_t* zconf, const char* key, char** outval, int* outlen)
 {
     char* lpv;
     lpv = ztl_config_have(zconf, key);
     if (lpv) {
-        *outval = lpv;
+        if (outval)
+            *outval = lpv;
+        if (outlen)
+            *outlen = (int)strlen(lpv);
         return true;
     }
     return false;
 }
 
-bool ztl_config_read_short(ztl_config_t* zconf, const char* key, void* outi16)
+bool ztl_config_read_int16(ztl_config_t* zconf, const char* key, void* outi16)
 {
     char* lpv;
     lpv = ztl_config_have(zconf, key);
@@ -126,7 +172,7 @@ bool ztl_config_read_short(ztl_config_t* zconf, const char* key, void* outi16)
     return false;
 }
 
-bool ztl_config_read_int(ztl_config_t* zconf, const char* key, void* outi32)
+bool ztl_config_read_int32(ztl_config_t* zconf, const char* key, void* outi32)
 {
     char* lpv;
     lpv = ztl_config_have(zconf, key);
@@ -170,6 +216,23 @@ bool ztl_config_read_bool(ztl_config_t* zconf, const char* key, bool* outbool)
     return false;
 }
 
+
+bool ztl_boolvalue_loopup(const char* desc)
+{
+    if (!desc || !desc[0]) {
+        return false;
+    }
+
+    for (int i = 0; zbooltable[i].desc; ++i)
+    {
+        if (strcmp(zbooltable[i].desc, desc) == 0) {
+            return zbooltable[i].val;
+        }
+    }
+
+    return false;
+}
+
 char* ztl_config_have(ztl_config_t* zconf, const char* key)
 {
     ztl_pair_value_t* lpPair;
@@ -188,10 +251,9 @@ char* ztl_config_have(ztl_config_t* zconf, const char* key)
 static int ztl_read_file_content(ztl_config_t* zconf)
 {
     char        buffer[1000];
-    uint32_t    keylen, vallen;
     FILE*       fp;
     char        *lpkey, *lpval;
-    ztl_pair_value_t* lpitem;
+    uint32_t    length;
 
     fp = fopen(zconf->filename, "r");
     if (fp == NULL) {
@@ -211,6 +273,8 @@ static int ztl_read_file_content(ztl_config_t* zconf)
             continue;
         }
 
+        length = (uint32_t)strlen(buffer);
+
         lpval = strchr(buffer, zconf->delimiter);
         if (lpval == NULL) {
             continue;
@@ -220,41 +284,13 @@ static int ztl_read_file_content(ztl_config_t* zconf)
         // key
         lpkey = buffer;
         righttrim(lpkey);
-        keylen = strlen(lpkey);
 
         // value
         lefttrim(lpval);
         righttrim(lpval);
-        vallen = strlen(lpval);
 
-        if (zconf->count >= zconf->nalloc)
-        {
-            zconf->nalloc *= 2;
-            zconf->items = realloc(zconf->items, zconf->nalloc * sizeof(ztl_pair_value_t));
-        }
-        lpitem = &zconf->items[zconf->count++];
-
-        lpitem->key = (char*)ztl_pcalloc(zconf->pool, keylen + 1);
-        lpitem->value = (char*)ztl_pcalloc(zconf->pool, vallen + 1);
-        memcpy(lpitem->key, lpkey, keylen);
-        memcpy(lpitem->value, lpval, vallen);
+        ztl_config_set_item(zconf, lpkey, lpval, true);
     }
 
     return 0;
-}
-
-static bool ztl_boolvalue_loopup(const char* desc)
-{
-    if (!desc || !desc[0]) {
-        return false;
-    }
-
-    for (int i = 0; zbooltable[i].desc; ++i)
-    {
-        if (strcmp(zbooltable[i].desc, desc) == 0) {
-            return zbooltable[i].val;
-        }
-    }
-
-    return false;
 }
