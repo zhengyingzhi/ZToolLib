@@ -185,7 +185,7 @@ static uint32_t digits10(uint64_t v)
     return 12 + digits10(v / 1000000000000UL);
 }
 
-int ll2string(char* dst, size_t dstlen, int64_t svalue)
+int ll2string(char* dst, uint32_t dstlen, int64_t svalue)
 {
     static const char digits[201] =
         "0001020304050607080910111213141516171819"

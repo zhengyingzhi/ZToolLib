@@ -460,8 +460,13 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
 
     va_list args;
     va_start(args, fmt);
-    vsnprintf(lpBuff + lLength, ZTL_LOGBUF_SIZE - lLength, fmt, args);
+    lLength += vsnprintf(lpBuff + lLength, ZTL_LOGBUF_SIZE - lLength - 2, fmt, args);
     va_end(args);
+
+    // append line feed
+    lpBuff[lLength] = '\r';
+    lpBuff[lLength+1] = '\n';
+    lLength += 2;
 
     ztl_log_header_t* lpHead;
     lpHead          = (ztl_log_header_t*)lpBuff;
@@ -507,9 +512,15 @@ void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
     // format log message's header and content
     lLength += _MakeLogLineTime(lpBuff + lLength, level);
 
-    len = ztl_min((ZTL_LOGBUF_SIZE - lLength), len);
+    len = ztl_min((ZTL_LOGBUF_SIZE - lLength - 2), len);
     memcpy(lpBuff + lLength, line, len);
     lLength += len;
+
+    // append line feed
+    lpBuff[lLength] = '\r';
+    lpBuff[lLength + 1] = '\n';
+    lLength += 2;
+
     
     ztl_log_header_t* lpHead;
     lpHead          = (ztl_log_header_t*)lpBuff;

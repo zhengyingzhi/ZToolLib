@@ -55,7 +55,7 @@ void gettimeofday(struct timeval *tp, void* reserve);
 #endif//_WIN32
 
 /// convert a long long value to string, return length
-int ll2string(char* dst, size_t dstlen, int64_t value);
+int ll2string(char* dst, uint32_t dstlen, int64_t value);
 
 /// convert previous len data to an integer
 int64_t atoi_n(const char* pszData, int len);

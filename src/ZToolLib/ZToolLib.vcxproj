@@ -140,6 +140,8 @@
     <ClInclude Include="ztl_array.h" />
     <ClInclude Include="ztl_bitset.h" />
     <ClInclude Include="ztl_buffer.h" />
+    <ClInclude Include="ztl_common.h" />
+    <ClInclude Include="ztl_config.h" />
     <ClInclude Include="ztl_dyso.h" />
     <ClInclude Include="ztl_event_timer.h" />
     <ClInclude Include="ztl_hash.h" />
@@ -162,10 +164,12 @@
     <ClInclude Include="ztl_locks.h" />
     <ClInclude Include="ztl_rbtree.h" />
     <ClInclude Include="ztl_map.h" />
+    <ClInclude Include="ztl_win32_stacktrace.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ztl_array.c" />
     <ClCompile Include="ztl_buffer.c" />
+    <ClCompile Include="ztl_config.c" />
     <ClCompile Include="ztl_dyso.c" />
     <ClCompile Include="lockfreequeue.c" />
     <ClCompile Include="ztl_event_timer.c" />
@@ -187,6 +191,7 @@
     <ClCompile Include="ztl_locks.c" />
     <ClCompile Include="ztl_rbtree.c" />
     <ClCompile Include="ztl_map.c" />
+    <ClCompile Include="ztl_win32_stacktrace.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

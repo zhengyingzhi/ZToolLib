@@ -105,6 +105,15 @@
     <ClInclude Include="ztl_hash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_win32_stacktrace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -173,8 +182,14 @@
     <ClCompile Include="ztl_event_timer.c">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="ztl_config.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ztl_hash.c">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_win32_stacktrace.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

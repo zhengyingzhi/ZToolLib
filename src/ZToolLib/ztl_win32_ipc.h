@@ -210,7 +210,7 @@ void *create_file(const char *name, unsigned long access, unsigned long creation
 	for (unsigned int attempt = 0; attempt < error_sharing_violation_tries; ++attempt) {
 		void * const handle = CreateFileA(name, access,
 			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-			psec, creation_flags, attributes, 0);
+			(LPSECURITY_ATTRIBUTES)psec, creation_flags, attributes, 0);
 
 		bool const invalid = (INVALID_HANDLE_VALUE == handle);
 		if (!invalid) {
