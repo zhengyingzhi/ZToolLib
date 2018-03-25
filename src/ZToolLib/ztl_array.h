@@ -53,7 +53,7 @@ void* ztl_array_pop_back(ztl_array_t* arr);
 void* ztl_array_push(ztl_array_t* arr);
 void* ztl_array_push_n(ztl_array_t* arr, uint32_t n);
 
-#define ztl_array_at(arr, pos)  ((uint8_t*)arr->elts + arr->nelts * arr->eltsize)
+#define ztl_array_at(arr, pos)  ((uint8_t*)arr->elts + pos * arr->eltsize)
 #define ztl_array_size(arr)     ((arr)->nelts)
 #define ztl_array_isempty(arr)  ((arr)->nelts == 0)
 

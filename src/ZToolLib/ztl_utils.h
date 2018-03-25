@@ -70,7 +70,7 @@ void random_string(char* buf, int size, bool onlyhexchar);
 void lefttrim(char* buf);
 void righttrim(char* buf);
 
-/// parse string within k,K,m,M,g,G to numeric, 2K ->> 2048
+/// parse string within k,K,m,M to numeric, 2K ->> 2048
 int64_t parse_size(const char* str, int len);
 
 /// get cpu core number
@@ -115,7 +115,8 @@ void zswap(T& ax, T& ay)
     ay = lt;
 }
 #else
-#define zswap(x,y) do {\
+#define zswap(x,y)  \
+    do {\
         x = x ^ y;  \
         y = x ^ y;  \
         x = x ^ y;  \
