@@ -26,7 +26,7 @@ typedef bool (*ztl_compare_fn)(void*, void* );
 /// thrpool_create creates a fixed-sized thread
 /// pool.  If the function succeeds, it returns a (non-NULL)
 /// "threadpool", else it returns NULL.
-ztl_thrpool_t* ztl_thrpool_create(int min_threads_num, int max_threads_num, int max_queue_size);
+ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size);
 
 /// dispatch a new task to the thread pool with argument 'arg'
 /// return 0 success, -1 the task queue is full

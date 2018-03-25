@@ -32,7 +32,6 @@ typedef struct ztl_task_st ztl_task_t;
 
 struct ztl_thrpool_st {
     uint32_t        thrnum;             // default num threads
-    uint32_t        maxthrnum;          // max num threads
     uint32_t        activenum;          // active num threads
     uint32_t        maxsize;            // max task num in task-list
     int32_t         stop;               // running or stop flag
@@ -132,34 +131,28 @@ static ztl_thread_result_t ZTL_THREAD_CALL _thrpool_worker_thread(void* arg)
 
 static int _create_worker_thread(ztl_thrpool_t* tp)
 {
-    if (ztl_atomic_add(&tp->thrnum, 1) >= tp->maxthrnum)
+    if (tp->activenum >= tp->thrnum)
     {
-        ztl_atomic_dec(&tp->thrnum, 1);
         return -1;
     }
 
     ztl_thread_t thr;
     int rv = ztl_thread_create(&thr, NULL, _thrpool_worker_thread, tp);
-    if (rv != 0)
-    {
-        ztl_atomic_dec(&tp->thrnum, 1);
-    }
 
     return rv;
 }
 
-ztl_thrpool_t* ztl_thrpool_create(int min_threads_num, int max_threads_num, int max_queue_size)
+ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size)
 {
-    if (min_threads_num <= 0 || min_threads_num > max_threads_num || max_queue_size <= 0)
+    if (threads_num <= 0 || max_queue_size <= 0)
         return NULL;
-    if (max_threads_num > ZTL_MAX_THR_IN_POOL)
-        max_threads_num = ZTL_MAX_THR_IN_POOL;
+    if (threads_num > ZTL_MAX_THR_IN_POOL)
+        threads_num = ZTL_MAX_THR_IN_POOL;
 
     ztl_thrpool_t* tp;
     tp = (ztl_thrpool_t*)malloc(sizeof(ztl_thrpool_t));
-    tp->maxthrnum   = max_threads_num;
     tp->activenum   = 0;
-    tp->thrnum      = 0;
+    tp->thrnum      = threads_num;
     tp->maxsize     = max_queue_size;
     tp->stop        = 0;
     tp->taskn       = 0;
@@ -173,7 +166,7 @@ ztl_thrpool_t* ztl_thrpool_create(int min_threads_num, int max_threads_num, int 
     ztl_thread_mutex_init(&tp->lock, NULL);
 
     int n;
-    for (n = 0; n < min_threads_num; ++n)
+    for (n = 0; n < threads_num; ++n)
     {
         if (0 != _create_worker_thread(tp)) {
             break;
@@ -213,11 +206,7 @@ int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* para
     if (lOldTaskN == 0) {
         ztl_thread_cond_signal(&thpool->workcond);
     }
-    else if (lOldTaskN > (thpool->thrnum << 1) && !thpool->stop &&
-        ztl_atomic_add(&thpool->thrnum, 0) < thpool->maxthrnum)
-    {
-        _create_worker_thread(thpool);
-    }
+
     return 0;
 }
 
