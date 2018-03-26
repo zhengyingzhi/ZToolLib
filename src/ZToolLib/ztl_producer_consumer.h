@@ -1,6 +1,7 @@
 #ifndef _ZTL_PRODUCER_CONSUMER_H_
 #define _ZTL_PRODUCER_CONSUMER_H_
 
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -5,16 +5,16 @@
 
 void Test_ztl_array(ZuTest* zt)
 {
-	ztl_array_t* lArray;
-	lArray = ztl_array_create(NULL, 2, sizeof(uint32_t));
-	
+    ztl_array_t* lArray;
+    lArray = ztl_array_create(NULL, 2, sizeof(uint32_t));
+
     uint32_t    lValue;
     uint32_t*   lpValue;
 
     // push n value
     lValue = 1;
-	ztl_array_push_back(lArray, &lValue);
-	ZuAssertTrue(zt, 1 == ztl_array_size(lArray));
+    ztl_array_push_back(lArray, &lValue);
+    ZuAssertTrue(zt, 1 == ztl_array_size(lArray));
 
     lpValue = ztl_array_push(lArray);
     *lpValue = 2;
@@ -32,9 +32,10 @@ void Test_ztl_array(ZuTest* zt)
     ZuAssertTrue(zt, 3 == *lpValue);
 
     // pop one
-    ztl_array_pop_back(lArray);
+    lpValue = (uint32_t*)ztl_array_pop_back(lArray);
+    ZuAssertTrue(zt, 3 == *lpValue);
     ZuAssertTrue(zt, 2 == ztl_array_size(lArray));
-	
+
     // reserve
     ztl_array_reserve(lArray, 8);
     lpValue = (uint32_t*)ztl_array_at(lArray, 0);
@@ -48,5 +49,5 @@ void Test_ztl_array(ZuTest* zt)
     lpValue = (uint32_t*)ztl_array_at(lArray, 2);
     ZuAssertTrue(zt, 4 == *lpValue);
 
-	ztl_array_release(lArray);
+    ztl_array_release(lArray);
 }

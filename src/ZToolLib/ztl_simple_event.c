@@ -23,7 +23,7 @@ struct ztl_simevent_st
 };
 
 #ifdef _MSC_VER
-ztl_simevent_t* simevent_create()
+ztl_simevent_t* ztl_simevent_create()
 {
     ztl_simevent_t* sev;
     sev = (ztl_simevent_t*)malloc(sizeof(ztl_simevent_t));

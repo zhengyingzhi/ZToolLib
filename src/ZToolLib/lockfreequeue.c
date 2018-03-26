@@ -6,6 +6,7 @@
 
 #include "lockfreequeue.h"
 #include "ztl_atomic.h"
+#include "ztl_utils.h"
 
 #ifdef _MSC_VER
 #include <windows.h>
@@ -35,8 +36,8 @@ typedef struct queue_op_data_st queue_op_data_t;
 /// an array lock free queue struct
 struct lfqueue_st
 {
-    volatile uint32_t*	rdindex;			// where the next element where be extracted from
-    volatile uint32_t*	wtindex;			// where a new element will be inserted to
+    volatile uint32_t*  rdindex;            // where the next element where be extracted from
+    volatile uint32_t*  wtindex;            // where a new element will be inserted to
 
     // @brief maximum read index for multiple producer queues
     /// If it's not the same as m_writeIndex it means
@@ -48,15 +49,11 @@ struct lfqueue_st
     /// note this index is only used for MultipleProducerThread queues
     volatile uint32_t*	maxreadindex;
 
-#ifdef _WIN32
-    HANDLE   handle;
-#else
-    int      handle;
-#endif//_WIN32
-    void*    paddr;
+    void**   arrdata;           // array to keep the elements
 
+    int32_t  outside_mem;       // is out side memory
+    uint32_t eltsize;           // element size
     uint32_t size;              // the queue size
-    void**  arrdata;            // array to keep the elements
 };
 
 
@@ -64,101 +61,105 @@ struct lfqueue_st
 /// to a particular "count" value
 #define TO_INDEX(idx,size) ((idx) < (size) ? (idx) : ((idx)-(size)))
 
+#define _DataCopy(dst,src,eltsize)                                  \
+    do {                                                            \
+        switch (eltsize) {                                          \
+        case 1: *(uint8_t*) dst = *(uint8_t*)src;   break;          \
+        case 2: *(uint16_t*)dst = *(uint16_t*)src;  break;          \
+        case 4: *(uint32_t*)dst = *(uint32_t*)src;  break;          \
+        case 8: *(uint64_t*)dst = *(uint64_t*)src;  break;          \
+        case 16:                                                    \
+            *(uint64_t*)dst     = *(uint64_t*)src;                  \
+            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
+            break;                                                  \
+        default:                                                    \
+            memcpy(dst,src,eltsize);                                \
+        }                                                           \
+    } while (0);
 
-static void lfqueue_initmember(lfqueue_t* que, uint32_t size)
+static void lfqueue_initmember(lfqueue_t* que, uint32_t quesize, void* addr)
 {
-    queue_op_data_t* lpMember = (queue_op_data_t*)que->paddr;
+    queue_op_data_t* lpMember;
+
+    lpMember = (queue_op_data_t*)addr;
     que->rdindex = &lpMember->read_index;
     que->wtindex = &lpMember->write_index;
     que->maxreadindex = &lpMember->max_read_index;
 
-    if (lpMember->array_size == 0)
-    {
-        lpMember->array_size = size;
+    if (lpMember->array_size == 0) {
+        lpMember->array_size = quesize;
     }
-    if (lpMember->array_size != size)
-    {
-        printf("error size: memory %d but passed %d\n", lpMember->array_size, size);
+
+    if (lpMember->array_size != quesize) {
+        printf("error size: memory %d but passed %d\n", lpMember->array_size, quesize);
     }
-    que->size = size;
-    que->arrdata = (void**)((char*)que->paddr + sizeof(queue_op_data_t));
+
+    que->size = quesize;
+    que->arrdata = (void**)((char*)addr + sizeof(queue_op_data_t));
 }
 
-static bool lfqueue_memory(lfqueue_t* que, const char* quename, uint32_t size)
+
+int64_t lfqueue_memory_size(uint32_t queusize, uint32_t elemsize)
 {
-    void* lpBase;
-    uint32_t lMapSize = (size + 1) * sizeof(void*) + sizeof(queue_op_data_t);
+    int64_t size;
+    elemsize = ztl_align(elemsize, sizeof(void*));
 
-#ifdef _WIN32
-    bool lByCreate = false;
-    HANDLE lpMap;
-    lpMap = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, quename);
-    if (NULL == lpMap)
-    {
-        lByCreate = true;
-        lpMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, lMapSize, quename);
-    }
+    size = sizeof(queue_op_data_t) + (queusize + 1) * elemsize;
+    size = ztl_align(size, 64);
 
-    lpBase = MapViewOfFile(lpMap, FILE_MAP_ALL_ACCESS, 0, 0, lMapSize);
-    if (NULL == lpBase)
-    {
-        return false;
-    }
-    if (lByCreate)
-    {
-        memset(lpBase, 0, size);
-    }
-    que->handle = lpMap;
-#else
-
-    int lShmKey = IPC_PRIVATE;
-    if (quename != NULL && *quename)
-        lShmKey = atoi(quename);
-
-    int lHandle = shmget(lShmKey, lMapSize, IPC_CREAT | IPC_EXCL | SHM_R | SHM_W);
-    if (lHandle == -1 && errno == EEXIST)
-    {
-        lHandle = shmget(lShmKey, lMapSize, SHM_R | SHM_W);
-    }
-
-    if (-1 == lHandle)
-    {
-        perror("shmget");
-        return false;
-    }
-
-    lpBase = shmat(lHandle, 0, 0);
-    if (NULL == lpBase)
-    {
-        perror("shmat");
-        return false;
-    }
-    que->handle = lHandle;
-#endif//_WIN32
-
-    que->paddr = lpBase;
-
-    lfqueue_initmember(que, size);
-    return true;
+    return size;
 }
 
-/// create lock free queue by size
-lfqueue_t* lfqueue_create(unsigned int size, const char* quename/* = 0*/)
+lfqueue_t* lfqueue_create(uint32_t quesize, uint32_t elemsize)
 {
-    lfqueue_t* que;
+    lfqueue_t*  que;
+    char*       addr;
+    int64_t     memsize;
+
     que = (lfqueue_t*)malloc(sizeof(lfqueue_t));
-    if (que == NULL)
+    if (que == NULL) {
         return NULL;
+    }
+    memset(que, 0, sizeof(lfqueue_t));
 
-    if (!lfqueue_memory(que, quename, size))
-    {
+    memsize = lfqueue_memory_size(quesize, elemsize);
+    addr = (char*)calloc(1, (size_t)memsize);
+    if (addr == NULL) {
         free(que);
         return NULL;
     }
+
+    que->outside_mem = 0;
+    que->eltsize = elemsize;
+
+    lfqueue_initmember(que, quesize, addr);
+
     return que;
 }
 
-/// push an item to the tail of the queue, return 0 if success
+lfqueue_t* lfqueue_create2(uint32_t quesize, uint32_t elemsize, void* memory, int64_t memsize)
+{
+    lfqueue_t*  que;
+
+    if (memsize < lfqueue_memory_size(quesize, elemsize)) {
+        return NULL;
+    }
+
+    que = (lfqueue_t*)malloc(sizeof(lfqueue_t));
+    if (que == NULL) {
+        return NULL;
+    }
+    memset(que, 0, sizeof(lfqueue_t));
+
+    que->outside_mem = 1;
+    que->eltsize = elemsize;
+
+    lfqueue_initmember(que, quesize, memory);
+
+    return que;
+}
+
+
 int lfqueue_push(lfqueue_t* que, void* pdata)
 {
     if (que == NULL)
@@ -179,7 +180,8 @@ int lfqueue_push(lfqueue_t* que, void* pdata)
     } while (!ztl_atomic_cas(que->wtindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size)));
 
     // save the data since the current write index is reserved for us
-    que->arrdata[curWriteIndex] = pdata;
+    //que->arrdata[curWriteIndex] = pdata;
+    _DataCopy(&que->arrdata[curWriteIndex], pdata, que->eltsize);
 
     // update the maximum read index after saving the data.
     // It wouldn't fail if there is only one producer thread intserting data into the queue.
@@ -193,14 +195,15 @@ int lfqueue_push(lfqueue_t* que, void* pdata)
 }
 
 /// pop an item at the head of the queue, return 0 if success
-int lfqueue_pop(lfqueue_t* que, void** ppdata)
+int lfqueue_pop(lfqueue_t* que, void* pdata)
 {
     if (que == NULL)
         return -1;
 
     uint32_t curMaxReadIndex;
     uint32_t curReadIndex;
-    void* olddata = *ppdata;
+    void* olddata = NULL;// *ppdata;
+    char* srcdata = NULL;
 
     // find the valid index to be read
     do
@@ -217,14 +220,15 @@ int lfqueue_pop(lfqueue_t* que, void** ppdata)
             return -1;
 
         // retrieve the data from the queue
-        *ppdata = que->arrdata[curReadIndex];
+        //*ppdata = que->arrdata[curReadIndex];
+        _DataCopy(pdata, &que->arrdata[curReadIndex], que->eltsize);
 
         // we automic increase the readIndex_ using CAS operation
         if (ztl_atomic_cas(que->rdindex, curReadIndex, TO_INDEX(curReadIndex + 1, que->size)))
             return 0;
 
         // rollback the data
-        *ppdata = olddata;
+        //*ppdata = olddata;
 
         // here, if failed retrieving the element off the queue
         // someone else is reading the element at curReadIndex before we perform CAS operation
@@ -262,15 +266,13 @@ bool lfqueue_empty(lfqueue_t* que)
 
 int lfqueue_release(lfqueue_t* que)
 {
+    char* lpDataBegin;
     if (que)
     {
-#ifdef _WIN32
-        CloseHandle(que->handle);
-        UnmapViewOfFile(que->paddr);
-#else
-        shmdt(que->paddr);
-        shmctl(que->handle, IPC_RMID, NULL);
-#endif//_WIN32
+        if (que->arrdata && !que->outside_mem) {
+            lpDataBegin = (char*)que->arrdata - sizeof(queue_op_data_t);
+            free(lpDataBegin);
+        }
 
         free(que);
     }

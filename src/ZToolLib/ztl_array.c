@@ -147,6 +147,7 @@ bool ztl_array_reserve(ztl_array_t* arr, uint32_t reserve_num)
                 return false;
             }
 
+            arr->elts = enew;
             arr->nalloc = reserve_num;
         }
     }
@@ -204,8 +205,8 @@ void* ztl_array_pop_back(ztl_array_t* arr)
 {
     void* elem = NULL;
     if (arr->nelts > 0) {
-        elem = (uint8_t*)arr->elts + arr->nelts * arr->eltsize;
         arr->nelts--;
+        elem = (uint8_t*)arr->elts + arr->nelts * arr->eltsize;
     }
 
     return elem;

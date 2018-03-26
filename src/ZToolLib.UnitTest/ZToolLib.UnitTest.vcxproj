@@ -154,7 +154,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="test_lfqueue.c" />
     <ClCompile Include="test_ztl_array.c" />
+    <ClCompile Include="test_ztl_pc.c" />
     <ClCompile Include="test_ztl_utils.c" />
     <ClCompile Include="ZToolUnitTests.c" />
   </ItemGroup>

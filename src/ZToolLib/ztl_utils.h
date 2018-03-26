@@ -22,7 +22,7 @@ extern "C" {
 #endif//__cplusplus
 
 #ifndef _MSC_VER
-void DebugBreak() {}
+static void DebugBreak() {}
 #endif//_MSC_VER
 
 #if defined(_DEBUG) || defined(DEBUG)

@@ -47,15 +47,15 @@ typedef struct
 #define ZTL_LOG_HEAD_OFFSET sizeof(ztl_log_header_t)
 
 struct ztl_log_st {
-    FILE*       logfp;                  // log file pointer
-    int         log_level;              // log level
-    int         outputType;             // log output type
-    int         bAsyncLog;              // is use async log
-    int         running;                // is running for async log thread
-    int         bExited;                // the log thread whether exit or not
-    OutputFunc  pfLogFunc;
+    FILE*               logfp;          // log file pointer
+    int                 log_level;      // log level
+    int                 outputType;     // log output type
+    int                 bAsyncLog;      // is use async log
+    int                 running;        // is running for async log thread
+    int                 bExited;        // the log thread whether exit or not
+    OutputFunc          pfLogFunc;
 
-    ztl_thread_t    thr;                // the thread handle
+    ztl_thread_t        thr;            // the thread handle
 
     char                filename[256];  // the filename
     uint32_t            itemCount;      // the pending count of log message
@@ -311,7 +311,7 @@ ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool b
 #endif//_WIN32
         ztl_thread_cond_init(&log->cond, NULL);
 
-        log->queue  = lfqueue_create(ZTL_LOG_QUEUE_SIZE, NULL);
+        log->queue  = lfqueue_create(ZTL_LOG_QUEUE_SIZE, sizeof(void*));
         log->pool   = ztl_mp_create(ZTL_LOGBUF_SIZE, 256, 1);
 
         // create log thread
@@ -488,7 +488,7 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
     lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
 
     if (log->bAsyncLog) {
-        lfqueue_push(log->queue, lpBuff);
+        lfqueue_push(log->queue, &lpBuff);
         if (ztl_atomic_add(&log->itemCount, 1) == 0) {
             ztl_thread_cond_signal(&log->cond);
         }
