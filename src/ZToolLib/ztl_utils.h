@@ -15,11 +15,11 @@
 #define ztl_max(a,b)            (a) > (b) ? (a) : (b)
 
 #ifdef __cplusplus
-#define ZInline inline
+#define ztl_inline inline
 extern "C" {
 #else
-#define ZInline 
-#endif
+#define ztl_inline 
+#endif//__cplusplus
 
 #ifndef _MSC_VER
 void DebugBreak() {}

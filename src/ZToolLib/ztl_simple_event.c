@@ -14,7 +14,7 @@ struct ztl_simevent_st
 #ifdef __GNUC__
     pthread_cond_t cond;
     pthread_mutex_t mutex;
-    bool bsignaled;
+    int bsignaled;
 #endif // __GNUC__
 
 #ifdef _MSC_VER
@@ -52,10 +52,10 @@ void ztl_simevent_wait(ztl_simevent_t* sev)
 #ifdef __GNUC__
 ztl_simevent_t* ztl_simevent_create()
 {
-    simevent_t* sev;
-    sev = (simevent_t*)malloc(sizeof(simevent_t));
+    ztl_simevent_t* sev;
+    sev = (ztl_simevent_t*)malloc(sizeof(ztl_simevent_t));
 
-    sev->bsignaled = false;
+    sev->bsignaled = 0;
     pthread_cond_init(&sev->cond, NULL);
     pthread_mutex_init(&sev->mutex, NULL);
     return sev;
@@ -70,7 +70,7 @@ void ztl_simevent_release(ztl_simevent_t* sev)
 void ztl_simevent_signal(ztl_simevent_t* sev)
 {
     pthread_mutex_lock(&sev->mutex);
-    sev->bsignaled = true;
+    sev->bsignaled = 1;
     pthread_cond_signal(&sev->cond);
     pthread_mutex_unlock(&sev->mutex);
 }
@@ -78,7 +78,7 @@ void ztl_simevent_signal(ztl_simevent_t* sev)
 void ztl_simevent_wait(ztl_simevent_t* sev)
 {
     pthread_mutex_lock(&sev->mutex);
-    sev->bsignaled = false;
+    sev->bsignaled = 0;
     while (!sev->bsignaled) {
         pthread_cond_wait(&sev->cond, &sev->mutex);
     }

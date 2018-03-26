@@ -67,7 +67,6 @@ HEADERS += lockfreequeue.h \
 
 SOURCES += lockfreequeue.c \
     ztl_array.c \
-    ztl_atomic.c \
     ztl_base64.c \
     ztl_buffer.c \
     ztl_config.c \

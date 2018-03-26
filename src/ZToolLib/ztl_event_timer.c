@@ -1,4 +1,4 @@
-#include <math.h>
+#include <stdlib.h>
 #include "ztl_event_timer.h"
 
 
@@ -48,9 +48,9 @@ int ztl_event_timer_del(ztl_event_timer_t* et, ztl_rbtree_node_t* timer)
     ztl_rbtree_delete(&et->event_timers, timer);
 
 #if defined(ZTL_DEBUG)
-    timer->left = NULL;
-    timer->right = NULL;
-    timer->parent = NULL;
+    timer->left = 0;
+    timer->right = 0;
+    timer->parent = 0;
 #endif
 
     return 0;

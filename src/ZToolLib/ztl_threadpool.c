@@ -210,7 +210,7 @@ int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* para
     return 0;
 }
 
-int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func, ztl_compare_fn cmp_func, void* param)
+int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_compare_fn cmp_func, void* param)
 {
     if (NULL == thpool) {
         return -1;

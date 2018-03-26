@@ -46,6 +46,9 @@ echo \
 
 int main(int argc, char* argv[])
 {
+    ZTL_NOTUSED(argc);
+    ZTL_NOTUSED(argv);
+	
     net_init();
 	
     RunAllTests();

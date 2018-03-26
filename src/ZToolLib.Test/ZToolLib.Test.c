@@ -12,6 +12,9 @@ void test_ztl_log();
 
 int main(int argc, char* argv[])
 {
+    ZTL_NOTUSED(argc);
+    ZTL_NOTUSED(argv);
+
     test_ztl_config();
     //test_ztl_log();
 

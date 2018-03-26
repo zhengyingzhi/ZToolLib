@@ -84,9 +84,9 @@ bool ztl_buffer_reserve(ztl_buffer_t* zbuf, uint32_t capacity)
             capacity |= capacity >> 4;
             capacity |= capacity >> 8;
             capacity |= capacity >> 16;
-#if (__x86_64__ || _WIN64)
-            capacity |= capacity >> 32;
-#endif
+//#if (__x86_64__ || _WIN64)
+//            capacity |= capacity >> 32;
+//#endif
             capacity++;
         }
 

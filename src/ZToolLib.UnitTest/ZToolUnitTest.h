@@ -2,6 +2,7 @@
 #define _ZTOOL_UNITTEST_H_
 
 #include <ZToolLib/ztl_array.h>
+#include <ZToolLib/ztl_common.h>
 #include <ZToolLib/ztl_network.h>
 #include <ZToolLib/ztl_utils.h>
 

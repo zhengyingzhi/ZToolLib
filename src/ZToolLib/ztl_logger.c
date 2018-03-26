@@ -87,8 +87,10 @@ static void _Output2DbgView(FILE* logfp, char* buf, int len)
 {
     (void)logfp;
     (void)len;
-#ifdef WIN32
+#ifdef _MSC_VER
     OutputDebugStringA(buf);
+#else
+    (void)buf;
 #endif//WIN32
 }
 static void _Output2Scrn(FILE* logfp, char* buf, int len)
@@ -100,6 +102,8 @@ static void _Output2Syslog(FILE* logfp, char* buf, int len)
 {
     (void)logfp;
 #ifdef __linux__
+    (void)buf;
+    (void)len;
     //syslog(KERN_INFO, buf, len);
     //klogctl(KERN_INFO, buf, len);
 #endif
@@ -151,7 +155,7 @@ static int _MakeLogLineTime(char* buf, int level)
 {
     int lLength = 0;
     lLength += current_time(buf + lLength, 16, true);
-    lLength += sprintf(buf + lLength, " [%u] [%s] ", ztl_thread_self(), levels[level]);
+    lLength += sprintf(buf + lLength, " [%u] [%s] ", (uint32_t)ztl_thread_self(), levels[level]);
     return lLength;
 }
 
@@ -251,6 +255,10 @@ static int _ztl_log_createfile(ztl_log_t* log)
         }
 
         log->logfp = fopen(lRealFileName, "a+");
+        if (!log->logfp) {
+            return -1;
+        }
+        log->pfLogFunc = _Output2Scrn;
     }
     else if (log->outputType == ZTL_PrintScrn)
     {
@@ -286,7 +294,10 @@ ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool b
     log->outputType = outType;
     log->bAsyncLog = bAsyncLog;
 
-    _ztl_log_createfile(log);
+    if (_ztl_log_createfile(log) != 0) {
+        free(log);
+        return NULL;
+    }
 
     if (log->bAsyncLog)
     {
@@ -335,7 +346,10 @@ ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t outType,
     log->outputType = outType;
     log->bAsyncLog = false;
 
-    _ztl_log_createfile(log);
+    if (_ztl_log_createfile(log) != 0) {
+        free(log);
+        return NULL;
+    }
 
     // init udp component
     memset(&log->udpaddr, 0, sizeof(log->udpaddr));
@@ -439,7 +453,7 @@ extern ztl_log_level_t ztl_log_get_level(ztl_log_t* log)
 
 void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
 {
-    if (!log || log->log_level > level || 0 == log->running)
+    if (!log || log->log_level > (int)level || 0 == log->running)
         return;
 
     char    lBuffer[ZTL_LOGBUF_SIZE] = "";
@@ -493,7 +507,7 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
 
 void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
 {
-    if (!log || log->log_level > level || 0 == log->running)
+    if (!log || log->log_level > (int)level || 0 == log->running)
         return;
 
     char    lBuffer[ZTL_LOGBUF_SIZE] = "";

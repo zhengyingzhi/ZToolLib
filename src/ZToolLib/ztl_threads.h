@@ -45,9 +45,7 @@ typedef pthread_attr_t                  ztl_thread_attr_t;
 #define ZTL_THREAD_CALL
 typedef ztl_thread_result_t (ZTL_THREAD_CALL* ztl_thread_func_t)(void* args);
 
-#ifndef sleepms
-#define sleepms(x)  usleep(x*1000)
-#endif
+#define sleepms(x)  usleep((x)*1000)
 
 #else ///////////////////////////////////////////////////////////////////////
 
@@ -110,11 +108,8 @@ int ztl_thread_join(ztl_thread_t thr, void **retval);
 unsigned int ztl_thread_self();
 
 
-
 /// sleep x milli-seconds
-#ifndef sleepms
 #define sleepms(x) Sleep(x)
-#endif
 
 #ifdef __cplusplus
 }

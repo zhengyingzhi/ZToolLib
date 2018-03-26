@@ -9,51 +9,51 @@
 /// millisec to timeval
 static void to_timeval(struct timeval* ptv, int timeMS)
 {
-	ptv->tv_sec = timeMS / 1000;
-	ptv->tv_usec= (timeMS % 1000) * 1000;
+    ptv->tv_sec = timeMS / 1000;
+    ptv->tv_usec = (timeMS % 1000) * 1000;
 }
 
 
 #ifdef _MSC_VER
 void net_init()
 {
-	WORD wVer = MAKEWORD(2, 2);
-	struct WSAData wsa;
-	WSAStartup(wVer, &wsa);
+    WORD wVer = MAKEWORD(2, 2);
+    struct WSAData wsa;
+    WSAStartup(wVer, &wsa);
 }
 void net_cleanup()
 {
-	WSACleanup();
+    WSACleanup();
 }
 
 int  get_errno() {
-	return WSAGetLastError();
+    return WSAGetLastError();
 }
 bool is_wouldblock(int nErrno) {
-	return (nErrno == WSAEWOULDBLOCK || nErrno == WSAEINPROGRESS);
+    return (nErrno == WSAEWOULDBLOCK || nErrno == WSAEINPROGRESS);
 }
 bool is_einterrupt(int nErrno) {
-	return (nErrno == WSAEINTR);
+    return (nErrno == WSAEINTR);
 }
 
 #else /* linux platform */
 
 void ignore_sigpipe()
 {
-	signal(SIGPIPE, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
 }
 
 void net_init(){}
 void net_cleanup(){}
 
 int  get_errno() {
-	return errno;
+    return errno;
 }
 bool is_wouldblock(int nErrno) {
-	return (nErrno == EINPROGRESS || nErrno == EAGAIN || nErrno == EWOULDBLOCK);
+    return (nErrno == EINPROGRESS || nErrno == EAGAIN || nErrno == EWOULDBLOCK);
 }
 bool is_einterrupt(int nErrno) {
-	return (nErrno == EINTR);
+    return (nErrno == EINTR);
 }
 #endif//_MSC_VER
 
@@ -131,18 +131,18 @@ int set_tcp_keepalive(sockhandle_t sockfd, bool on)
 int set_closeonexec(sockhandle_t sockfd)
 {
 #ifdef _MSC_VER
-	(void) SetHandleInformation((HANDLE)sockfd, HANDLE_FLAG_INHERIT, 0);
+    (void) SetHandleInformation((HANDLE)sockfd, HANDLE_FLAG_INHERIT, 0);
 #else
-	fcntl(sockfd, F_SETFD, FD_CLOEXEC);
+    fcntl(sockfd, F_SETFD, FD_CLOEXEC);
 #endif//_MSC_VER
-	return 0;
+    return 0;
 }
 
 /// set broadcast property
 int set_broadcast(sockhandle_t sockfd, bool on)
 {
-	int flag = on ? 1 : 0;
-	return setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char*)&flag, sizeof(flag));
+    int flag = on ? 1 : 0;
+    return setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char*)&flag, sizeof(flag));
 }
 
 /// multicast operations
@@ -150,33 +150,36 @@ int join_multicast(sockhandle_t sockfd, const char* multiip, const char* bindip)
 {
     struct ip_mreq mreqInfo;
     memset(&mreqInfo, 0, sizeof(mreqInfo));
-    mreqInfo.imr_multiaddr.s_addr = inet_addr(multiip);
+    inet_pton(AF_INET, multiip, &mreqInfo.imr_multiaddr);
+
     if (bindip == NULL || *bindip == '\0')
         mreqInfo.imr_interface.s_addr = htonl(INADDR_ANY);
     else
-        mreqInfo.imr_interface.s_addr = inet_addr(bindip);
+        inet_pton(AF_INET, bindip, &mreqInfo.imr_interface);
     return setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&mreqInfo, sizeof(mreqInfo));
 }
 int leave_multicast(sockhandle_t sockfd, const char* multiip, const char* bindip)
 {
     struct ip_mreq mreqInfo;
     memset(&mreqInfo, 0, sizeof(mreqInfo));
-    mreqInfo.imr_multiaddr.s_addr = inet_addr(multiip);
+    inet_pton(AF_INET, multiip, &mreqInfo.imr_multiaddr);
+
     if (bindip == NULL || *bindip == '\0')
         mreqInfo.imr_interface.s_addr = htonl(INADDR_ANY);
     else
-        mreqInfo.imr_interface.s_addr = inet_addr(bindip);
+        inet_pton(AF_INET, bindip, &mreqInfo.imr_interface);
     return setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (const char*)&mreqInfo, sizeof(mreqInfo));
 }
 
 int set_multicase_interface(sockhandle_t sockfd, const char* bindip)
 {
 #ifdef _MSC_VER
-    DWORD lAddr = (DWORD)inet_addr(bindip);
+    DWORD lAddr;
+    inet_pton(AF_INET, bindip, &lAddr);
     return setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_IF, (char*)&lAddr, sizeof(lAddr));
 #else
-    in_addr lAddr;
-    lAddr.s_addr = inet_addr(bindip);
+    struct in_addr lAddr;
+    inet_pton(AF_INET, bindip, &lAddr);
     return setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_IF, (char*)&lAddr, sizeof(lAddr));
 #endif//_MSC_VER
 }
@@ -246,9 +249,6 @@ int get_peeraddr(sockhandle_t sockfd, struct sockaddr_in* peeraddr)
 /// make sockaddr_in by ip and port
 int make_sockaddr(struct sockaddr_in* psa, const char* ip, uint16_t port)
 {
-    if (port < 0)
-        return -1;
-
     psa->sin_family = AF_INET;
     psa->sin_port = htons(port);
     psa->sin_addr.s_addr = string_to_inetaddr(ip);
@@ -576,6 +576,7 @@ int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb)
 /// make a tcp echo server
 static int echo_func(sockhandle_t ns, int isoutev)
 {
+    (void)isoutev;
     int rv;
     char buf[4096] = "";
 

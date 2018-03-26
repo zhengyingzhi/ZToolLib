@@ -17,17 +17,17 @@ extern "C" {
 typedef struct ztl_shm_st ztl_shm_t;
 
 typedef enum {
-	ztl_open_only       = 0x01,
-	ztl_create_only     = 0x02,
-	ztl_open_or_create  = 0x03
-}ztl_enum__create_t;
+    ztl_open_only       = 0x01,
+    ztl_create_only     = 0x02,
+    ztl_open_or_create  = 0x03
+}ztl_enum_create_t;
  
 typedef enum {
-	ztl_read_only       = 0x01,
-	ztl_read_write      = 0x02,
-	ztl_copy_on_write	= 0x03,
-	ztl_read_private	= 0x04
-}ztl_enum__mode_t;
+    ztl_read_only       = 0x01,
+    ztl_read_write      = 0x02,
+    ztl_copy_on_write	= 0x03,
+    ztl_read_private	= 0x04
+}ztl_enum_mode_t;
 
 
 /// Tries to open a shared memory object with name "name", with the access mode "mode",

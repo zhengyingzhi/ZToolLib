@@ -55,8 +55,6 @@ struct ztl_config_s
 
 /* do read & parse file content */
 static int ztl_read_file_content(ztl_config_t* zconf);
-/* parse bool desc to value */
-static bool ztl_boolvalue_loopup(const char* desc);
 
 
 ztl_config_t* ztl_config_open(const char* filename, char comment, char delimiter)
@@ -253,7 +251,6 @@ static int ztl_read_file_content(ztl_config_t* zconf)
     char        buffer[1000];
     FILE*       fp;
     char        *lpkey, *lpval;
-    uint32_t    length;
 
     fp = fopen(zconf->filename, "r");
     if (fp == NULL) {
@@ -272,8 +269,6 @@ static int ztl_read_file_content(ztl_config_t* zconf)
         if (buffer[0] == zconf->comment) {
             continue;
         }
-
-        length = (uint32_t)strlen(buffer);
 
         lpval = strchr(buffer, zconf->delimiter);
         if (lpval == NULL) {

@@ -23,6 +23,8 @@
 #include <sched.h>
 #define ztl_cpu_pause()     __asm__ ("pause")
 //#define ztl_cpu_pause() __asm__ volatile("rep; nop" ::: "memory")
+
+#define ztl_sched_yield     sched_yield
 #endif//_MSC_VER
 
 

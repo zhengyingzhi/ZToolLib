@@ -47,7 +47,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _zpc_work_thread(void* arg)
     while (true)
     {
         pcdata = NULL;
-        if (!lfqueue_pop(zpc->queue, &pcdata)) {
+        if (!lfqueue_pop(zpc->queue, (void**)&pcdata)) {
             ztl_simevent_wait(zpc->event);
             continue;
         }

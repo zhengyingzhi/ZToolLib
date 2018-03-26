@@ -352,7 +352,7 @@ void random_string(char* buf, int size, bool onlyhexchar)
 #else
     int   lpid = getpid();
 #endif//_MSC_VER
-    int   llen = size;
+    uint32_t llen = size;
     char* pbuf = buf;
 
     // Use time and PID to fill the initial array

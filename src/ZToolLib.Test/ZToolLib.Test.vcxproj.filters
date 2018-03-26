@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ZToolLib.Test.cpp">
+    <ClCompile Include="ZToolLib.Test.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
