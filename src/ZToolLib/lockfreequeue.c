@@ -10,9 +10,12 @@
 #ifdef _MSC_VER
 #include <windows.h>
 #else
+
+#define __USE_SVID
+#include <sys/shm.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/shm.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sched.h>

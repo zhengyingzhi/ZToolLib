@@ -26,12 +26,12 @@ int ztl_event_timer_add(ztl_event_timer_t* et, ztl_rbtree_node_t* timer,
 
         /*
         * Use a previous timer value if difference between it and a new
-        * value is less than EG_TIMER_LAZY_DELAY milliseconds: this allows
+        * value is less than ZTL_TIMER_LAZY_DELAY milliseconds: this allows
         * to minimize the rbtree operations for fast connections.
         */
 
         diff = (ztl_msec_int_t)(key - timer->key);
-        if ((ztl_msec_t)abs(diff) < ZTL_TIMER_INFINITE) {
+        if ((ztl_msec_t)abs((int)diff) < ZTL_TIMER_LAZY_DELAY) {
             return 1;
         }
 

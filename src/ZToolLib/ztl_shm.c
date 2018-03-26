@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+
+#define __USE_SVID
 #include <sys/shm.h>
 
 #define INVALID_HANDLE_VALUE (-1)

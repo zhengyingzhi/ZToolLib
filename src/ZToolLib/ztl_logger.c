@@ -249,16 +249,15 @@ static int _ztl_log_createfile(ztl_log_t* log)
             strncpy(lRealFileName, log->filename, psep - log->filename);
             sprintf(lRealFileName + strlen(lRealFileName), "_%s%s", lDate, psep);
         }
-        else
-        {
-            sprintf(lRealFileName, "%s_%s.log", lDate, psep);
+        else {
+            sprintf(lRealFileName, "%s_%s.log", log->filename, lDate);
         }
 
         log->logfp = fopen(lRealFileName, "a+");
         if (!log->logfp) {
             return -1;
         }
-        log->pfLogFunc = _Output2Scrn;
+        log->pfLogFunc = _Output2File;
     }
     else if (log->outputType == ZTL_PrintScrn)
     {

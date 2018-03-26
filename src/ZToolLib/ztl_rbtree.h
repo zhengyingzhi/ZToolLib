@@ -68,7 +68,7 @@ void ztl_rbtree_insert_timer_value(ztl_rbtree_node_t *root, ztl_rbtree_node_t *n
 
 static ztl_rbtree_node_t* ztl_rbtree_min(
     ztl_rbtree_node_t *node, 
-	ztl_rbtree_node_t *sentinel)
+    ztl_rbtree_node_t *sentinel)
 {
     while (node->left != sentinel) {
         node = node->left;

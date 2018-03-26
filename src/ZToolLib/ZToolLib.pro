@@ -24,7 +24,6 @@ TEMPLATE = lib
 
 
 
-
 build_pass:CONFIG(debug, debug|release) {
         DEFINES += DEBUG _DEBUG ZTL_DEBUG
         DESTDIR = ../../build/debug
@@ -33,7 +32,7 @@ build_pass:CONFIG(debug, debug|release) {
         DESTDIR = ../../build/release
 }
 
-QMAKE_CFLAGS += -std=c99
+QMAKE_CFLAGS += -E -std=c99
 
 
 # Input
