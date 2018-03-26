@@ -1,5 +1,10 @@
-#ifndef _NETWORK_H_
-#define _NETWORK_H_
+/*
+ * Copyright (C) Yingzhi Zheng.
+ * Copyright (C) <zhengyingzhi112@163.com>
+ */
+
+#ifndef _ZTL_NETWORK_H_
+#define _ZTL_NETWORK_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -179,4 +184,4 @@ int make_sockpair(sockhandle_t sockfds[], int type);
 }
 #endif
 
-#endif//_NETWORK_H_
+#endif//_ZTL_NETWORK_H_

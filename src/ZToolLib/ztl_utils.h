@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) Yingzhi Zheng.
+ * Copyright (C) <zhengyingzhi112@163.com>
+ */
+
 #ifndef _ZTL_UTILS_H_
 #define _ZTL_UTILS_H_
 
@@ -26,7 +31,9 @@ static void DebugBreak() {}
 #endif//_MSC_VER
 
 #if defined(_DEBUG) || defined(DEBUG)
-#define ztl_assert(condition)  do { if(!(condition)){ fprintf(stderr, "ZTL Assertion failed: %s @ %s::%s (%d)\n", #condition , __FILE__, __FUNCTION__, __LINE__); DebugBreak();} } while(0)
+#define ztl_assert(condition)  do { if(!(condition)){ \
+    fprintf(stderr, "ZTL Assertion failed: %s @ %s::%s (%d)\n", \
+    #condition , __FILE__, __FUNCTION__, __LINE__); DebugBreak();} } while(0)
 #else
 #define ztl_assert(condition) 
 #endif//DEBUG
@@ -99,6 +106,29 @@ union zudi {
     union zudi lud; \
     lud.i = src;    \
     dst = lud.f;    \
+    } while (0);
+
+
+/* a fixed size fast memory copy, carefully use!
+ */
+#define ztlncpy(dst,src,size)                                       \
+    do {                                                            \
+        switch (size) {                                             \
+        case 1: *(uint8_t*) dst = *(uint8_t*)src;   break;          \
+        case 2: *(uint16_t*)dst = *(uint16_t*)src;  break;          \
+        case 4: *(uint32_t*)dst = *(uint32_t*)src;  break;          \
+        case 8: *(uint64_t*)dst = *(uint64_t*)src;  break;          \
+        case 12:                                                    \
+            *(uint64_t*)dst     = *(uint64_t*)src;                  \
+            *(uint32_t*)((char*)dst+8) = *(uint32_t*)((char*)src+8);\
+            break;                                                  \
+        case 16:                                                    \
+            *(uint64_t*)dst     = *(uint64_t*)src;                  \
+            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
+            break;                                                  \
+        default:                                                    \
+            memcpy(dst,src,size);                                   \
+        }                                                           \
     } while (0);
 
 

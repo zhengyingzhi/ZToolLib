@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) Yingzhi Zheng.
+ * Copyright (C) <zhengyingzhi112@163.com>
+ */
+
 #ifndef _ZTL_THREAD_POOL_H_
 #define _ZTL_THREAD_POOL_H_
 
@@ -23,39 +28,46 @@ typedef void (*ztl_free_fn)(ztl_thrpool_t* , void* );
 typedef bool (*ztl_compare_fn)(void*, void* );
 
 
-/// thrpool_create creates a fixed-sized thread
-/// pool.  If the function succeeds, it returns a (non-NULL)
-/// "threadpool", else it returns NULL.
+/* thrpool_create creates a fixed-sized number threads & queue size
+ * if the function succeeds, it returns a (non-NULL)
+ * "threadpool", else it return NULL.
+ */
 ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size);
 
-/// dispatch a new task to the thread pool with argument 'arg'
-/// return 0 success, -1 the task queue is full
+/* @brief   dispatch a new task to the thread pool with argument 'param'
+ * @param   afree: to free the param after task finished
+ * @return  0 success, -1 the task queue is full
+ */
 int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* param, ztl_free_fn afree);
 
-/// remove the queued job from thread pool by passed func and argument "arg"
+/* @brief   remove the queued task from thread pool by passed compare func and argument "param"
+ */
 int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_compare_fn cmp_func, void* param);
 
-/// set or get user data related this thrpool
+/* @brief   set or get user data related this thrpool
+ */
 void  ztl_thrpool_set_data(ztl_thrpool_t* thpool, void* userdata);
 void* ztl_thrpool_get_data(ztl_thrpool_t* thpool);
 
-/// get current tasks count in queue
-int ztl_thrpool_tasknum(ztl_thrpool_t* thpool);
-
-/// return working threads number
-int ztl_thrpool_thrnum(ztl_thrpool_t* thpool);
-
-/// return the pending tasks in the queue to process
+/* @brief   get current pending tasks count in queue
+ */
 int ztl_thrpool_pending(ztl_thrpool_t* thpool);
 
-/// wait all threads exit
+/* @return  working threads number
+ */
+int ztl_thrpool_thrnum(ztl_thrpool_t* thpool);
+
+/* @brief   wait all threads exit
+ */
 int ztl_thrpool_join(ztl_thrpool_t* thpool);
 
-/// thread pool stop
+/* @brief   thrpool stop all working threads
+ */
 int ztl_thrpool_stop(ztl_thrpool_t* thpool);
 
-/// destroy the threadpool, causing all threads in it to commit suicide,
-/// and then frees all the memory associated with the thread pool
+/* @brief   destroy the threadpool, causing all threads in it to commit suicide,
+ * and then frees all the memory associated with the thread pool
+ */
 int ztl_thrpool_release(ztl_thrpool_t* thpool);
 
 #ifdef __cplusplus

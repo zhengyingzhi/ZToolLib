@@ -1,5 +1,10 @@
-#ifndef _ZLOGGER_H_
-#define _ZLOGGER_H_
+/*
+ * Copyright (C) Yingzhi Zheng.
+ * Copyright (C) <zhengyingzhi112@163.com>
+ */
+
+#ifndef _ZTL_LOGGER_H_
+#define _ZTL_LOGGER_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -31,25 +36,36 @@ typedef struct ztl_log_st ztl_log_t;
 extern "C" {
 #endif
 
-/// create a logger by the filename, and specify how to output log msgs
+/* create a logger by the filename, and specify how to output log msgs
+ */
 extern ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool bAsyncLog);
 
-/// create a udp log parameter
+/* create a udp logger
+ * if 'issender' is true, log will send to peer machine
+ * if 'issender' is false, this logger would recv udp log message from peer
+ * and output log message to the file
+ */
 extern ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t outType, 
     const char* udpip, uint16_t udpport, int issender);
 
-/// close the logger
+/* close the logger
+ */
 extern void ztl_log_close(ztl_log_t* logger);
 
-/// set the minimum log level
+/* set the minimum log level
+ */
 extern void ztl_log_set_level(ztl_log_t* logger, ztl_log_level_t minLevel);
 
+/* get current log level
+ */
 extern ztl_log_level_t ztl_log_get_level(ztl_log_t* logger);
 
-/// redirect stderr to logger
+/* redirect stderr to logger
+ */
 extern int zlt_log_redirect_stderr(ztl_log_t* logger);
 
-/// log a piece of msg
+/* log a piece of msg
+ */
 extern void ztl_log(ztl_log_t* logger, ztl_log_level_t level, const char* fmt, ...);
 
 extern void ztl_log2(ztl_log_t* logger, ztl_log_level_t level, const char* line, int len);
@@ -61,4 +77,4 @@ extern void ztl_log2(ztl_log_t* logger, ztl_log_level_t level, const char* line,
 }
 #endif
 
-#endif//_ZLOGGER_H_
+#endif//_ZTL_LOGGER_H_

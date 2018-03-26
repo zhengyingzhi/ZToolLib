@@ -285,12 +285,9 @@ void* ztl_thrpool_get_data(ztl_thrpool_t* thpool)
     return thpool->userdata;
 }
 
-/// get current task count
-int ztl_thrpool_tasknum(ztl_thrpool_t* thpool)
+int ztl_thrpool_pending(ztl_thrpool_t* thpool)
 {
-    if (NULL == thpool)
-        return 0;
-    return thpool->taskn;
+    return ztl_atomic_add(&thpool->taskn, 0);
 }
 
 int ztl_thrpool_thrnum(ztl_thrpool_t* thpool)
@@ -300,12 +297,6 @@ int ztl_thrpool_thrnum(ztl_thrpool_t* thpool)
     return thpool->thrnum;
 }
 
-int ztl_thrpool_pending(ztl_thrpool_t* thpool)
-{
-    return ztl_atomic_add(&thpool->taskn, 0);
-}
-
-/// wait all thread exit
 int ztl_thrpool_join(ztl_thrpool_t* thpool)
 {
     if (thpool == NULL)

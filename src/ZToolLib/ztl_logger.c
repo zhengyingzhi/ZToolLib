@@ -136,14 +136,16 @@ static ztl_log_t* _InitNewLogger()
 
 static char* _WaitLogMsg(ztl_log_t* log)
 {
-    char* lpBuff = NULL;
+    char* lpBuff;
     
     do 
     {
-        if (lfqueue_pop(log->queue, (void**)&lpBuff) != 0) {
+        lpBuff = NULL;
+        if (lfqueue_pop(log->queue, &lpBuff) != 0) {
             ztl_thread_cond_wait(&log->cond, &log->lock);
             continue;
         }
+
         ztl_atomic_dec(&log->itemCount, 1);
         break;
     } while (log->running);
@@ -176,7 +178,9 @@ static ztl_thread_result_t ZTL_THREAD_CALL _LogWorkThread(void* arg)
 
         lpHead = (ztl_log_header_t*)lpBuf;
 
-        log->pfLogFunc(log->logfp, lpBuf + ZTL_LOG_HEAD_OFFSET, lpHead->size - ZTL_LOG_HEAD_OFFSET);
+        if (log->pfLogFunc)
+            log->pfLogFunc(log->logfp, lpBuf + ZTL_LOG_HEAD_OFFSET, 
+                lpHead->size - ZTL_LOG_HEAD_OFFSET);
 
         ztl_mp_free(log->pool, lpBuf);
     }
@@ -311,7 +315,7 @@ ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool b
 #endif//_WIN32
         ztl_thread_cond_init(&log->cond, NULL);
 
-        log->queue  = lfqueue_create(ZTL_LOG_QUEUE_SIZE, sizeof(void*));
+        log->queue  = lfqueue_create(ZTL_LOG_QUEUE_SIZE, sizeof(char*));
         log->pool   = ztl_mp_create(ZTL_LOGBUF_SIZE, 256, 1);
 
         // create log thread
@@ -541,19 +545,17 @@ void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
     lpHead->size    = (uint16_t)(lLength - ZTL_LOG_HEAD_OFFSET);
     lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
 
-    if (log->bAsyncLog)
-    {
+    if (log->bAsyncLog) {
+        lfqueue_push(log->queue, &lpBuff);
         if (ztl_atomic_add(&log->itemCount, 1) == 0) {
             ztl_thread_cond_signal(&log->cond);
         }
     }
-    else if (log->udpsock > 0 && log->issender)
-    {
+    else if (log->udpsock > 0 && log->issender) {
         lpHead->type = ZTL_LOG_TYPE_UDP;
         udp_send(log->udpsock, lpBuff, lLength, &log->udpaddr);
     }
-    else
-    {
+    else {
         if (log->pfLogFunc)
             log->pfLogFunc(log->logfp, lpBuff + ZTL_LOG_HEAD_OFFSET, lLength - ZTL_LOG_HEAD_OFFSET);
     }

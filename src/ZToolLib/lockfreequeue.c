@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 #include "lockfreequeue.h"
 #include "ztl_atomic.h"
@@ -49,7 +48,7 @@ struct lfqueue_st
     /// note this index is only used for MultipleProducerThread queues
     volatile uint32_t*	maxreadindex;
 
-    void**   arrdata;           // array to keep the elements
+    char*    arrdata;           // array to keep the elements
 
     int32_t  outside_mem;       // is out side memory
     uint32_t eltsize;           // element size
@@ -61,41 +60,26 @@ struct lfqueue_st
 /// to a particular "count" value
 #define TO_INDEX(idx,size) ((idx) < (size) ? (idx) : ((idx)-(size)))
 
-#define _DataCopy(dst,src,eltsize)                                  \
-    do {                                                            \
-        switch (eltsize) {                                          \
-        case 1: *(uint8_t*) dst = *(uint8_t*)src;   break;          \
-        case 2: *(uint16_t*)dst = *(uint16_t*)src;  break;          \
-        case 4: *(uint32_t*)dst = *(uint32_t*)src;  break;          \
-        case 8: *(uint64_t*)dst = *(uint64_t*)src;  break;          \
-        case 16:                                                    \
-            *(uint64_t*)dst     = *(uint64_t*)src;                  \
-            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
-            break;                                                  \
-        default:                                                    \
-            memcpy(dst,src,eltsize);                                \
-        }                                                           \
-    } while (0);
 
 static void lfqueue_initmember(lfqueue_t* que, uint32_t quesize, void* addr)
 {
-    queue_op_data_t* lpMember;
+    queue_op_data_t* opdata;
 
-    lpMember = (queue_op_data_t*)addr;
-    que->rdindex = &lpMember->read_index;
-    que->wtindex = &lpMember->write_index;
-    que->maxreadindex = &lpMember->max_read_index;
+    opdata              = (queue_op_data_t*)addr;
+    que->rdindex        = &opdata->read_index;
+    que->wtindex        = &opdata->write_index;
+    que->maxreadindex   = &opdata->max_read_index;
 
-    if (lpMember->array_size == 0) {
-        lpMember->array_size = quesize;
+    if (opdata->array_size == 0) {
+        opdata->array_size = quesize;
     }
 
-    if (lpMember->array_size != quesize) {
-        printf("error size: memory %d but passed %d\n", lpMember->array_size, quesize);
+    if (opdata->array_size != quesize) {
+        printf("error size: memory %d but passed %d\n", opdata->array_size, quesize);
     }
 
     que->size = quesize;
-    que->arrdata = (void**)((char*)addr + sizeof(queue_op_data_t));
+    que->arrdata = (char*)addr + sizeof(queue_op_data_t);
 }
 
 
@@ -165,6 +149,7 @@ int lfqueue_push(lfqueue_t* que, void* pdata)
     if (que == NULL)
         return -1;
 
+    char*    dstaddr;
     uint32_t curWriteIndex;
     uint32_t curReadIndex;
 
@@ -181,7 +166,9 @@ int lfqueue_push(lfqueue_t* que, void* pdata)
 
     // save the data since the current write index is reserved for us
     //que->arrdata[curWriteIndex] = pdata;
-    _DataCopy(&que->arrdata[curWriteIndex], pdata, que->eltsize);
+    dstaddr = que->arrdata + que->eltsize * curWriteIndex;
+    ztlncpy(dstaddr, pdata, que->eltsize);
+    //ztlncpy(&que->arrdata[curWriteIndex], pdata, que->eltsize);
 
     // update the maximum read index after saving the data.
     // It wouldn't fail if there is only one producer thread intserting data into the queue.
@@ -194,7 +181,6 @@ int lfqueue_push(lfqueue_t* que, void* pdata)
     return 0;
 }
 
-/// pop an item at the head of the queue, return 0 if success
 int lfqueue_pop(lfqueue_t* que, void* pdata)
 {
     if (que == NULL)
@@ -202,8 +188,7 @@ int lfqueue_pop(lfqueue_t* que, void* pdata)
 
     uint32_t curMaxReadIndex;
     uint32_t curReadIndex;
-    void* olddata = NULL;// *ppdata;
-    char* srcdata = NULL;
+    char*    srcaddr;
 
     // find the valid index to be read
     do
@@ -221,7 +206,9 @@ int lfqueue_pop(lfqueue_t* que, void* pdata)
 
         // retrieve the data from the queue
         //*ppdata = que->arrdata[curReadIndex];
-        _DataCopy(pdata, &que->arrdata[curReadIndex], que->eltsize);
+        srcaddr = que->arrdata + que->eltsize * curReadIndex;
+        ztlncpy(pdata, srcaddr, que->eltsize);
+        //ztlncpy(pdata, &que->arrdata[curReadIndex], que->eltsize);
 
         // we automic increase the readIndex_ using CAS operation
         if (ztl_atomic_cas(que->rdindex, curReadIndex, TO_INDEX(curReadIndex + 1, que->size)))
@@ -239,7 +226,6 @@ int lfqueue_pop(lfqueue_t* que, void* pdata)
     return -1;
 }
 
-/// get queue size which may be a vogus value
 int lfqueue_size(lfqueue_t* que)
 {
     if (que)
@@ -256,7 +242,11 @@ int lfqueue_size(lfqueue_t* que)
     return 0;
 }
 
-/// @returns true if the queue is empty
+int lfqueue_elem_size(lfqueue_t* que)
+{
+    return que->eltsize;
+}
+
 bool lfqueue_empty(lfqueue_t* que)
 {
     if (que == NULL)
