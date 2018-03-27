@@ -14,6 +14,7 @@ extern void Test_ztl_strdelimiter(ZuTest*);
 
 extern void Test_lfqueue(ZuTest* zt);
 extern void Test_lfqueue2(ZuTest* zt);
+extern void Test_lfqueue3(ZuTest* zt);
 extern void Test_ztl_producer_consumer(ZuTest* zt);
 
 
@@ -34,6 +35,7 @@ void RunAllTests(void)
 
     SUITE_ADD_TEST(suite, Test_lfqueue);
     SUITE_ADD_TEST(suite, Test_lfqueue2);
+    SUITE_ADD_TEST(suite, Test_lfqueue3);
     SUITE_ADD_TEST(suite, Test_ztl_producer_consumer);
 
 

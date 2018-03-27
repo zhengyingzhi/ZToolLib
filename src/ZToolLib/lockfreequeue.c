@@ -168,7 +168,6 @@ int lfqueue_push(lfqueue_t* que, void* pdata)
     //que->arrdata[curWriteIndex] = pdata;
     dstaddr = que->arrdata + que->eltsize * curWriteIndex;
     ztlncpy(dstaddr, pdata, que->eltsize);
-    //ztlncpy(&que->arrdata[curWriteIndex], pdata, que->eltsize);
 
     // update the maximum read index after saving the data.
     // It wouldn't fail if there is only one producer thread intserting data into the queue.
@@ -208,14 +207,10 @@ int lfqueue_pop(lfqueue_t* que, void* pdata)
         //*ppdata = que->arrdata[curReadIndex];
         srcaddr = que->arrdata + que->eltsize * curReadIndex;
         ztlncpy(pdata, srcaddr, que->eltsize);
-        //ztlncpy(pdata, &que->arrdata[curReadIndex], que->eltsize);
 
         // we automic increase the readIndex_ using CAS operation
         if (ztl_atomic_cas(que->rdindex, curReadIndex, TO_INDEX(curReadIndex + 1, que->size)))
             return 0;
-
-        // rollback the data
-        //*ppdata = olddata;
 
         // here, if failed retrieving the element off the queue
         // someone else is reading the element at curReadIndex before we perform CAS operation
@@ -251,7 +246,7 @@ bool lfqueue_empty(lfqueue_t* que)
 {
     if (que == NULL)
         return true;
-    return (que->wtindex == que->rdindex) ? true : false;
+    return (*que->wtindex == *que->rdindex) ? true : false;
 }
 
 int lfqueue_release(lfqueue_t* que)

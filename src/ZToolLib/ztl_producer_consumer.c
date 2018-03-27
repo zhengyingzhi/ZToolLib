@@ -46,8 +46,8 @@ static ztl_thread_result_t ZTL_THREAD_CALL _zpc_work_thread(void* arg)
     {
         pcdata.handler = NULL;
 
-        if (0 != lfqueue_pop(zpc->queue, &pcdata)) {
-            ztl_simevent_wait(zpc->event);
+        if (lfqueue_pop(zpc->queue, &pcdata) != 0) {
+            ztl_simevent_timedwait(zpc->event, 1);
             continue;
         }
         ztl_atomic_dec(&zpc->count, 1);
@@ -93,7 +93,8 @@ int ztl_pc_post(ztl_producer_consumer_t* zpc, ztl_pc_handler_pt handler, void* d
         return -2;
     }
 
-    ztl_pc_data_t pcdata;
+    uint32_t        count;
+    ztl_pc_data_t   pcdata;
     pcdata.data    = data;
     pcdata.handler = handler;
 
@@ -101,7 +102,8 @@ int ztl_pc_post(ztl_producer_consumer_t* zpc, ztl_pc_handler_pt handler, void* d
         return -1;
     }
 
-    if (ztl_atomic_add(&zpc->count, 1) == 0) {
+    count = ztl_atomic_add(&zpc->count, 1);
+    if (count == 0 || count == (uint32_t)-1) {
         ztl_simevent_signal(zpc->event);
     }
 
