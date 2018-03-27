@@ -49,7 +49,7 @@ void ztl_buffer_erase(ztl_buffer_t* zbuf, uint32_t pos, uint32_t size);
 /* clear size */
 #define ztl_buffer_clear(zbuf)      (zbuf)->size = 0
 
-#define ztl_buffer_isempty(zbuf)    (zbuf)->size == 0
+#define ztl_buffer_empty(zbuf)      (zbuf)->size == 0
 #define ztl_buffer_size(zbuf)       (zbuf)->size
 #define ztl_buffer_capacity(zbuf)   (zbuf)->capacity
 

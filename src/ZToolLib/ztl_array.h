@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 /* create a dynamic array
- * @pool the alloc pool, which could null
+ * @pool the alloc pool, which could be null
  * @num  the initial array size
  * @eltsize each elem size, like sizeof(int)
  * @return the new array object
@@ -29,7 +29,7 @@ extern "C" {
 ztl_array_t* ztl_array_create(ztl_pool_t* pool, uint32_t num, size_t eltsize);
 
 /* init an existed array
- * @pool the alloc pool, which could null
+ * @pool the alloc pool, which could be null
  * @return 0-success
  */
 int ztl_array_init(ztl_array_t* arr, ztl_pool_t* pool, uint32_t num, size_t eltsize);

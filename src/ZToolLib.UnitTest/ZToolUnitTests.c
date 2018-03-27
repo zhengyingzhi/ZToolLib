@@ -11,6 +11,9 @@ extern void Test_ztl_atoin(ZuTest*);
 extern void Test_ztl_trim(ZuTest*);
 extern void Test_ztl_parse_size(ZuTest*);
 extern void Test_ztl_strdelimiter(ZuTest*);
+extern void Test_ztl_buffer(ZuTest* zt);
+extern void Test_ztl_buffer2(ZuTest* zt);
+extern void Test_ztl_linklist(ZuTest* zt);
 
 extern void Test_lfqueue(ZuTest* zt);
 extern void Test_lfqueue2(ZuTest* zt);
@@ -32,6 +35,10 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_trim);
     SUITE_ADD_TEST(suite, Test_ztl_parse_size);
     SUITE_ADD_TEST(suite, Test_ztl_strdelimiter);
+
+    SUITE_ADD_TEST(suite, Test_ztl_buffer);
+    SUITE_ADD_TEST(suite, Test_ztl_buffer2);
+    SUITE_ADD_TEST(suite, Test_ztl_linklist);
 
     SUITE_ADD_TEST(suite, Test_lfqueue);
     SUITE_ADD_TEST(suite, Test_lfqueue2);

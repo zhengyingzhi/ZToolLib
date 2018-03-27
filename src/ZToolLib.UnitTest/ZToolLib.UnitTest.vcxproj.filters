@@ -33,6 +33,9 @@
     <ClCompile Include="test_ztl_pc.c">
       <Filter>TestCases</Filter>
     </ClCompile>
+    <ClCompile Include="test_ztl_buffer.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ZToolUnitTest.h">
