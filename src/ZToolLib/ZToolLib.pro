@@ -53,6 +53,7 @@ HEADERS += lockfreequeue.h \
     ztl_malloc.h \
     ztl_map.h \
     ztl_mempool.h \
+    ztl_message_buffer.h \
     ztl_network.h \
     ztl_palloc.h \
     ztl_producer_consumer.h \
@@ -77,6 +78,7 @@ SOURCES += lockfreequeue.c \
     ztl_malloc.c \
     ztl_map.c \
     ztl_mempool.c \
+    ztl_message_buffer.c \
     ztl_network.c \
     ztl_palloc.c \
     ztl_producer_consumer.c \

@@ -114,6 +114,9 @@
     <ClInclude Include="ztl_win32_stacktrace.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_message_buffer.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -190,6 +193,9 @@
     </ClCompile>
     <ClCompile Include="ztl_win32_stacktrace.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_message_buffer.c">
+      <Filter>Containers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

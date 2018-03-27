@@ -285,6 +285,7 @@
     <ClInclude Include="ztl_atomic.h" />
     <ClInclude Include="lockfreequeue.h" />
     <ClInclude Include="ztl_logger.h" />
+    <ClInclude Include="ztl_message_buffer.h" />
     <ClInclude Include="ztl_network.h" />
     <ClInclude Include="ztl_palloc.h" />
     <ClInclude Include="ztl_producer_consumer.h" />
@@ -312,6 +313,7 @@
     <ClCompile Include="ztl_malloc.c" />
     <ClCompile Include="ztl_mempool.c" />
     <ClCompile Include="ztl_logger.c" />
+    <ClCompile Include="ztl_message_buffer.c" />
     <ClCompile Include="ztl_network.c" />
     <ClCompile Include="ztl_palloc.c" />
     <ClCompile Include="ztl_producer_consumer.c" />

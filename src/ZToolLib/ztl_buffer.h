@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) Yingzhi Zheng
+ * Copyright (C) <zhengyingzhi112@163.com>
+ */
+
 #ifndef _ZTL_BUFFER_H_INCLUDED_
 #define _ZTL_BUFFER_H_INCLUDED_
 
