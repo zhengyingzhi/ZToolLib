@@ -77,4 +77,10 @@ uint64_t ztl_shm_get_size(ztl_shm_t* zshm);
 /* Return access mode */
 int ztl_shm_get_mode(ztl_shm_t* zshm);
 
+
+#ifdef __cplusplus
+}
+#endif//__cplusplus
+
+
 #endif//_ZTL_SHM_H_INCLUDE_

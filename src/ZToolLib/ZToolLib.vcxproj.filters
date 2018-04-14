@@ -25,6 +25,9 @@
     <Filter Include="Network">
       <UniqueIdentifier>{91da1628-7cbe-4a19-933a-424329dba562}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Encrypt">
+      <UniqueIdentifier>{de66dd9e-f787-460a-afa8-42703c4f98fd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -117,6 +120,12 @@
     <ClInclude Include="ztl_message_buffer.h">
       <Filter>Containers</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_aes.h">
+      <Filter>Encrypt</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_aes_encrypt.h">
+      <Filter>Encrypt</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -196,6 +205,12 @@
     </ClCompile>
     <ClCompile Include="ztl_message_buffer.c">
       <Filter>Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_aes_encrypt.c">
+      <Filter>Encrypt</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_aes.c">
+      <Filter>Encrypt</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

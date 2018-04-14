@@ -271,6 +271,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ztl_aes.h" />
+    <ClInclude Include="ztl_aes_encrypt.h" />
     <ClInclude Include="ztl_array.h" />
     <ClInclude Include="ztl_bitset.h" />
     <ClInclude Include="ztl_buffer.h" />
@@ -302,6 +304,8 @@
     <ClInclude Include="ztl_win32_stacktrace.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ztl_aes.c" />
+    <ClCompile Include="ztl_aes_encrypt.c" />
     <ClCompile Include="ztl_array.c" />
     <ClCompile Include="ztl_buffer.c" />
     <ClCompile Include="ztl_config.c" />
