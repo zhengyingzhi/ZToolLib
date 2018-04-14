@@ -126,6 +126,12 @@
     <ClInclude Include="ztl_aes_encrypt.h">
       <Filter>Encrypt</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_evloop.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_evloop_private.h">
+      <Filter>Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -211,6 +217,21 @@
     </ClCompile>
     <ClCompile Include="ztl_aes.c">
       <Filter>Encrypt</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_evloop_private.c">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_evloop_select.c">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_evloop.c">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_evloop_epoll.c">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_evloop_iocp.c">
+      <Filter>Network</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
