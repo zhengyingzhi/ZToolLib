@@ -43,6 +43,8 @@ static void DebugBreak() {}
 int64_t query_tick_count();
 int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd);
 
+/// precision to milli-second
+int64_t get_timestamp();
 
 
 /// get current date, return length, fmtDelimiter like '-', '/', return length

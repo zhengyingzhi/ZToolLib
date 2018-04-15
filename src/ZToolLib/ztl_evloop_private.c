@@ -42,7 +42,7 @@ ztl_connection_t* ztl_do_accept(ztl_evloop_t* evloop)
     newconn = NULL;
 
     do {
-        ns = accept(evloop->listenfd, (struct sockaddr*)&addr, &addrlen);
+        ns = accept(evloop->listen_conn.sockfd, (struct sockaddr*)&addr, &addrlen);
         if (ns < 0)
         {
             if (is_einterrupt(get_errno())) {
@@ -100,3 +100,7 @@ void ztl_free_connection(ztl_evloop_t* evloop, ztl_connection_t* conn)
     ztl_mp_free(evloop->conn_mp, conn);
 }
 
+void ztl_evloop_update_polltime(ztl_evloop_t* evloop)
+{
+    evloop->timepoint = get_timestamp();
+}

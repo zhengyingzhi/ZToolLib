@@ -53,6 +53,19 @@ int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd)
 }
 
 
+int64_t get_timestamp()
+{
+#ifdef _MSC_VER
+    return (int64_t)GetTickCount();
+#else
+    timespec lTime;
+    clock_gettime(CLOCK_REALTIME, &lTime);
+    int64_t lRet = (uint64_t)lTime.tv_sec * 1000 + lTime.tv_nsec / 1000000;
+    return lRet;
+#endif//_MSC_VER
+}
+
+
 /// get current data, return length
 int current_date(char* chDate, int nLen, char fmtDelimiter)
 {

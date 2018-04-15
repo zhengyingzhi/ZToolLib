@@ -19,21 +19,22 @@ typedef struct ztl_event_ops ztl_event_ops_t;
 
 struct ztl_evloop_st
 {
-    sockhandle_t        listenfd;
-    unsigned short      listen_port;
-    unsigned int        listen_addr;
+    ztl_connection_t    listen_conn;
+    ztl_connection_t    pipeconn[2];
 
-    sockhandle_t        pipefds[2];
-    sockhandle_t        timeoutMS;
+    int                 timeoutMS;
     int                 thrnum;
     int                 running;
     volatile uint32_t   nexited;
-    uint32_t            looponce_flag;
-    ztl_event_timer_t   timers;
+    uint32_t            looponce;
     ztl_mempool_t*      conn_mp;
 
     ztl_ev_handler_t    handler;
     void*               userdata;
+
+    ztl_event_timer_t   timers;
+    ztl_evt_handler_pt  timer_handler;
+    uint64_t            timepoint;
 
     void*               ctx;
     ztl_event_ops_t*    evsel;
@@ -47,6 +48,8 @@ struct ztl_event_ops
 
     int(*add)(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS reqevents);
     int(*del)(ztl_evloop_t* evloop, ztl_connection_t* conn);
+
+    int(*poll)(ztl_evloop_t* evloop, int timeoutMS);
 
     int(*stop)(ztl_evloop_t* evloop);
 
@@ -66,6 +69,6 @@ ztl_connection_t* ztl_do_accept(ztl_evloop_t* evloop);
 void ztl_free_connection(ztl_evloop_t* evloop, ztl_connection_t* conn);
 ztl_connection_t* ztl_new_connection(ztl_evloop_t* evloop, sockhandle_t sockfd);
 
-
+void ztl_evloop_update_polltime(ztl_evloop_t* evloop);
 
 #endif//_ZTL_EVENT_LOOP_PRIVATE_H_

@@ -11,7 +11,7 @@
 #include "ztl_atomic.h"
 #include "ztl_utils.h"
 
-
+/* the file only support on Windows */
 #ifdef _WIN32
 
 #include <process.h>
@@ -34,7 +34,7 @@ typedef struct per_io_data
     char        buf[_ZTL_IODATA_BUFF_SIZE];
     int         nRecvedBytes;
     int         optType;            //operation type for read/write/accept
-    int         sockfd;
+    SOCKET      sockfd;
 #define IO_OPT_READ   1
 #define IO_OPT_WRITE  2
 #define IO_OPT_ACCEPT 3
@@ -67,6 +67,7 @@ static int iocp_init(ztl_evloop_t* evloop);
 static int iocp_start(ztl_evloop_t* evloop);
 static int iocp_add(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS reqevents);
 static int iocp_del(ztl_evloop_t* evloop, ztl_connection_t* conn);
+static int iocp_poll(ztl_evloop_t* evloop, int timeoutMS);
 static int iocp_stop(ztl_evloop_t* evloop);
 static int iocp_destroy(ztl_evloop_t* evloop);
 
@@ -76,6 +77,7 @@ struct ztl_event_ops iocpops = {
     iocp_start,
     iocp_add,
     iocp_del,
+    iocp_poll,
     iocp_stop,
     iocp_destroy,
     "iocp",
@@ -131,7 +133,7 @@ static void* load_extend_function(sockhandle_t aListenFD, GUID* aGUID)
     return lpfnFundAddr;
 }
 
-static int iocp_extend_function(iocp_ctx_t* pctx, int listenfd)
+static int iocp_extend_function(iocp_ctx_t* pctx, sockhandle_t listenfd)
 {
     // AcceptEx and GetAcceptExSockaddrs GUID to aquire function pointer
     GUID lGuidAcceptEx = WSAID_ACCEPTEX;
@@ -194,7 +196,7 @@ static void _iocp_freeconn(ztl_evloop_t* evloop, ztl_connection_t* conn)
     conn->sockfd = INVALID_SOCKET;
 
     //if (apConn->timerid != INVAL_TIMER_ID) {
-    //	event_timer_del(evloop->timers, apConn->timerid);
+    //  event_timer_del(evloop->timers, apConn->timerid);
     //}
 
     iocp_ctx_t* lpctx = ZTL_THE_CTX(evloop);
@@ -213,7 +215,7 @@ static int iocp_post_acceptex(ztl_evloop_t* evloop, iocp_ctx_t* pctx)
     // if wsaBuf.len is more length, iocp will auto accept&recv data when accept new conection
     lpIOData->wsaBuf.buf = lpIOData->buf;
     lpIOData->wsaBuf.len = (sizeof(SOCKADDR_IN) + 16) * 2;
-    lpIOData->optType = IO_OPT_ACCEPT;
+    lpIOData->optType    = IO_OPT_ACCEPT;
     lpIOData->nRecvedBytes = 0;
 
     // create a socket descriptor firstly for new connection when accept(which is different from traditional accept) 
@@ -231,7 +233,7 @@ static int iocp_post_acceptex(ztl_evloop_t* evloop, iocp_ctx_t* pctx)
     set_tcp_keepalive(lpIOData->sockfd, true);
 
     // post AcceptEx request
-    if (FALSE == pctx->pfnAcceptEx(evloop->listenfd, lpIOData->sockfd, 
+    if (FALSE == pctx->pfnAcceptEx(evloop->listen_conn.sockfd, lpIOData->sockfd, 
         lpIOData->wsaBuf.buf, lpIOData->wsaBuf.len - ((sizeof(SOCKADDR_IN) + 16) * 2),
         sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &lTransBytes, &lpIOData->ovlp))
     {
@@ -280,56 +282,42 @@ static int iocp_do_accept(ztl_evloop_t* evloop, ztl_connection_t* apConn, per_io
 }
 
 //////////////////////////////////////////////////////////////////////////
-/// create event loop object
+/* impl iocp interfaces */
 static int iocp_init(ztl_evloop_t* evloop)
 {
-	iocp_ctx_t* lpctx;
-	lpctx = (iocp_ctx_t*)malloc(sizeof(iocp_ctx_t));
-	if (!lpctx)
-	{
-		return -1;
-	}
+    iocp_ctx_t* lpctx;
+    lpctx = (iocp_ctx_t*)malloc(sizeof(iocp_ctx_t));
+    if (!lpctx)
+    {
+        return -1;
+    }
 
-	memset(lpctx, 0, sizeof(iocp_ctx_t));
-	evloop->ctx = lpctx;
+    memset(lpctx, 0, sizeof(iocp_ctx_t));
+    evloop->ctx = lpctx;
 
-	// create iocp object
-	lpctx->hIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+    // create iocp object
+    lpctx->hIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
 
-	// create connection objects pool
-	lpctx->iodata_mp = ztl_mp_create(sizeof(per_io_data_t), _ZTL_DEF_IOCP_DATA_COUNT, 1);
+    // create connection objects pool
+    lpctx->iodata_mp = ztl_mp_create(sizeof(per_io_data_t), _ZTL_DEF_IOCP_DATA_COUNT, 1);
 
-	return 0;
+    return 0;
 }
 
 static int iocp_start(ztl_evloop_t* evloop)
 {
     iocp_ctx_t* lpctx = ZTL_THE_CTX(evloop);
 
-    // listener is also use a connection object
-    ztl_connection_t* conn;
-    conn = (ztl_connection_t*)ztl_mp_alloc(evloop->conn_mp);
-    memset(conn, 0, sizeof(ztl_connection_t));
-    conn->sockfd = evloop->listenfd;
-    conn->userdata = evloop;
-    conn->port = evloop->listen_port;
-    conn->addr = evloop->listen_addr;
-
-    if (evloop->pipefds[1] > 0)
-    {
-        // todo: add pipefd
-    }
-
     if (evloop->thrnum <= 0) {
         evloop->thrnum = get_cpu_number();
     }
 
-    if (iocp_extend_function(lpctx, evloop->listenfd) == 0)
+    if (iocp_extend_function(lpctx, evloop->listen_conn.sockfd) == 0)
     {
         // post n AcceptEx I/O requests
         for (int i = 0; i < _ZTL_MAX_POST_ACCEPT; i++) {
 
-            if (-1 == iocp_add(evloop, conn, ZEV_POLLIN)) {
+            if (-1 == iocp_add(evloop, &evloop->listen_conn, ZEV_POLLIN)) {
                 break;
             }
         }
@@ -359,7 +347,7 @@ static int iocp_add(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS 
     DWORD lTransBytes = 0, lFlag = 0;
     per_io_data_t* lpIOData = NULL;
 
-    if (conn->sockfd == evloop->listenfd) {
+    if (conn == &evloop->listen_conn) {
         return iocp_post_acceptex(evloop, lpctx);
     }
 
@@ -394,6 +382,71 @@ static int iocp_del(ztl_evloop_t* evloop, ztl_connection_t* conn)
     return 0;
 }
 
+static int iocp_poll(ztl_evloop_t* evloop, int timeoutMS)
+{
+    DWORD       dwTrans;
+    DWORD       dwFlag;
+    iocp_ctx_t* lpctx;
+
+    ztl_connection_t*   lpConn;
+    per_io_data_t*      lpPerIO;
+
+    dwTrans = 0;
+    dwFlag  = 0;
+    lpctx = ZTL_THE_CTX(evloop);
+    lpConn = NULL;
+    lpPerIO = NULL;
+
+    // wait io completion
+    BOOL bOK = GetQueuedCompletionStatus(lpctx->hIocp, &dwTrans, (LPDWORD)&lpConn, 
+        (LPOVERLAPPED*)&lpPerIO, timeoutMS);
+
+    // expire timers...
+    //update_time(lpev->timers);
+    //ztl_event_timer_expire(lpev->timers);
+
+    if (!bOK && WAIT_TIMEOUT == get_errno()) {
+        return 0;
+    }
+
+    if (lpConn == NULL || lpPerIO == NULL)
+    {
+#ifdef _DEBUG
+        //logdebug("iocp thread got terminate signal %d.\n", get_errno());
+#endif
+        return 0;
+    }
+
+    // error happens or the socket fd closed by peer
+    if (!bOK || (0 == dwTrans && (IO_OPT_READ == lpPerIO->optType || IO_OPT_WRITE == lpPerIO->optType)))
+    {
+        lpConn->disconncted = 1;
+        lpConn->handler(evloop, lpConn, ZEV_POLLIN);
+
+        _iocp_freeconn(evloop, lpConn);
+        return 0;
+    }
+
+    // check the operation type here
+    if (lpPerIO->optType == IO_OPT_READ) {
+        lpPerIO->nRecvedBytes = dwTrans;
+        lpConn->rsize += dwTrans;
+
+        lpConn->handler(evloop, lpConn, ZEV_POLLIN);
+    }
+    else if (lpPerIO->optType == IO_OPT_WRITE) {
+        lpConn->handler(evloop, lpConn, ZEV_POLLOUT);
+    }
+    else if (lpPerIO->optType == IO_OPT_ACCEPT) {
+        iocp_do_accept(evloop, lpConn, lpPerIO);
+    }
+    else {
+        //logdebug("#ERROR unkonwn operation type %d\n", lpPerIO->optType);
+    }
+
+    return 1;
+}
+
 static int iocp_stop(ztl_evloop_t* evloop)
 {
     iocp_ctx_t* lpctx = ZTL_THE_CTX(evloop);
@@ -401,12 +454,14 @@ static int iocp_stop(ztl_evloop_t* evloop)
 
     if (lpctx->hIocp)
     {
-        for (int i = 0; i < evloop->thrnum; ++i)
-            PostQueuedCompletionStatus(lpctx->hIocp, 0, NULL, NULL);
+        for (int i = 0; i < evloop->thrnum; ++i) {
+            PostQueuedCompletionStatus(lpctx->hIocp, 0, 0, NULL);
+        }
     }
 
-    if (INVALID_SOCKET != evloop->listenfd) {
-        close_socket(evloop->listenfd);
+    if (INVALID_SOCKET != evloop->listen_conn.sockfd) {
+        close_socket(evloop->listen_conn.sockfd);
+        evloop->listen_conn.sockfd = INVALID_SOCKET;
     }
 
     while (ztl_atomic_add(&evloop->nexited, 0) != (uint32_t)evloop->thrnum) {
@@ -417,7 +472,7 @@ static int iocp_stop(ztl_evloop_t* evloop)
 
 static int iocp_destroy(ztl_evloop_t* evloop)
 {
-    if (evloop == NULL) {
+    if (!evloop) {
         return -1;
     }
 
@@ -429,7 +484,7 @@ static int iocp_destroy(ztl_evloop_t* evloop)
     CloseHandle(lpctx->hIocp);
 
 EV_DESTROY_FINISH:
-    mp_destroy(lpctx->iodata_mp);
+    ztl_mp_release(lpctx->iodata_mp);
 
     return 0;
 }
@@ -439,103 +494,56 @@ EV_DESTROY_FINISH:
 static unsigned __stdcall iocp_loop_entry(void* arg)
 {
     //logdebug("%u entry...\n", get_thread_id());
-    ztl_evloop_t* lpev = (ztl_evloop_t*)arg;
-    iocp_ctx_t*  lpctx = ZTL_THE_CTX(lpev);
-    HANDLE       hIocp = lpctx->hIocp;
+    ztl_evloop_t* evloop = (ztl_evloop_t*)arg;
 
-    bool looponce_flag = ztl_atomic_add(&lpev->looponce_flag, 1) == 0 ? true : false;
-    DWORD	       dwTrans;
-    DWORD          dwFlag;
-    per_io_data_t* lpPerIO;
-    ztl_connection_t*  lpConn;
-    dwTrans = 0;
-    dwFlag = 0;
+    bool looponce = ztl_atomic_add(&evloop->looponce, 1) == 0 ? true : false;
 
-    while (lpev->running)
+    while (evloop->running)
     {
-        if (looponce_flag)
-            lpev->handler(lpev, NULL, ZEV_LOOPONCE);
+        // FIXME: only one threads expire timers
+        ztl_evloop_update_polltime(evloop);
+        ztl_evloop_expire(evloop);
 
-        lpPerIO = NULL;
-        lpConn = NULL;
+        iocp_poll(evloop, evloop->timeoutMS);
 
-        // wait io completion
-        BOOL bOK = GetQueuedCompletionStatus(hIocp, &dwTrans, (LPDWORD)&lpConn, (LPOVERLAPPED*)&lpPerIO, lpev->timeoutMS);
-
-        // expire timers...
-        //update_time(lpev->timers);
-        //ztl_event_timer_expire(lpev->timers);
-
-        if (!bOK && WAIT_TIMEOUT == get_errno()) {
-            continue;
-        }
-
-        if (lpConn == NULL || lpPerIO == NULL)
-        {
-#ifdef _DEBUG
-            logdebug("iocp thread got terminate signal %d.\n", get_errno());
-#endif
-            break;
-        }
-
-        // error happens or the socket fd closed by peer
-        if (!bOK || (0 == dwTrans && (IO_OPT_READ == lpPerIO->optType || IO_OPT_WRITE == lpPerIO->optType)))
-        {
-            lpConn->disconncted = 1;
-            lpev->handler(lpev, lpConn, ZEV_POLLIN);
-
-            _iocp_freeconn(lpev, lpConn);
-
-            continue;
-        }
-
-        // check the operation type here
-        if (lpPerIO->optType == IO_OPT_READ) {
-            lpPerIO->nRecvedBytes = dwTrans;
-            lpConn->rsize += dwTrans;
-
-            lpev->handler(lpev, lpConn, ZEV_POLLIN);
-        }
-        else if (lpPerIO->optType == IO_OPT_WRITE) {
-            lpev->handler(lpev, lpConn, ZEV_POLLOUT);
-        }
-        else if (lpPerIO->optType == IO_OPT_ACCEPT) {
-            iocp_do_accept(lpev, lpConn, lpPerIO);
-        }
-        else {
-            //logdebug("#ERROR unkonwn operation type %d\n", lpPerIO->optType);
-        }
+        if (looponce)
+            evloop->handler(evloop, NULL, ZEV_LOOPONCE);
     }
 
     //logdebug("%u exit.\n", get_thread_id());
-    ztl_atomic_add(&lpev->nexited, 1);
+    ztl_atomic_add(&evloop->nexited, 1);
     return 0;
 }
 
 static unsigned __stdcall iocp_accept_entry(void* arg)
 {
     //logdebug("accept thread running...\n");
-    ztl_evloop_t* lpev = (ztl_evloop_t*)arg;
-    iocp_ctx_t*  lpctx = ZTL_THE_CTX(lpev);
+    ztl_evloop_t*   evloop  = (ztl_evloop_t*)arg;
+    iocp_ctx_t*     lpctx   = ZTL_THE_CTX(evloop);
 
-    ztl_connection_t*  lpNewConn;
-    per_io_data_t* lpIoData;
+    int rv;
+    ztl_connection_t*   lpNewConn;
+    per_io_data_t*      lpIoData;
 
-    while (lpev->running)
+    while (evloop->running)
     {
-        // accept new socket
-        struct sockaddr_in clientAddr;
-        int addrLen = sizeof(clientAddr);
-        SOCKET ns = accept(lpev->listenfd, (struct sockaddr*)&clientAddr, &addrLen);
-        if (ns == -1) {
-            //logdebug("accept failed: %d\n", get_errno());
-            perror("accept failed");
+        // accept new socket (todo: try waiting)
+        rv = poll_read(&evloop->listen_conn.sockfd, 1, evloop->timeoutMS);
+        if (rv == 0) {
             continue;
         }
-        else if (ns == -1 && !is_wouldblock(get_errno()))
+        else if (rv < 0)
         {
-            break;
+            if (!is_wouldblock(get_errno())) {
+                perror("accept failed");
+                break;
+            }
+            continue;
         }
+
+        struct sockaddr_in clientAddr;
+        int addrLen = sizeof(clientAddr);
+        SOCKET ns = accept(evloop->listen_conn.sockfd, (struct sockaddr*)&clientAddr, &addrLen);
 
         // TCP_NODELAY, RCV_BUFSIZE could be set in cbconn function
         set_tcp_nodelay(ns, true);
@@ -543,7 +551,7 @@ static unsigned __stdcall iocp_accept_entry(void* arg)
 
         // get a new ztl_connection_t and associate to iocp
         lpIoData = (per_io_data_t*)ztl_mp_alloc(lpctx->iodata_mp);
-        lpNewConn = _iocp_newconn(lpev, lpIoData);
+        lpNewConn = _iocp_newconn(evloop, lpIoData);
 
         lpNewConn->port = ntohs(clientAddr.sin_port);
         lpNewConn->addr = clientAddr.sin_addr.s_addr;
@@ -555,7 +563,7 @@ static unsigned __stdcall iocp_accept_entry(void* arg)
 #endif
 
         // notify new connection
-        lpev->handler(lpev, lpNewConn, ZEV_NEWCONN);
+        evloop->handler(evloop, lpNewConn, ZEV_NEWCONN);
     }
     return 0;
 }
