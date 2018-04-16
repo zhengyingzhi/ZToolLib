@@ -132,6 +132,12 @@
     <ClInclude Include="ztl_evloop_private.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_tcp_server.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_protocol.h">
+      <Filter>Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -231,6 +237,9 @@
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="ztl_evloop_iocp.c">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_tcp_server.c">
       <Filter>Network</Filter>
     </ClCompile>
   </ItemGroup>

@@ -293,8 +293,10 @@
     <ClInclude Include="ztl_network.h" />
     <ClInclude Include="ztl_palloc.h" />
     <ClInclude Include="ztl_producer_consumer.h" />
+    <ClInclude Include="ztl_protocol.h" />
     <ClInclude Include="ztl_shm.h" />
     <ClInclude Include="ztl_simple_event.h" />
+    <ClInclude Include="ztl_tcp_server.h" />
     <ClInclude Include="ztl_threadpool.h" />
     <ClInclude Include="ztl_threads.h" />
     <ClInclude Include="ztl_unit_test.h" />
@@ -330,6 +332,7 @@
     <ClCompile Include="ztl_producer_consumer.c" />
     <ClCompile Include="ztl_shm.c" />
     <ClCompile Include="ztl_simple_event.c" />
+    <ClCompile Include="ztl_tcp_server.c" />
     <ClCompile Include="ztl_threadpool.c" />
     <ClCompile Include="ztl_threads.c" />
     <ClCompile Include="ztl_unit_test.c" />

@@ -46,6 +46,8 @@ HEADERS += lockfreequeue.h \
     ztl_config.h \
     ztl_dyso.h \
     ztl_event_timer.h \
+	ztl_evloop.h \
+	ztl_evloop_private.h \
     ztl_hash.h \
     ztl_linklist.h \
     ztl_locks.h \
@@ -57,10 +59,12 @@ HEADERS += lockfreequeue.h \
     ztl_network.h \
     ztl_palloc.h \
     ztl_producer_consumer.h \
+	ztl_protocol.h \
     ztl_rbtree.h \
     ztl_shm.h \
     ztl_simple_event.h \
     ztl_threadpool.h \
+    ztl_tcp_server.h \
     ztl_threads.h \
     ztl_unit_test.h \
     ztl_utils.h 
@@ -72,6 +76,9 @@ SOURCES += lockfreequeue.c \
     ztl_config.c \
     ztl_dyso.c \
     ztl_event_timer.c \
+	ztl_evloop.c \
+	ztl_evloop_epoll.c \
+	ztl_evloop_private.c \
     ztl_hash.c \
     ztl_locks.c \
     ztl_logger.c \
@@ -86,6 +93,7 @@ SOURCES += lockfreequeue.c \
     ztl_shm.c \
     ztl_simple_event.c \
     ztl_threadpool.c \
+    ztl_tcp_server.c \
     ztl_threads.c \
     ztl_unit_test.c \
     ztl_utils.c 
