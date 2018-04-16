@@ -10,12 +10,19 @@ struct ztl_tcp_server_st
     ztl_evconfig_t          evconf;
     ztl_tcp_server_config_t svrconf;
 
+    ztl_tcp_server_event_ptr    handler;
+
     int32_t     inited;
     uint32_t    running;
 };
 
 
-static int _ztl_ev_handler(ztl_evloop_t* ev, ztl_connection_t* conn, ZTL_EV_EVENTS events);
+static int _ztl_ev_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS events);
+
+static int _ztl_conn_handle(ztl_evloop_t* evloop, ztl_connection_t* conn);
+static int _ztl_read_handle(ztl_evloop_t* evloop, ztl_connection_t* conn);
+static int _ztl_write_handle(ztl_evloop_t* evloop, ztl_connection_t* conn);
+
 
 int ztl_tcp_server_create(ztl_tcp_server_t** ptcpsvr)
 {
@@ -107,39 +114,75 @@ typedef struct
 }ztl_server_conn_t;
 static int _ztl_ev_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS events)
 {
-    ztl_server_conn_t*  svrconn;
+    int rv;
     ztl_tcp_server_t*   tcpsvr;
     tcpsvr = (ztl_tcp_server_t*)ztl_evloop_get_usedata(evloop);
 
     if (events == ZEV_NEWCONN)
     {
         // new connection
-        svrconn = (ztl_server_conn_t*)malloc(sizeof(ztl_server_conn_t));
-
-        svrconn->conn   = conn;
-        svrconn->tcpsvr = tcpsvr;
-
-        conn->userdata  = svrconn;
+        rv = _ztl_conn_handle(evloop, conn);
     }
     else if (events == ZEV_POLLIN)
     {
         // read event
-        svrconn = (ztl_server_conn_t*)conn->userdata;
-
-        if (conn->bytes_recved == 0 && conn->rbuf == NULL) {
-            // buffer could be from memory pool
-            conn->rbuf = (char*)malloc(1014);
-            conn->rsize = 1024;
-        }
-        else {
-            // todo: check whether got a whole packet
-        }
-
+        rv = _ztl_read_handle(evloop, conn);
     }
     else if (events == ZEV_POLLOUT)
     {
         // wriet event
+        rv = _ztl_write_handle(evloop, conn);
     }
 
     return 0;
 }
+
+
+static int _ztl_conn_handle(ztl_evloop_t* evloop, ztl_connection_t* conn)
+{
+    ztl_server_conn_t*  svrconn;
+    ztl_tcp_server_t*   tcpsvr;
+    tcpsvr = (ztl_tcp_server_t*)ztl_evloop_get_usedata(evloop);
+
+    svrconn = (ztl_server_conn_t*)malloc(sizeof(ztl_server_conn_t));
+
+    svrconn->conn = conn;
+    svrconn->tcpsvr = tcpsvr;
+
+    conn->userdata = svrconn;
+
+    ztl_evloop_add(evloop, conn, ZEV_POLLIN);
+
+    // notify upper
+    tcpsvr->handler(tcpsvr, ZEV_NEWCONN, NULL, 0);
+
+    return 0;
+}
+
+static int _ztl_read_handle(ztl_evloop_t* evloop, ztl_connection_t* conn)
+{
+    ztl_server_conn_t* svrconn;
+    svrconn = (ztl_server_conn_t*)conn->userdata;
+
+    if (conn->bytes_recved == 0 && conn->rbuf == NULL) {
+        // buffer could be from memory pool
+        conn->rbuf = (char*)malloc(1014);
+        conn->rsize = 1024;
+    }
+    else {
+        // todo: check whether got a whole packet
+    }
+
+    ztl_evloop_add(evloop, conn, ZEV_POLLIN);
+    return 0;
+}
+
+static int _ztl_write_handle(ztl_evloop_t* evloop, ztl_connection_t* conn)
+{
+    ztl_server_conn_t* svrconn;
+    svrconn = (ztl_server_conn_t*)conn->userdata;
+
+    ztl_evloop_add(evloop, conn, ZEV_POLLIN);
+    return 0;
+}
+

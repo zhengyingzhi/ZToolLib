@@ -29,10 +29,6 @@ struct ZHeader
 
 #pragma pack(pop)
 
-typedef struct 
-{
-    //
-}ztl_proto_op;
 
 
 #ifdef __cplusplus
