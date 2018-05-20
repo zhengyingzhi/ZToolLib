@@ -27,6 +27,7 @@ typedef enum
     ZTL_LOG_INFO,
     ZTL_LOG_NOTICE,
     ZTL_LOG_WARN,
+    ZTL_LOG_ERROR,
     ZTL_LOG_CRITICAL
 }ztl_log_level_t;
 

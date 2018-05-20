@@ -561,3 +561,21 @@ int binary_search2(int arr[], int low, int high, int val)
     }
 }
 #endif
+
+char* zpassword_change(char* apdata)
+{
+	unsigned char *p;
+	unsigned char uch, umask, index = 0;
+	p = (unsigned char *)apdata;
+	while ((uch = *p))
+	{
+		umask = 0xFF - index;
+		*p++ = uch  ^ umask;
+		index++;
+
+		if (index > 8)
+			index = 0;
+	}
+
+	return apdata;
+}

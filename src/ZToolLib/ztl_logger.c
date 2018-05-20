@@ -484,6 +484,7 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
     lpBuff[lLength] = '\r';
     lpBuff[lLength+1] = '\n';
     lLength += 2;
+    lpBuff[lLength] = '\0';
 
     ztl_log_header_t* lpHead;
     lpHead          = (ztl_log_header_t*)lpBuff;
@@ -537,6 +538,7 @@ void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
     lpBuff[lLength] = '\r';
     lpBuff[lLength + 1] = '\n';
     lLength += 2;
+    lpBuff[lLength] = '\0';
 
     
     ztl_log_header_t* lpHead;

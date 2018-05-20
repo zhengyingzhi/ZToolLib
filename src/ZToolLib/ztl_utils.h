@@ -94,6 +94,10 @@ int read_number_from_file(const char* apfile);
 /// binary search, return the index, return -1 if not find
 int binary_search(int arr[], int size, int val);
 
+/// a simple password change algorithm
+char* zpassword_change(char* apdata);
+
+
 union zudi {
     double f;
     uint64_t i;
