@@ -7,7 +7,7 @@ int32_t ztl_base64_encode(const char* apInBinData, uint32_t aInLength, char* apO
     char* lpData = apOutBase64;
     uint32_t bits = 0;
     uint32_t left = aInLength;
-    uint32_t shift = 0;
+    int32_t  shift = 0;
 
     if (!apInBinData || !apOutBase64 || *apInOutLength < _ZTL_BASE64_ENCODE_LENGTH_MIN(aInLength))
         return -1;
