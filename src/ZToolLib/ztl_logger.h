@@ -38,6 +38,8 @@ extern "C" {
 #endif
 
 /* create a logger by the filename, and specify how to output log msgs
+ * if filename contains '_YYYYMMDD', the log fine will has the current created date,
+ * otherwise, all the log message will append to the tail of the specified file
  */
 extern ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool bAsyncLog);
 

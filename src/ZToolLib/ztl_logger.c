@@ -248,13 +248,20 @@ static int _ztl_log_createfile(ztl_log_t* log)
         char lDate[32] = "";
         current_date(lDate, sizeof(lDate), 0);
 
-        const char* psep = strchr(log->filename, '.');
-        if (psep) {
-            strncpy(lRealFileName, log->filename, psep - log->filename);
-            sprintf(lRealFileName + strlen(lRealFileName), "_%s%s", lDate, psep);
+        if (!strstr(log->filename, "_YYYYMMDD"))
+        {
+            strncpy(lRealFileName, log->filename, sizeof(lRealFileName) - 1);
         }
-        else {
-            sprintf(lRealFileName, "%s_%s.log", log->filename, lDate);
+        else
+        {
+            const char* psep = strchr(log->filename, '.');
+            if (psep) {
+                strncpy(lRealFileName, log->filename, psep - log->filename);
+                sprintf(lRealFileName + strlen(lRealFileName), "_%s%s", lDate, psep);
+            }
+            else {
+                sprintf(lRealFileName, "%s_%s.log", log->filename, lDate);
+            }
         }
 
         log->logfp = fopen(lRealFileName, "a+");
