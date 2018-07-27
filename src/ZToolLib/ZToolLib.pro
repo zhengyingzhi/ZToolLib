@@ -37,6 +37,7 @@ QMAKE_CFLAGS += -E -std=c99
 
 # Input
 HEADERS += lockfreequeue.h \
+    ztl_aes.h \
     ztl_array.h \
     ztl_atomic.h \
     ztl_base64.h \
@@ -44,6 +45,7 @@ HEADERS += lockfreequeue.h \
     ztl_buffer.h \
     ztl_common.h \
     ztl_config.h \
+    ztl_crypt.h \
     ztl_dyso.h \
     ztl_event_timer.h \
 	ztl_evloop.h \
@@ -71,10 +73,12 @@ HEADERS += lockfreequeue.h \
     ztl_utils.h 
 
 SOURCES += lockfreequeue.c \
+    ztl_aes.c \
     ztl_array.c \
     ztl_base64.c \
     ztl_buffer.c \
     ztl_config.c \
+    ztl_crypt.c \
     ztl_dyso.c \
     ztl_event_timer.c \
 	ztl_evloop.c \

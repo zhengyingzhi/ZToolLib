@@ -1,9 +1,12 @@
+#include <string.h>
 #include "ztl_base64.h"  
+
+static char const table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static char padding_char = '=';
 
 int32_t ztl_base64_encode(const char* apInBinData, uint32_t aInLength, char* apOutBase64, uint32_t* apInOutLength)
 {
-    static char const table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
+#if 0
     char* lpData = apOutBase64;
     uint32_t bits = 0;
     uint32_t left = aInLength;
@@ -29,12 +32,69 @@ int32_t ztl_base64_encode(const char* apInBinData, uint32_t aInLength, char* apO
     *lpData = '\0';
 
     *apInOutLength = (uint32_t)(lpData - apOutBase64);
+#else
+    const char* src = apInBinData;
+    char* dst = apOutBase64;
+
+    int i = 0, j = 0;
+    unsigned char trans_index = 0;
+    const int datalength = aInLength;
+
+    for (; i < datalength; i += 3)
+    {
+        trans_index = ((src[i] >> 2) & 0x3f);
+        dst[j++] = table[(int)trans_index];
+
+        trans_index = ((src[i] << 4) & 0x30);
+        if (i + 1 < datalength)
+        {
+            trans_index |= ((src[i + 1] >> 4) & 0x0f);
+            dst[j++] = table[(int)trans_index];
+        }
+        else
+        {
+            dst[j++] = table[(int)trans_index];
+            dst[j++] = padding_char;
+            dst[j++] = padding_char;
+            break;
+        }
+
+        trans_index = ((src[i + 1] << 2) & 0x3c);
+        if (i + 2 < datalength)
+        {
+            trans_index |= ((src[i + 2] >> 6) & 0x03);
+            dst[j++] = table[(int)trans_index];
+
+            trans_index = src[i + 2] & 0x3f;
+            dst[j++] = table[(int)trans_index];
+        }
+        else
+        {
+            dst[j++] = table[(int)trans_index];
+            dst[j++] = padding_char;
+            break;
+        }
+    }
+
+    apOutBase64[j] = '\0';
+    *apInOutLength = j;
+
+#endif
     return 0;
 }
 
+inline int num_strchr(const char *str, char c) // 
+{
+    const char *pindex = strchr(str, c);
+    if (NULL == pindex) {
+        return -1;
+    }
+    return pindex - str;
+}
 
 int32_t ztl_base64_decode(const char* apInBase64, uint32_t aInLength, char* apOutBinData, uint32_t* apInOutLength)
 {
+#if 0
     static uint8_t table[] =
     {
         0x3e, 0xff, 0xff, 0xff, 0x3f, 0x34, 0x35, 0x36
@@ -72,6 +132,44 @@ int32_t ztl_base64_decode(const char* apInBase64, uint32_t aInLength, char* apOu
     }
 
     *apInOutLength = (uint32_t)(lpData - (uint8_t*)apOutBinData);
+#else
+    const char* src = apInBase64;
+    char* dst = apOutBinData;
+
+    int i = 0, j = 0;
+    int trans[4] = {0, 0, 0, 0};
+    for (; src[i]; i += 4)
+    {
+        trans[0] = num_strchr(table, src[i]);
+        trans[1] = num_strchr(table, src[i + 1]);
+
+        dst[j++] = ((trans[0] << 2) & 0xfc) | ((trans[1] >> 4) & 0x03);
+
+        if (src[i + 2] == padding_char) {
+            continue;
+        }
+        else {
+            trans[2] = num_strchr(table, src[i + 2]);
+        }
+
+        // 2/3
+        dst[j++] = ((trans[1] << 4) & 0xf0) | ((trans[2] >> 2) & 0x0f);
+
+        if (src[i + 3] == padding_char) {
+            continue;
+        }
+        else {
+            trans[3] = num_strchr(table, src[i + 3]);
+        }
+
+        // 3/3
+        dst[j++] = ((trans[2] << 6) & 0xc0) | (trans[3] & 0x3f);
+    }
+
+    //dst[j] = '\0';
+    *apInOutLength = j;
+
+#endif
     return 0;
 }
 
