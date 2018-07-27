@@ -297,6 +297,7 @@
     <ClCompile Include="test_ztl_array.c" />
     <ClCompile Include="test_ztl_buffer.c" />
     <ClCompile Include="test_ztl_pc.c" />
+    <ClCompile Include="test_ztl_times.c" />
     <ClCompile Include="test_ztl_utils.c" />
     <ClCompile Include="ZToolUnitTests.c" />
   </ItemGroup>

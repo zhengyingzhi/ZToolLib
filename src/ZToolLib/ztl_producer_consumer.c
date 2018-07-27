@@ -62,7 +62,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _zpc_work_thread(void* arg)
 }
 
 
-ztl_producer_consumer_t* ztl_pc_create(uint32_t quesize)
+ztl_producer_consumer_t* ztl_pc_create(unsigned int quesize)
 {
     ztl_producer_consumer_t* zpc;
     zpc = (ztl_producer_consumer_t*)malloc(sizeof(ztl_producer_consumer_t));

@@ -7,6 +7,7 @@
 #include <time.h>
 #include <limits.h>
 
+#include "ztl_times.h"
 #include "ztl_utils.h"
 
 #ifdef _MSC_VER
@@ -51,128 +52,6 @@ int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd)
     return aTickCountEnd - aTickCountBeg;
 #endif//_MSC_VER
 }
-
-
-int64_t get_timestamp()
-{
-#ifdef _MSC_VER
-    return (int64_t)GetTickCount();
-#else
-    timespec lTime;
-    clock_gettime(CLOCK_REALTIME, &lTime);
-    int64_t lRet = (uint64_t)lTime.tv_sec * 1000 + lTime.tv_nsec / 1000000;
-    return lRet;
-#endif//_MSC_VER
-}
-
-
-/// get current data, return length
-int current_date(char* chDate, int nLen, char fmtDelimiter)
-{
-    time_t now = time(NULL);
-
-    struct tm ltm;
-#ifdef _MSC_VER
-    localtime_s(&ltm, &now);
-#else
-    localtime_r(&now, &ltm);
-#endif//_MSC_VER
-
-    if (fmtDelimiter == 0) {
-        return snprintf(chDate, nLen, "%04d%02d%02d", ltm.tm_year + 1900, ltm.tm_mon + 1, ltm.tm_mday);
-    }
-    else {
-        return snprintf(chDate, nLen, "%04d%c%02d%c%02d", ltm.tm_year + 1900, fmtDelimiter,
-            ltm.tm_mon + 1, fmtDelimiter,
-            ltm.tm_mday);
-    }
-}
-
-/// get current time, return length
-int current_time(char* chTime, int nLen, bool bMicroSec/* = true*/)
-{
-    int len;
-#ifdef _MSC_VER
-    FILETIME    ftLocal;
-    SYSTEMTIME  stLocal;
-    GetSystemTimeAsFileTime(&ftLocal);
-    FileTimeToSystemTime(&ftLocal, &stLocal);
-
-    if (bMicroSec)
-    {
-        int64_t it = ftLocal.dwHighDateTime;
-        it = it << 32;
-        it |= ftLocal.dwLowDateTime;
-        it /= 10; // convert from 100 nano-sec periods to micro-seconds
-        it -= (__int64)11644473600000000; //Convert from Windows epoch to Unix epoch
-        int microsec = it % 1000000;
-        len = snprintf(chTime, nLen, "%02d:%02d:%02d.%06d", (stLocal.wHour + 8) % 24, stLocal.wMinute, stLocal.wSecond, microsec);
-    }
-    else
-    {
-        len = snprintf(chTime, nLen, "%02d:%02d:%02d", stLocal.wHour, stLocal.wMinute, stLocal.wSecond);
-    }
-#else//linux
-
-    struct tm ptm;
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-
-#if defined (_POSIX_THREAD_SAFE_FUNCTIONS)
-    localtime_r(&tv.tv_sec, &ptm);
-#else
-    ptm = *localtime(&tv.tv_sec);
-#endif
-    if (bMicroSec)
-    {
-        len = snprintf(chTime, nLen, "%02d:%02d:%02d.%06d", ptm.tm_hour, ptm.tm_min, ptm.tm_sec, (int)tv.tv_usec);
-    }
-    else
-    {
-        len = snprintf(chTime, nLen, "%02d:%02d:%02d", ptm.tm_hour, ptm.tm_min, ptm.tm_sec);
-    }
-#endif//_MSC_VER
-    return len;
-}
-
-/// get current date time
-int cur_date_time(char* chBuf, int nLen, char fmtDelimiter, bool bMicroSec/* = true*/)
-{
-    int len = current_date(chBuf, nLen, fmtDelimiter);
-    chBuf[len] = ' ';
-    return len + current_time(chBuf + len + 1, nLen - len, bMicroSec);
-}
-
-/// get time of day
-#ifdef _MSC_VER
-void gettimeofday(struct timeval *tp, void* reserve)
-{
-    int64_t intervals;
-    FILETIME ft;
-
-    GetSystemTimeAsFileTime(&ft);
-
-    /*
-     * A file time is a 64-bit value that represents the number
-     * of 100-nanosecond intervals that have elapsed since
-     * January 1, 1601 12:00 A.M. UTC.
-     *
-     * Between January 1, 1970 (Epoch) and January 1, 1601 there were
-     * 134744 days,
-     * 11644473600 seconds or
-     * 11644473600,000,000,0 100-nanosecond intervals.
-     *
-     * See also MSKB Q167296.
-     */
-
-    intervals = ((__int64) ft.dwHighDateTime << 32) | ft.dwLowDateTime;
-    intervals -= 116444736000000000;
-
-    tp->tv_sec = (long) (intervals / 10000000);
-    tp->tv_usec = (long) ((intervals % 10000000) / 10);
-}
-
-#endif//_MSC_VER
 
 
 /* Return the number of digits of 'v' when converted to string in radix 10.
@@ -503,6 +382,30 @@ int str_delimiter(char* apSrc, char** apRetArr, int aArrSize, char aDelimiter)
         }
 
         *lpCur++ = 0x00;
+    }
+    return n;
+}
+
+
+int str_delimiter2(char* apSrc, char** apRetArr, int aArrSize, const char* aDelimiter)
+{
+    if (!apSrc) {
+        return 0;
+    }
+
+    char* lpCur = apSrc;
+    int n = 0;
+    int dlen = strlen(aDelimiter);
+    while (n < aArrSize)
+    {
+        apRetArr[n++] = lpCur;
+        lpCur = strstr(lpCur, aDelimiter);
+        if (!lpCur) {
+            break;
+        }
+
+        *lpCur = 0x00;
+        lpCur += dlen;
     }
     return n;
 }

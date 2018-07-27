@@ -43,25 +43,6 @@ static void DebugBreak() {}
 int64_t query_tick_count();
 int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd);
 
-/// precision to milli-second
-int64_t get_timestamp();
-
-
-/// get current date, return length, fmtDelimiter like '-', '/', return length
-int current_date(char* chDate, int nLen, char fmtDelimiter);
-
-/// get current time, like 14:23:50.187940, return length
-int current_time(char* chTime, int nLen, bool bMicroSec);
-
-/// get current date time like 2017/12/12 14:23:50.187940, return length
-int cur_date_time(char* chBuf, int nLen, char fmtDelimiter, bool bMicroSec);
-
-/// get time of day
-#ifdef _WIN32
-void gettimeofday(struct timeval *tp, void* reserve);
-#else
-#include <sys/time.h>
-#endif//_WIN32
 
 /// convert a long long value to string, return length
 int ll2string(char* dst, uint32_t dstlen, int64_t value);
@@ -87,6 +68,8 @@ int get_cpu_number();
 
 /// parse the string ptr into the array by the delemiter charactor like '|', return array size 
 int str_delimiter(char* apSrc, char** apRetArr, int aArrSize, char aDelimiter);
+
+int str_delimiter2(char* apSrc, char** apRetArr, int aArrSize, const char* aDelimiter);
 
 /// read an integer number from file
 int read_number_from_file(const char* apfile);

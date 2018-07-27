@@ -20,6 +20,7 @@ extern void Test_lfqueue2(ZuTest* zt);
 extern void Test_lfqueue3(ZuTest* zt);
 extern void Test_ztl_producer_consumer(ZuTest* zt);
 
+extern void Test_ztl_times(ZuTest* zt);
 
 
 void RunAllTests(void)
@@ -45,6 +46,7 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_lfqueue3);
     SUITE_ADD_TEST(suite, Test_ztl_producer_consumer);
 
+    SUITE_ADD_TEST(suite, Test_ztl_times);
 
     ZuSuiteRun(suite);
     ZuSuiteDetails(suite, output);

@@ -9,6 +9,7 @@
 #include "ztl_network.h"
 #include "ztl_logger.h"
 #include "ztl_threads.h"
+#include "ztl_times.h"
 #include "ztl_utils.h"
 #include "ztl_atomic.h"
 
@@ -156,7 +157,7 @@ static char* _WaitLogMsg(ztl_log_t* log)
 static int _MakeLogLineTime(char* buf, int level)
 {
     int lLength = 0;
-    lLength += current_time(buf + lLength, 16, true);
+    lLength += ztl_hmsu(buf + lLength);
     lLength += sprintf(buf + lLength, " [%u] [%s] ", (uint32_t)ztl_thread_self(), levels[level]);
     return lLength;
 }
@@ -246,7 +247,8 @@ static int _ztl_log_createfile(ztl_log_t* log)
         // create a file
         char lRealFileName[512] = "";
         char lDate[32] = "";
-        current_date(lDate, sizeof(lDate), 0);
+        time_t lNow = time(0);
+        sprintf(lDate, "%d", ztl_tointdate(lNow));
 
         if (!strstr(log->filename, "_YYYYMMDD"))
         {

@@ -138,6 +138,9 @@
     <ClInclude Include="ztl_protocol.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_times.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -241,6 +244,9 @@
     </ClCompile>
     <ClCompile Include="ztl_tcp_server.c">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_times.c">
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

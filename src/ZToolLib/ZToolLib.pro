@@ -64,6 +64,7 @@ HEADERS += lockfreequeue.h \
     ztl_shm.h \
     ztl_simple_event.h \
     ztl_threadpool.h \
+    ztl_times.h \
     ztl_tcp_server.h \
     ztl_threads.h \
     ztl_unit_test.h \
@@ -95,5 +96,6 @@ SOURCES += lockfreequeue.c \
     ztl_threadpool.c \
     ztl_tcp_server.c \
     ztl_threads.c \
+    ztl_times.c \
     ztl_unit_test.c \
     ztl_utils.c 
