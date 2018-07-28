@@ -482,3 +482,25 @@ char* zpassword_change(char* apdata)
 
 	return apdata;
 }
+
+
+uint32_t ztl_randseed()
+{
+    uint32_t lSeed;
+#ifdef _MSC_VER
+    DWORD64 x = __rdtsc();
+    lSeed = (uint32_t)x + (uint32_t)(x >> 32);
+#else
+    unsigned int lo, hi;
+    __asm__ __volatile__("rdtsc" : "=a" (lo), "=d" (hi));
+    lSeed = lo + hi;
+#endif
+
+    return lSeed;
+}
+
+uint32_t ztl_rand(uint32_t* pseed)
+{
+    *pseed = (214013 * (*pseed) + 2531011);
+    return (*pseed >> 16) & 0x7FFF;
+}

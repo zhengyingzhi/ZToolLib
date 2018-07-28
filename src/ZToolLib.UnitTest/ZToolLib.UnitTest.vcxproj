@@ -293,6 +293,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="test_lfqueue.c" />
+    <ClCompile Include="test_ztl_dict.c" />
     <ClCompile Include="test_ztl_encrypt.c" />
     <ClCompile Include="test_ztl_linklist.c" />
     <ClCompile Include="test_ztl_array.c" />

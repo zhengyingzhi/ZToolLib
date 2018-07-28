@@ -80,6 +80,10 @@ int binary_search(int arr[], int size, int val);
 /// a simple password change algorithm
 char* zpassword_change(char* apdata);
 
+/// random related
+uint32_t ztl_randseed();
+uint32_t ztl_rand(uint32_t* pseed);
+
 
 union zudi {
     double f;

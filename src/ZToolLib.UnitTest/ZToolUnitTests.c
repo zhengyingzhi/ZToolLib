@@ -23,6 +23,8 @@ extern void Test_ztl_producer_consumer(ZuTest* zt);
 extern void Test_ztl_times(ZuTest* zt);
 extern void Test_ztl_base64(ZuTest* zt);
 extern void Test_ztl_encrypt(ZuTest* zt);
+extern void Test_ztl_dict(ZuTest* zt);
+
 
 void RunAllTests(void)
 {
@@ -50,6 +52,7 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_times);
     SUITE_ADD_TEST(suite, Test_ztl_base64);
     SUITE_ADD_TEST(suite, Test_ztl_encrypt);
+    SUITE_ADD_TEST(suite, Test_ztl_dict);
 
     ZuSuiteRun(suite);
     ZuSuiteDetails(suite, output);

@@ -141,6 +141,12 @@
     <ClInclude Include="ztl_crypt.h">
       <Filter>Encrypt</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_fixapi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_dict.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -247,6 +253,12 @@
     </ClCompile>
     <ClCompile Include="ztl_crypt.c">
       <Filter>Encrypt</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_fixapi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_dict.c">
+      <Filter>Containers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
