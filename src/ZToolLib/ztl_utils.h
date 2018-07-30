@@ -69,7 +69,11 @@ int get_cpu_number();
 /// parse the string ptr into the array by the delemiter charactor like '|', return array size 
 int str_delimiter(char* apSrc, char** apRetArr, int aArrSize, char aDelimiter);
 
+int str_delimiter_ex(const char* apSrc, char** apRetArr, int aArrSize, int* apLenArr, int aLenArrSize, char aDelimiter);
+
 int str_delimiter2(char* apSrc, char** apRetArr, int aArrSize, const char* aDelimiter);
+
+int str_delimiter2_ex(const char* apSrc, char** apRetArr, int aArrSize, int* apLenArr, int aLenArrSize, const char* aDelimiter);
 
 /// read an integer number from file
 int read_number_from_file(const char* apfile);

@@ -44,7 +44,7 @@ LIBS += -L$${DESTDIR} -lztoollib$${BuildSuff}
 HEADERS += ZToolUnitTest.h
 SOURCES += ZToolUnitTests.c \
     test_lfqueue.c \
-    test_linklist.c \
+    test_ztl_linklist.c \
     test_ztl_array.c \
     test_ztl_buffer.c \
     test_ztl_pc.c \

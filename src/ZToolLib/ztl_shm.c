@@ -419,6 +419,10 @@ int ztl_shm_truncate(ztl_shm_t* zshm, uint64_t aSize)
         return -2;
     }
 
+    if (aSize == 0) {
+        aSize = lFileSize;
+    }
+
     //avoid unused variable warnings in 32 bit systems
     if (aSize > (uint64_t)INT_MAX)
     {
@@ -450,6 +454,9 @@ int ztl_shm_truncate(ztl_shm_t* zshm, uint64_t aSize)
 #else
     if (ZTL_SHT_SHMOPEN == zshm->m_ShmType || ZTL_SHT_FILEMAP == zshm->m_ShmType)
     {
+        if (aSize == 0)
+            get_file_size(zshm->m_Name, &aSize);
+
         if (zshm->m_OpenOrCreate != ztl_open_only && 0 != ftruncate(zshm->m_Handle, aSize))
         {
             perror("ftruncate");

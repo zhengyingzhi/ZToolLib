@@ -386,6 +386,32 @@ int str_delimiter(char* apSrc, char** apRetArr, int aArrSize, char aDelimiter)
     return n;
 }
 
+int str_delimiter_ex(const char* apSrc, char** apRetArr, int aArrSize, int* apLenArr, int aLenArrSize, char aDelimiter)
+{
+    if (!apSrc) {
+        return 0;
+    }
+
+    char* lpCur = (char*)apSrc;
+    char* lpEnd;
+    int n = 0;
+    while (n < aArrSize)
+    {
+        apRetArr[n] = lpCur;
+        lpEnd = strchr(lpCur, aDelimiter);
+        if (!lpEnd) {
+            break;
+        }
+
+        apLenArr[n] = lpEnd - lpCur;
+        ++n;
+
+        // next pos
+        lpCur = lpEnd + 1;
+    }
+    return n;
+}
+
 
 int str_delimiter2(char* apSrc, char** apRetArr, int aArrSize, const char* aDelimiter)
 {
@@ -406,6 +432,34 @@ int str_delimiter2(char* apSrc, char** apRetArr, int aArrSize, const char* aDeli
 
         *lpCur = 0x00;
         lpCur += dlen;
+    }
+    return n;
+}
+
+
+int str_delimiter2_ex(const char* apSrc, char** apRetArr, int aArrSize, int* apLenArr, int aLenArrSize, const char* aDelimiter)
+{
+    if (!apSrc) {
+        return 0;
+    }
+
+    char* lpCur = (char*)apSrc;
+    char* lpEnd;
+    int n = 0;
+    int dlen = strlen(aDelimiter);
+    while (n < aArrSize)
+    {
+        apRetArr[n] = lpCur;
+        lpEnd = strstr(lpCur, aDelimiter);
+        if (!lpEnd) {
+            break;
+        }
+
+        apLenArr[n] = lpEnd - lpCur;
+        ++n;
+
+        // next pos
+        lpCur = lpEnd + dlen;
     }
     return n;
 }
