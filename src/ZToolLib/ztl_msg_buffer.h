@@ -8,6 +8,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct ztl_msg_buffer_st ztl_msg_buffer_t;
 
 struct ztl_msg_buffer_st
@@ -23,13 +27,9 @@ struct ztl_msg_buffer_st
     uint32_t    refcount;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 ztl_msg_buffer_t* zlt_msg_buffer_alloc(uint32_t size);
 
-ztl_msg_buffer_t zlt_msg_buffer_free(ztl_msg_buffer_t* zmb);
+void zlt_msg_buffer_free(ztl_msg_buffer_t* zmb);
 
 uint32_t ztl_mb_addref(ztl_msg_buffer_t* zmb);
 

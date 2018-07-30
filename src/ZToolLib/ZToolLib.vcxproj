@@ -293,7 +293,7 @@
     <ClInclude Include="ztl_atomic.h" />
     <ClInclude Include="lockfreequeue.h" />
     <ClInclude Include="ztl_logger.h" />
-    <ClInclude Include="ztl_message_buffer.h" />
+    <ClInclude Include="ztl_msg_buffer.h" />
     <ClInclude Include="ztl_network.h" />
     <ClInclude Include="ztl_palloc.h" />
     <ClInclude Include="ztl_producer_consumer.h" />
@@ -313,6 +313,7 @@
     <ClInclude Include="ztl_win32_stacktrace.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="siphash.c" />
     <ClCompile Include="ztl_aes.c" />
     <ClCompile Include="ztl_crypt.c" />
     <ClCompile Include="ztl_array.c" />
@@ -333,7 +334,7 @@
     <ClCompile Include="ztl_malloc.c" />
     <ClCompile Include="ztl_mempool.c" />
     <ClCompile Include="ztl_logger.c" />
-    <ClCompile Include="ztl_message_buffer.c" />
+    <ClCompile Include="ztl_msg_buffer.c" />
     <ClCompile Include="ztl_network.c" />
     <ClCompile Include="ztl_palloc.c" />
     <ClCompile Include="ztl_producer_consumer.c" />
