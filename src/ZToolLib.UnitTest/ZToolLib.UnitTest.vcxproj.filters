@@ -42,7 +42,7 @@
     <ClCompile Include="test_ztl_times.c">
       <Filter>TestCases</Filter>
     </ClCompile>
-    <ClCompile Include="test_ztl_encrypt.c">
+    <ClCompile Include="test_ztl_crypt.c">
       <Filter>TestCases</Filter>
     </ClCompile>
     <ClCompile Include="test_ztl_dict.c">
