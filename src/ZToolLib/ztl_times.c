@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 #ifdef _MSC_VER
 #include <Windows.h>
@@ -76,9 +77,12 @@ int64_t get_timestamp()
 #ifdef _MSC_VER
     return (int64_t)GetTickCount();
 #else
-    timespec lTime;
-    clock_gettime(CLOCK_REALTIME, &lTime);
-    int64_t lRet = (uint64_t)lTime.tv_sec * 1000 + lTime.tv_nsec / 1000000;
+    //struct timespec lTime;
+    //clock_gettime(CLOCK_REALTIME, &lTime);
+    //int64_t lRet = (uint64_t)lTime.tv_sec * 1000 + lTime.tv_nsec / 1000000;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    int64_t lRet = (uint64_t)tv.tv_sec * 1000 + tv.tv_nsec / 1000;
     return lRet;
 #endif//_MSC_VER
 }

@@ -7,6 +7,7 @@
 #include "ztl_utils.h"
 #include "ztl_mempool.h"
 #include "ztl_atomic.h"
+#include "ztl_threads.h"
 
 
 #ifdef __linux__
@@ -157,7 +158,7 @@ static int epoll_stop(ztl_evloop_t* evloop)
 
 static int epoll_add(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS reqevents)
 {
-    epoll_event reqev;
+    struct epoll_event reqev;
     reqev.events = EPOLLONESHOT | EPOLLET;
     reqev.data.u64 = 0; /* avoid valgrind warning */
     reqev.data.ptr = conn;
@@ -182,7 +183,7 @@ static int epoll_add(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS
 
 static int epoll_del(ztl_evloop_t* evloop, ztl_connection_t* conn)
 {
-    epoll_event reqev;
+    struct epoll_event reqev;
     reqev.events = EPOLLIN | EPOLLOUT;
     reqev.data.u64 = 0; /* avoid valgrind warning */
     reqev.data.ptr = conn;
@@ -197,7 +198,7 @@ static int epoll_poll(ztl_evloop_t* evloop, int timeoutMS)
 {
     int numev;
     const int max_nevent = 64;
-    epoll_event epevents[max_nevent];
+    struct epoll_event epevents[max_nevent];
     epoll_ctx_t* lpctx = ZTL_THE_CTX(evloop);
 
     numev = epoll_wait(lpctx->epfd, epevents, max_nevent, timeoutMS);
@@ -220,11 +221,11 @@ static int epoll_poll(ztl_evloop_t* evloop, int timeoutMS)
 
     for (int i = 0; i < numev; ++i)
     {
-        epoll_event* lpee = epevents + i;
+        struct epoll_event* lpee = epevents + i;
         ztl_connection_t* conn = (ztl_connection_t*)lpee->data.ptr;
 
         // process in event
-        if (lpee->events & (EPOLLOIN | EPOLLERR | EPOLLHUP))
+        if (lpee->events & (EPOLLIN | EPOLLERR | EPOLLHUP))
         {
             conn->handler(evloop, conn, ZEV_POLLIN);
         }
@@ -233,7 +234,7 @@ static int epoll_poll(ztl_evloop_t* evloop, int timeoutMS)
         if (conn->disconncted)
         {
             //logdebug("[%u] the connection is broken for %d\n", get_thread_id(), conn->sockfd);
-            ztl_free_connection(ev, conn);
+            ztl_free_connection(evloop, conn);
             continue;
         }
 

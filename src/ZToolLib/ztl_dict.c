@@ -12,6 +12,7 @@
 #include <WinSock2.h>
 #else
 #include <unistd.h>
+#include <limits.h>
 #endif
 
 #define zfree   free

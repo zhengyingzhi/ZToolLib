@@ -29,7 +29,7 @@ static ztl_event_ops_t* _ztl_event_ops_provider(ZTL_EV_POLL_METHOD method)
     else
         lpops = &selectops;
 #elif defined(__linux__)
-    if (method == ZPM_Epoll)
+    if (method == ZTL_EPM_Epoll)
         lpops = &epollops;
     else
         lpops = &epollops;
