@@ -20,7 +20,7 @@ void Test_ztl_base64(ZuTest* zt)
     ztl_base64_decode(b64, bLen64, rawdata, &rawlen);
 
     ZuAssertTrue(zt, strlen(key) == rawlen);
-    ZuAssertTrue(zt, strcmp(key, rawdata) == 0);
+    ZuAssertTrue(zt, strncmp(key, rawdata, rawlen) == 0);
 
     // base64 encode a struct
     struct testStruct

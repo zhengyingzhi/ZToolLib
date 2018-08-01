@@ -260,7 +260,19 @@ void ZuSuiteRun(ZuSuite* testSuite)
     {
         ZuTest* testCase = testSuite->list[i];
         ZuTestRun(testCase);
-        if (testCase->failed) { testSuite->failCount += 1; }
+        if (testCase->failed)
+        {
+#ifdef ZTL_DEBUG
+            fprintf(stderr, "[TEST] %-32s failed\n", testCase->name);
+#endif
+            testSuite->failCount += 1;
+        }
+        else
+        {
+#ifdef ZTL_DEBUG
+            fprintf(stderr, "[TEST] %-32s ok\n", testCase->name);
+#endif
+        }
     }
 }
 

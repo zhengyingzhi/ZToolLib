@@ -121,3 +121,11 @@ void Test_ztl_strdelimiter(ZuTest* zt)
     ZuAssertStrEquals(zt, " ",      lpArr[2]);
     ZuAssertStrEquals(zt, "20:32:10", lpArr[5]);
 }
+
+void Test_ztl_ztlncpy(ZuTest* zt)
+{
+    int64_t data;
+    void* psrc = (void*)0x01;
+    ztlncpy(&data, &psrc, sizeof(void*));
+    ZuAssertTrue(zt, 1 == data);
+}

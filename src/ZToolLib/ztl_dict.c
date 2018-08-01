@@ -17,7 +17,7 @@
 
 #define zfree   free
 #define zmalloc malloc
-static ztl_inline void* zcalloc(sz) {
+static ztl_inline void* zcalloc(unsigned int sz) {
     return calloc(1, sz);
 }
 

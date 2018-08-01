@@ -82,7 +82,7 @@ int64_t get_timestamp()
     //int64_t lRet = (uint64_t)lTime.tv_sec * 1000 + lTime.tv_nsec / 1000000;
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    int64_t lRet = (uint64_t)tv.tv_sec * 1000 + tv.tv_nsec / 1000;
+    int64_t lRet = (uint64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
     return lRet;
 #endif//_MSC_VER
 }

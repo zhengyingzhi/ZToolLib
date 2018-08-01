@@ -37,21 +37,33 @@ lfqueue_t* lfqueue_create(uint32_t quesize, uint32_t elemsize);
 lfqueue_t* lfqueue_create2(uint32_t quesize, uint32_t elemsize, void* memory, int64_t memsize);
 
 
-/* @brief  push an element at the tail of the queue
+/* @brief  push an element pointer at the tail of the queue
  * @param  the element to insert in the queue
  * @return 0 if the element was inserted in the queue. -1 if the queue was full
  * @note   element size was specified when 'lfqueue_create',
  *         and the queue internally will do a copy of pdata (no keep the pointer)
+ *         use 'lfqueue_pop' to retrieve elem
  */
-int lfqueue_push(lfqueue_t* que, void* pdata);
+int lfqueue_push(lfqueue_t* que, const void* pdata);
+
+/* @brief  push the data of the pointer at the tail of the queue
+ * @note   use 'lfqueue_pop_value' to retrieve data
+ */
+int lfqueue_push_value(lfqueue_t* que, const void* pdata);
+
 
 /* @brief  pop an element from the queue at the head
- * @param  the element to pop out
+ * @param  the element to pop out, output the elem's address
  * @return 0 if the element was successfully extracted from the queue. 
  *          -1 if the queue was empty
  * @note   must reserve at least elemsize space for pdata
  */
-int lfqueue_pop(lfqueue_t* que, void* pdata);
+int lfqueue_pop(lfqueue_t* que, void** ppdata);
+
+/* @brief  pop the data to the pointer from the head of the queue
+ */
+int lfqueue_pop_value(lfqueue_t* que, void* pdata);
+
 
 /* @return the queue size which might be bogus value
  */

@@ -46,7 +46,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _zpc_work_thread(void* arg)
     {
         pcdata.handler = NULL;
 
-        if (lfqueue_pop(zpc->queue, &pcdata) != 0) {
+        if (lfqueue_pop_value(zpc->queue, &pcdata) != 0) {
             ztl_simevent_timedwait(zpc->event, 1);
             continue;
         }
@@ -98,7 +98,7 @@ int ztl_pc_post(ztl_producer_consumer_t* zpc, ztl_pc_handler_pt handler, void* d
     pcdata.data    = data;
     pcdata.handler = handler;
 
-    if (0 != lfqueue_push(zpc->queue, &pcdata)) {
+    if (0 != lfqueue_push_value(zpc->queue, &pcdata)) {
         return -1;
     }
 
