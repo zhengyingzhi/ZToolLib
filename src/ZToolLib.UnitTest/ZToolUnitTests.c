@@ -5,6 +5,7 @@
 
 
 extern void Test_ztl_array(ZuTest*);
+extern void Test_ztl_array2(ZuTest* zt);
 extern void Test_ztl_util(ZuTest*);
 extern void Test_ztl_ll2string(ZuTest*);
 extern void Test_ztl_atoin(ZuTest*);
@@ -16,6 +17,9 @@ extern void Test_ztl_ztlncpy(ZuTest* zt);
 extern void Test_ztl_buffer(ZuTest* zt);
 extern void Test_ztl_buffer2(ZuTest* zt);
 extern void Test_ztl_linklist(ZuTest* zt);
+
+extern void Test_ztl_map(ZuTest* zt);
+extern void Test_ztl_map_ex(ZuTest* zt);
 
 extern void Test_lfqueue0(ZuTest* zt);
 extern void Test_lfqueue(ZuTest* zt);
@@ -36,6 +40,7 @@ void RunAllTests(void)
 
 
     SUITE_ADD_TEST(suite, Test_ztl_array);
+    SUITE_ADD_TEST(suite, Test_ztl_array2);
     SUITE_ADD_TEST(suite, Test_ztl_util);
     SUITE_ADD_TEST(suite, Test_ztl_ll2string);
     SUITE_ADD_TEST(suite, Test_ztl_atoin);
@@ -47,6 +52,9 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_buffer);
     SUITE_ADD_TEST(suite, Test_ztl_buffer2);
     SUITE_ADD_TEST(suite, Test_ztl_linklist);
+
+    SUITE_ADD_TEST(suite, Test_ztl_map);
+    SUITE_ADD_TEST(suite, Test_ztl_map_ex);
 
     SUITE_ADD_TEST(suite, Test_lfqueue0);
     SUITE_ADD_TEST(suite, Test_lfqueue);

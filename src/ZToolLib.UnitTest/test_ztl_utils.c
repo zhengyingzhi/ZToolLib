@@ -110,22 +110,27 @@ void Test_ztl_parse_size(ZuTest* zt)
 void Test_ztl_strdelimiter(ZuTest* zt)
 {
     char  lBuffer[128] = "MD001|000001| || 100.0|20:32:10";
-    char* lpArr[16];
+    zditem_t lArr[16] = { 0 };
     int   lArrSize = 16;
 
-    lArrSize = str_delimiter(lBuffer, lpArr, lArrSize, '|');
+    lArrSize = str_delimiter_ex(lBuffer, strlen(lBuffer) - 2, lArr, lArrSize, "|");
     ZuAssertIntEquals(zt, 6, lArrSize);
 
-    ZuAssertStrEquals(zt, "MD001",  lpArr[0]);
-    ZuAssertStrEquals(zt, "000001", lpArr[1]);
-    ZuAssertStrEquals(zt, " ",      lpArr[2]);
-    ZuAssertStrEquals(zt, "20:32:10", lpArr[5]);
+    ZuAssertTrue(zt, 0 == strncmp("MD001", lArr[0].ptr, lArr[0].len));
+    ZuAssertTrue(zt, 0 == strncmp("000001", lArr[1].ptr, lArr[1].len));
+    ZuAssertTrue(zt, 0 == strncmp(" ", lArr[2].ptr, lArr[2].len));
+    ZuAssertTrue(zt, 0 == strncmp("20:32:10", lArr[5].ptr, lArr[5].len));
 }
 
 void Test_ztl_ztlncpy(ZuTest* zt)
 {
-    int64_t data;
+    int64_t data = 0;
     void* psrc = (void*)0x01;
     ztlncpy(&data, &psrc, sizeof(void*));
     ZuAssertTrue(zt, 1 == data);
+
+    struct st_data {
+        int val;
+        void* ptr;
+    };
 }

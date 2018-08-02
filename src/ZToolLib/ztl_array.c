@@ -192,7 +192,15 @@ bool ztl_array_push_back(ztl_array_t* arr, void* elem)
         *(uint8_t*)(lpaddr + 6) = *(uint8_t*)((char*)elem + 6);
         break;
     case 8:
-        *(uint8_t*)lpaddr = *(uint8_t*)elem;
+        *(uint64_t*)lpaddr = *(uint64_t*)elem;
+        break;
+    case 12:
+        *(uint64_t*)lpaddr = *(uint64_t*)elem;
+        *(uint32_t*)(lpaddr + 8)= *(uint32_t*)((char*)elem + 8);
+        break;
+    case 16:
+        *(uint64_t*)lpaddr = *(uint64_t*)elem;
+        *(uint64_t*)(lpaddr + 8) = *(uint64_t*)((char*)elem + 8);
         break;
     default:
         memcpy(lpaddr, elem, arr->eltsize);

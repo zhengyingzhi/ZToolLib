@@ -298,6 +298,7 @@
     <ClCompile Include="test_ztl_linklist.c" />
     <ClCompile Include="test_ztl_array.c" />
     <ClCompile Include="test_ztl_buffer.c" />
+    <ClCompile Include="test_ztl_map.c" />
     <ClCompile Include="test_ztl_pc.c" />
     <ClCompile Include="test_ztl_times.c" />
     <ClCompile Include="test_ztl_utils.c" />
