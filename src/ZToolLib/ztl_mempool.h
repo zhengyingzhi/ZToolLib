@@ -32,6 +32,9 @@ void ztl_mp_free(ztl_mempool_t* mp, void* paddr);
 /// get entity size
 int ztl_mp_entity_size(ztl_mempool_t* mp);
 
+/// get how many entity alloced currently
+int ztl_mp_exposed(ztl_mempool_t* mp);
+
 #ifdef __cplusplus
 }
 #endif//__cplusplus

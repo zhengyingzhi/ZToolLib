@@ -19,18 +19,23 @@
    This version was modified by Salvatore Sanfilippo <antirez@gmail.com>
    in the following ways:
 
-   1. Hard-code 2-4 rounds in the hope the compiler can optimize it more
+   1. We use SipHash 1-2. This is not believed to be as strong as the
+      suggested 2-4 variant, but AFAIK there are not trivial attacks
+      against this reduced-rounds version, and it runs at the same speed
+      as Murmurhash2 that we used previously, why the 2-4 variant slowed
+      down Redis by a 4% figure more or less.
+   2. Hard-code rounds in the hope the compiler can optimize it more
       in this raw from. Anyway we always want the standard 2-4 variant.
-   2. Modify the prototype and implementation so that the function directly
+   3. Modify the prototype and implementation so that the function directly
       returns an uint64_t value, the hash itself, instead of receiving an
       output buffer. This also means that the output size is set to 8 bytes
       and the 16 bytes output code handling was removed.
-   3. Provide a case insensitive variant to be used when hashing strings that
+   4. Provide a case insensitive variant to be used when hashing strings that
       must be considered identical by the hash table regardless of the case.
       If we don't have directly a case insensitive hash function, we need to
       perform a text transformation in some temporary buffer, which is costly.
-   4. Remove debugging code.
-   5. Modified the original test.c file to be a stand-alone function testing
+   5. Remove debugging code.
+   6. Modified the original test.c file to be a stand-alone function testing
       the function in the new form (returing an uint64_t) using just the
       relevant test vector.
  */
@@ -39,6 +44,23 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+
+/* Fast tolower() alike function that does not care about locale
+ * but just returns a-z insetad of A-Z. */
+int siptlw(int c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c+('a'-'A');
+    } else {
+        return c;
+    }
+}
+
+/* Test of the CPU is Little Endian and supports not aligned accesses.
+ * Two interesting conditions to speedup the function that happen to be
+ * in most of x86 servers. */
+#if defined(__X86_64__) || defined(__x86_64__) || defined (__i386__)
+#define UNALIGNED_LE_CPU
+#endif
 
 #define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
 
@@ -52,21 +74,25 @@
     U32TO8_LE((p), (uint32_t)((v)));                                           \
     U32TO8_LE((p) + 4, (uint32_t)((v) >> 32));
 
+#ifdef UNALIGNED_LE_CPU
+#define U8TO64_LE(p) (*((uint64_t*)(p)))
+#else
 #define U8TO64_LE(p)                                                           \
     (((uint64_t)((p)[0])) | ((uint64_t)((p)[1]) << 8) |                        \
      ((uint64_t)((p)[2]) << 16) | ((uint64_t)((p)[3]) << 24) |                 \
      ((uint64_t)((p)[4]) << 32) | ((uint64_t)((p)[5]) << 40) |                 \
      ((uint64_t)((p)[6]) << 48) | ((uint64_t)((p)[7]) << 56))
+#endif
 
 #define U8TO64_LE_NOCASE(p)                                                    \
-    (((uint64_t)(tolower((p)[0]))) |                                           \
-     ((uint64_t)(tolower((p)[1])) << 8) |                                      \
-     ((uint64_t)(tolower((p)[2])) << 16) |                                     \
-     ((uint64_t)(tolower((p)[3])) << 24) |                                     \
-     ((uint64_t)(tolower((p)[4])) << 32) |                                              \
-     ((uint64_t)(tolower((p)[5])) << 40) |                                              \
-     ((uint64_t)(tolower((p)[6])) << 48) |                                              \
-     ((uint64_t)(tolower((p)[7])) << 56))
+    (((uint64_t)(siptlw((p)[0]))) |                                           \
+     ((uint64_t)(siptlw((p)[1])) << 8) |                                      \
+     ((uint64_t)(siptlw((p)[2])) << 16) |                                     \
+     ((uint64_t)(siptlw((p)[3])) << 24) |                                     \
+     ((uint64_t)(siptlw((p)[4])) << 32) |                                              \
+     ((uint64_t)(siptlw((p)[5])) << 40) |                                              \
+     ((uint64_t)(siptlw((p)[6])) << 48) |                                              \
+     ((uint64_t)(siptlw((p)[7])) << 56))
 
 #define SIPROUND                                                               \
     do {                                                                       \
@@ -87,8 +113,10 @@
     } while (0)
 
 uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k) {
+#ifndef UNALIGNED_LE_CPU
     uint64_t hash;
     uint8_t *out = (uint8_t*) &hash;
+#endif
     uint64_t v0 = 0x736f6d6570736575ULL;
     uint64_t v1 = 0x646f72616e646f6dULL;
     uint64_t v2 = 0x6c7967656e657261ULL;
@@ -109,18 +137,17 @@ uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k) {
         v3 ^= m;
 
         SIPROUND;
-        SIPROUND;
 
         v0 ^= m;
     }
 
     switch (left) {
-    case 7: b |= ((uint64_t)in[6]) << 48;
-    case 6: b |= ((uint64_t)in[5]) << 40;
-    case 5: b |= ((uint64_t)in[4]) << 32;
-    case 4: b |= ((uint64_t)in[3]) << 24;
-    case 3: b |= ((uint64_t)in[2]) << 16;
-    case 2: b |= ((uint64_t)in[1]) << 8;
+    case 7: b |= ((uint64_t)in[6]) << 48; /* fall-thru */
+    case 6: b |= ((uint64_t)in[5]) << 40; /* fall-thru */
+    case 5: b |= ((uint64_t)in[4]) << 32; /* fall-thru */
+    case 4: b |= ((uint64_t)in[3]) << 24; /* fall-thru */
+    case 3: b |= ((uint64_t)in[2]) << 16; /* fall-thru */
+    case 2: b |= ((uint64_t)in[1]) << 8; /* fall-thru */
     case 1: b |= ((uint64_t)in[0]); break;
     case 0: break;
     }
@@ -128,26 +155,28 @@ uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k) {
     v3 ^= b;
 
     SIPROUND;
-    SIPROUND;
 
     v0 ^= b;
     v2 ^= 0xff;
 
     SIPROUND;
     SIPROUND;
-    SIPROUND;
-    SIPROUND;
 
     b = v0 ^ v1 ^ v2 ^ v3;
+#ifndef UNALIGNED_LE_CPU
     U64TO8_LE(out, b);
-
     return hash;
+#else
+    return b;
+#endif
 }
 
 uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k)
 {
+#ifndef UNALIGNED_LE_CPU
     uint64_t hash;
     uint8_t *out = (uint8_t*) &hash;
+#endif
     uint64_t v0 = 0x736f6d6570736575ULL;
     uint64_t v1 = 0x646f72616e646f6dULL;
     uint64_t v2 = 0x6c7967656e657261ULL;
@@ -168,25 +197,23 @@ uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k)
         v3 ^= m;
 
         SIPROUND;
-        SIPROUND;
 
         v0 ^= m;
     }
 
     switch (left) {
-    case 7: b |= ((uint64_t)tolower(in[6])) << 48;
-    case 6: b |= ((uint64_t)tolower(in[5])) << 40;
-    case 5: b |= ((uint64_t)tolower(in[4])) << 32;
-    case 4: b |= ((uint64_t)tolower(in[3])) << 24;
-    case 3: b |= ((uint64_t)tolower(in[2])) << 16;
-    case 2: b |= ((uint64_t)tolower(in[1])) << 8;
-    case 1: b |= ((uint64_t)tolower(in[0])); break;
+    case 7: b |= ((uint64_t)siptlw(in[6])) << 48; /* fall-thru */
+    case 6: b |= ((uint64_t)siptlw(in[5])) << 40; /* fall-thru */
+    case 5: b |= ((uint64_t)siptlw(in[4])) << 32; /* fall-thru */
+    case 4: b |= ((uint64_t)siptlw(in[3])) << 24; /* fall-thru */
+    case 3: b |= ((uint64_t)siptlw(in[2])) << 16; /* fall-thru */
+    case 2: b |= ((uint64_t)siptlw(in[1])) << 8; /* fall-thru */
+    case 1: b |= ((uint64_t)siptlw(in[0])); break;
     case 0: break;
     }
 
     v3 ^= b;
 
-    SIPROUND;
     SIPROUND;
 
     v0 ^= b;
@@ -194,13 +221,14 @@ uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k)
 
     SIPROUND;
     SIPROUND;
-    SIPROUND;
-    SIPROUND;
 
     b = v0 ^ v1 ^ v2 ^ v3;
+#ifndef UNALIGNED_LE_CPU
     U64TO8_LE(out, b);
-
     return hash;
+#else
+    return b;
+#endif
 }
 
 
@@ -277,7 +305,11 @@ const uint8_t vectors_sip64[64][8] = {
 
 
 /* Test siphash using a test vector. Returns 0 if the function passed
- * all the tests, otherwise 1 is returned. */
+ * all the tests, otherwise 1 is returned.
+ *
+ * IMPORTANT: The test vector is for SipHash 2-4. Before running
+ * the test revert back the siphash() function to 2-4 rounds since
+ * now it uses 1-2 rounds. */
 int siphash_test(void) {
     uint8_t in[64], k[16];
     int i;

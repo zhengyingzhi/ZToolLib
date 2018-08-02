@@ -10,9 +10,11 @@
 
 #ifdef _MSC_VER
 #include <WinSock2.h>
+#define strcasecmp _stricmp
 #else
 #include <unistd.h>
 #include <limits.h>
+#include <strings.h>
 #endif
 
 #define zfree   free
@@ -1086,3 +1088,42 @@ void dictGetStats(char *buf, size_t bufsize, dict *d) {
     /* Make sure there is a NULL term at the end. */
     if (orig_bufsize) orig_buf[orig_bufsize - 1] = '\0';
 }
+
+
+//////////////////////////////////////////////////////////////////////////
+uint64_t dictSdsHash(const void *key) {
+    //return dictGenHashFunction((unsigned char*)key, sdslen((char*)key));
+    return dictGenHashFunction((unsigned char*)key, *(int*)((char*)key - sizeof(uint32_t)));
+}
+
+uint64_t dictSdsCaseHash(const void *key) {
+    //return dictGenCaseHashFunction((unsigned char*)key, sdslen((char*)key));
+    return dictGenCaseHashFunction((unsigned char*)key, *(int*)((char*)key - sizeof(uint32_t)));
+}
+
+int _ztl_strcastcmp(void* priv, const void* s1, const void* s2) {
+    (void)priv;
+    return strcasecmp((const char*)s1, (const char*)s2);
+}
+int _ztl_strcmp(void* priv, const void* s1, const void* s2) {
+    (void)priv;
+    return strcmp((const char*)s1, (const char*)s2);
+}
+
+dictType commHashDictType = {
+    dictSdsHash,
+    NULL,
+    NULL,
+    _ztl_strcastcmp,
+    NULL,
+    NULL
+};
+
+dictType commCaseHashDictType = {
+    dictSdsCaseHash,
+    NULL,
+    NULL,
+    _ztl_strcmp,
+    NULL,
+    NULL 
+};

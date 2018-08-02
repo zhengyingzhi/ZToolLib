@@ -38,6 +38,7 @@ struct ztl_mempool_st
     uint32_t nEntitySize;
     uint32_t nInitCount;
     int32_t  AutoExpand;
+    uint32_t ExposedCount;
     volatile uint32_t   nFreeCount;
     volatile uint32_t   freelock;
     volatile uint32_t   alloclock;
@@ -84,6 +85,7 @@ ztl_mempool_t* ztl_mp_create(int nEntitySize, int nInitCount, int aAutoExpand)
     {
         mp->nEntitySize = ztl_align(nEntitySize, 8);
         mp->nInitCount  = nInitCount;
+        mp->ExposedCount= 0;
         mp->nFreeCount  = 0;
         mp->AutoExpand  = aAutoExpand;
 
@@ -155,6 +157,8 @@ char* ztl_mp_alloc(ztl_mempool_t* mp)
         ++theblock->curindex;
     }
 
+    ztl_atomic_add(&mp->ExposedCount, 1);
+
     ztl_unlock(&mp->alloclock);
 
     pnode->nextbuf = NULL;
@@ -175,10 +179,16 @@ void ztl_mp_free(ztl_mempool_t* mp, void* paddr)
     mp->freenodes = pnode;
     ztl_unlock(&mp->freelock);
 
+    ztl_atomic_dec(&mp->ExposedCount, 1);
     ztl_atomic_add(&mp->nFreeCount, 1);
 }
 
 int ztl_mp_entity_size(ztl_mempool_t* mp)
 {
     return mp->nEntitySize;
+}
+
+int ztl_mp_exposed(ztl_mempool_t* mp)
+{
+    return mp->ExposedCount;
 }

@@ -164,6 +164,12 @@ extern dictType dictTypeHeapStringCopyKey;
 extern dictType dictTypeHeapStrings;
 extern dictType dictTypeHeapStringCopyKeyValue;
 
+
+/* Some common use dictType */
+extern dictType commHashDictType;
+extern dictType commCaseHashDictType;
+
+
 #ifdef __cplusplus
 }
 #endif
