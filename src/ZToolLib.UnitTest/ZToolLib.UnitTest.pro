@@ -52,5 +52,6 @@ SOURCES += ZToolUnitTests.c \
     test_ztl_map.c \
     test_ztl_mempool.c \
     test_ztl_pc.c \
+    test_ztl_shm.c \
     test_ztl_times.c \
     test_ztl_utils.c 

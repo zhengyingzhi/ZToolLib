@@ -429,7 +429,7 @@ int ztl_shm_truncate(ztl_shm_t* zshm, uint64_t aSize)
         return -3;
     }
 
-    if (aSize > lFileSize)
+    if (zshm->m_OpenOrCreate != ztl_open_only && aSize > lFileSize)
     {
         if (!set_file_pointer_ex(zshm->m_Handle, lFileSize, NULL, 0)) {
             return -4;
@@ -447,7 +447,7 @@ int ztl_shm_truncate(ztl_shm_t* zshm, uint64_t aSize)
             return -6;
         }
 
-        if (!set_end_of_file(zshm->m_Handle)) {
+        if (zshm->m_OpenOrCreate != ztl_open_only && !set_end_of_file(zshm->m_Handle)) {
             return -7;
         }
     }
@@ -507,8 +507,13 @@ int ztl_shm_map_region(ztl_shm_t* zshm, int aAccessMode)
     lInteger.QuadPart = zshm->m_Size;
 
     HANDLE lpMapping = OpenFileMappingA(lMapAccess, FALSE, zshm->m_Name);
-    if (NULL == lpMapping && zshm->m_OpenOrCreate != ztl_open_only) {
-        lpMapping = CreateFileMappingA(zshm->m_Handle, NULL, lProtMode, lInteger.HighPart, lInteger.LowPart, zshm->m_Name);
+    if (NULL == lpMapping)
+    {
+        // open a read-only file mapview
+        if (zshm->m_OpenOrCreate == ztl_open_or_create ||
+            (zshm->m_OpenOrCreate == ztl_open_only && (zshm->m_ShmType == ZTL_SHT_FILEMAP || zshm->m_ShmType == ZTL_SHT_SHMOPEN))) {
+            lpMapping = CreateFileMappingA(zshm->m_Handle, NULL, lProtMode, lInteger.HighPart, lInteger.LowPart, zshm->m_Name);
+        }
     }
 
     if (NULL == lpMapping)

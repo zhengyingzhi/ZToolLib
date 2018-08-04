@@ -235,6 +235,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+      <AdditionalOptions>/NODEFAULTLIB:"libcmt.lib" %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">
@@ -301,6 +304,7 @@
     <ClCompile Include="test_ztl_map.c" />
     <ClCompile Include="test_ztl_mempool.c" />
     <ClCompile Include="test_ztl_pc.c" />
+    <ClCompile Include="test_ztl_shm.c" />
     <ClCompile Include="test_ztl_times.c" />
     <ClCompile Include="test_ztl_utils.c" />
     <ClCompile Include="ZToolUnitTests.c" />
