@@ -65,7 +65,7 @@ void* ztl_dlist_tail(ztl_dlist_t* dl)
 {
     if (dl->size == 0)
         return NULL;
-    return ztl_queue_last(ztl_queue_head(&dl->que), ztl_dlnode_t, link);
+    return ztl_queue_data(ztl_queue_last(&dl->que), ztl_dlnode_t, link);
 }
 
 int ztl_dlist_size(ztl_dlist_t* dl)
