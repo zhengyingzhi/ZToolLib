@@ -150,6 +150,9 @@
     <ClInclude Include="ztl_msg_buffer.h">
       <Filter>Containers</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_dlist.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -264,6 +267,9 @@
       <Filter>Hash</Filter>
     </ClCompile>
     <ClCompile Include="ztl_msg_buffer.c">
+      <Filter>Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_dlist.c">
       <Filter>Containers</Filter>
     </ClCompile>
   </ItemGroup>

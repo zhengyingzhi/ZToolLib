@@ -9,6 +9,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct ztl_buffer_st ztl_buffer_t;
 
 typedef void*(*ztl_buffer_alloc_pt)(void* ctx, void* oldaddr, uint32_t size);
@@ -25,9 +29,6 @@ struct ztl_buffer_st
     void*                   ctx;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* int a buffer */
 void ztl_buffer_init(ztl_buffer_t* zbuf);
