@@ -10,6 +10,7 @@ typedef HMODULE ztl_hlib_t;
 
 #else
 
+#include <errno.h>
 #include <dlfcn.h>
 typedef void* ztl_hlib_t;
 
@@ -67,7 +68,8 @@ void dso_unload(dso_handle_t* dso)
 {
 	if (dso)
 	{
-		unload_lib(dso->hlib);
+        if (dso->hlib)
+            unload_lib(dso->hlib);
 		free(dso);
 	}
 }
@@ -81,15 +83,29 @@ void* dos_symbol(dso_handle_t* dso, const char* symname)
 	return NULL;
 }
 
-void apr_dso_error(dso_handle_t* dso, char* buf, int bufsize)
+int apr_dso_error(dso_handle_t* dso, char* buf, int bufsize)
 {
 	if (dso)
 	{
-#ifdef _WIN32
-		strncpy(buf, "unkonwn error", bufsize);
+#if defined WINDOWS || WIN32
+        LPVOID lpMsgBuf;
+        DWORD dw = GetLastError();
+        FormatMessageA(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+            NULL,
+            dw,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            (LPSTR)&lpMsgBuf,
+            0, NULL);
+        strncpy(buf, lpMsgBuf, bufsize - 1);
+        return dw;
 #else
+        extern int errno;
+        int ret = errno;
 		strncpy(buf, dlerror(), bufsize);
+        return ret;
 #endif//_WIN32
 	}
+    return -1;
 }
 

@@ -21,6 +21,7 @@ void test_lfqueue();
 
 void test_base64();
 
+void test_read_file();
 
 int main(int argc, char* argv[])
 {
@@ -32,7 +33,9 @@ int main(int argc, char* argv[])
 
     //test_lfqueue();
 
-	test_base64();
+	//test_base64();
+
+    test_read_file();
 
     return 0;
 }
@@ -93,8 +96,8 @@ void test_lfqueue()
     ldata.arg = (void*)4;
     lfqueue_push(que, &ldata);
 
-    lfqueue_pop(que, &ldata);
-    lfqueue_pop(que, &ldata);
+    lfqueue_pop(que, (void**)&ldata);
+    lfqueue_pop(que, (void**)&ldata);
 
 }
 
@@ -140,4 +143,37 @@ void test_base64()
 	lpRaw = zpassword_change(lRawString);
 
 	assert(strcmp(lpRaw, "111111") == 0);
+}
+
+void test_read_file()
+{
+    typedef struct {
+        char name[16];
+        int  age;
+        double score;
+    }test_rf_st;
+
+    const char* filename = "test_read.txt";
+    char buf1[16] = "";
+    read_file_content(filename, buf1, sizeof(buf1) - 1);
+    printf("read: %s\n", buf1);
+
+    const char* filename2 = "test_read_ex.txt";
+    test_rf_st rfst = { 0 };
+    strcpy(rfst.name, "yizhe");
+    rfst.age = 29;
+    rfst.score = 7.6;
+    FILE* fp = fopen(filename2, "w+");
+    if (fp)
+    {
+        fwrite(&rfst, sizeof(rfst), 1, fp);
+        fclose(fp);
+    }
+
+    test_rf_st rfst1 = { 0 };
+    read_file_content(filename2, (char*)&rfst1, 18);
+
+    test_rf_st rfst2 = { 0 };
+    read_file_content(filename2, (char*)&rfst2, sizeof(rfst2));
+    printf("rfst2: %s,%d,%lf\n", rfst2.name, rfst2.age, rfst2.score);
 }

@@ -109,7 +109,7 @@ int ztl_evloop_create(ztl_evloop_t** pevloop, ZTL_EV_POLL_METHOD method)
         evloop->pipeconn[1].sockfd = INVALID_SOCKET;
 
         // create connection objects pool
-        ztl_event_timer_init(&evloop->timers);
+        ztl_evtimer_init(&evloop->timers);
         evloop->conn_mp = ztl_mp_create(sizeof(ztl_connection_t), ZTL_DEF_CONN_INIT_COUNT, 1);
     }
 
@@ -277,18 +277,18 @@ sockhandle_t ztl_evloop_get_listenfd(ztl_evloop_t* evloop)
 //////////////////////////////////////////////////////////////////////////
 int ztl_evloop_addtimer(ztl_evloop_t* evloop, ztl_rbtree_node_t* timer, uint32_t timeoutMS)
 {
-    ztl_event_timer_add(&evloop->timers, timer, timeoutMS, 0);
+    ztl_evtimer_add(&evloop->timers, timer, timeoutMS, 0);
     return 0;
 }
 
 int ztl_evloop_deltimer(ztl_evloop_t* evloop, ztl_rbtree_node_t* timer)
 {
-    ztl_event_timer_del(&evloop->timers, timer);
+    ztl_evtimer_del(&evloop->timers, timer);
     return 0;
 }
 
 int ztl_evloop_expire(ztl_evloop_t* evloop)
 {
-    ztl_event_timer_expire(&evloop->timers, evloop->timepoint, evloop->timer_handler, evloop);
+    ztl_evtimer_expire(&evloop->timers, evloop->timepoint, evloop->timer_handler, evloop);
     return 0;
 }

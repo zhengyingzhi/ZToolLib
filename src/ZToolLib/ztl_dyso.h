@@ -18,7 +18,7 @@ void dso_unload(dso_handle_t* dso);
 void* dos_symbol(dso_handle_t* dso, const char* symname);
 
 /// report more information when a DSO function fails.
-void apr_dso_error(dso_handle_t* dso, char* buf, int bufsize);
+int apr_dso_error(dso_handle_t* dso, char* buf, int bufsize);
 
 #ifdef __cplusplus
 }

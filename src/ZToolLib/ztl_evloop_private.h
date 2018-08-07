@@ -32,7 +32,7 @@ struct ztl_evloop_st
     ztl_ev_handler_t    handler;
     void*               userdata;
 
-    ztl_event_timer_t   timers;
+    ztl_evtimer_t       timers;
     ztl_evt_handler_pt  timer_handler;
     uint64_t            timepoint;
 

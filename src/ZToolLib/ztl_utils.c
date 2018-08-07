@@ -423,13 +423,27 @@ int str_delimiter_ex(const char* src, int length, zditem_t* retArr, int arrSize,
 }
 
 
-int read_number_from_file(const char* apfile)
+int read_number_from_file(const char* filename)
 {
     int lValue = -1;
     FILE* fp;
-    fp = fopen(apfile, "r");
+    fp = fopen(filename, "r");
     if (fp) {
         fscanf(fp, "%d", &lValue);
+        fclose(fp);
+    }
+    return lValue;
+}
+
+
+int read_file_content(const char* filename, char buf[], int size)
+{
+    int lValue = -1;
+    FILE* fp;
+    fp = fopen(filename, "r");
+    if (fp)
+    {
+        lValue = (int)fread(buf, size, 1, fp);
         fclose(fp);
     }
     return lValue;
