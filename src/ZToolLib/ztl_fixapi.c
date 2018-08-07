@@ -143,7 +143,7 @@ int ztl_fixapi_set_double(ztl_fixapi_t* fixapi, fixkey_t id, const double val)
 int ztl_fixapi_set_str(ztl_fixapi_t* fixapi, fixkey_t id, const char* val, int len)
 {
     if (len <=0)
-        len = strlen(val);
+        len = (int)strlen(val);
 
     if (_avail_size(fixapi) <= (uint32_t)len) {
         return -1;
@@ -230,7 +230,7 @@ int ztl_fixapi_get_str(ztl_fixapi_t* fixapi, fixkey_t id, char* pval, int* plen)
     char* pdata = (char*)_ztl_find_data(fixapi, id);
     if (pdata)
     {
-        *plen = strlen(pdata);
+        *plen = (int)strlen(pdata);
         memcpy(pval, pdata, *plen);
         return 0;
     }

@@ -62,9 +62,103 @@ void Test_ztl_linklist(ZuTest* zt)
 
 void Test_ztl_dlist(ZuTest* zt)
 {
+    int rv;
     ztl_dlist_t* dl;
     dl = ztl_dlist_create(4);
 
+    void* head, *tail;
+    for (int i = 1; i <= 6; ++i)
+    {
+        rv = ztl_dlist_insert_tail(dl, (void*)i);
+        ZuAssertTrue(zt, rv == 0);
+        ZuAssertTrue(zt, ztl_dlist_size(dl) == i);
+
+        head = ztl_dlist_head(dl);
+        tail = ztl_dlist_tail(dl);
+        ZuAssertTrue(zt, (void*)1 == head);
+        ZuAssertTrue(zt, (void*)i == tail);
+    }
+
+    // search
+    ZuAssertTrue(zt, ztl_dlist_have(dl, (void*)1));
+    ZuAssertTrue(zt, ztl_dlist_have(dl, (void*)4));
+
+    // pop front and back
+    head = ztl_dlist_pop(dl);
+    ZuAssertTrue(zt, (void*)1 == head);
+    tail = ztl_dlist_pop_back(dl);
+    ZuAssertTrue(zt, (void*)6 == tail);
+
+    // traverse dlist from head or tail
+    int iv = 2;
+    ztl_dlist_iterator_t* iter;
+    iter = ztl_dlist_iter_new(dl, ZTL_DLSTART_HEAD);
+    do 
+    {
+        void* data = ztl_dlist_next(dl, iter);
+        if (data == NULL) {
+            --iv;
+            break;
+        }
+
+        ZuAssertTrue(zt, (void*)iv == data);
+        ++iv;
+    } while (true);
+    ztl_dlist_iter_del(dl, iter);
+    ZuAssertTrue(zt, iv == 5);
+
+    iv = 5;
+    iter = ztl_dlist_iter_new(dl, ZTL_DLSTART_TAIL);
+    do
+    {
+        void* data = ztl_dlist_next(dl, iter);
+        if (data == NULL) {
+            ++iv;
+            break;
+        }
+
+        ZuAssertTrue(zt, (void*)iv == data);
+        --iv;
+    } while (true);
+    ztl_dlist_iter_del(dl, iter);
+    ZuAssertTrue(zt, iv == 2);
+
+    // erase by iterator
+    bool lrmoved = false;
+    iter = ztl_dlist_iter_new(dl, ZTL_DLSTART_HEAD);
+    do
+    {
+        void* data = ztl_dlist_next(dl, iter);
+        if (data == NULL) {
+            ++iv;
+            break;
+        }
+
+        if (data == (void*)3) {
+            ZuAssertTrue(zt, true == ztl_dlist_have(dl, (void*)3));
+            ztl_dlist_erase(dl, iter);
+            ZuAssertTrue(zt, false == ztl_dlist_have(dl, (void*)3));
+        }
+        else if (data == (void*)5) {
+            ZuAssertTrue(zt, true == ztl_dlist_have(dl, (void*)5));
+            ztl_dlist_erase(dl, iter);
+            ZuAssertTrue(zt, false == ztl_dlist_have(dl, (void*)5));
+        }
+    } while (true);
+    ztl_dlist_iter_del(dl, iter);
+    ZuAssertTrue(zt, ztl_dlist_size(dl) == 2);
+
+    // direction remove expect data
+    void* actual;
+    actual = ztl_dlist_remove(dl, (void*)4, NULL);
+    ZuAssertTrue(zt, actual == (void*)4);
+    actual = ztl_dlist_remove(dl, (void*)4, NULL);
+    ZuAssertTrue(zt, actual == NULL);
+
+    // the left data
+    ZuAssertTrue(zt, ztl_dlist_size(dl) == 1);
+    ZuAssertTrue(zt, ztl_dlist_head(dl) == (void*)2);
+    ZuAssertTrue(zt, ztl_dlist_tail(dl) == (void*)2);
 
     ztl_dlist_release(dl);
 }

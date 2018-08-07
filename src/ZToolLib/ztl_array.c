@@ -258,3 +258,36 @@ void* ztl_array_push_n(ztl_array_t* arr, uint32_t n)
 
     return elt;
 }
+
+
+static inline int _ztl_array_cmp(void* expect, void* actual)
+{
+    if (expect == actual) {
+        return 0;
+    }
+    else if (expect < actual) {
+        return -1;
+    }
+    else {
+        return 1;
+    }
+}
+
+void* ztl_array_find(ztl_array_t* arr, void* expect, int(*cmp)(void* expect, void* actual))
+{
+    if (!cmp)
+        cmp = _ztl_array_cmp;
+
+    void* actual;
+
+    for (uint32_t x = 0; x < ztl_array_size(arr); ++x)
+    {
+        actual = ztl_array_at(arr, x);
+        if (cmp(expect, actual) == 0) {
+            break;
+        }
+        actual = NULL;
+    }
+
+    return actual;
+}

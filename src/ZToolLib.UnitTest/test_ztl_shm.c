@@ -56,7 +56,7 @@ void Test_ztl_shm_readwrite(ZuTest* zt)
 
     // write data to shared memory
     char lDataBuf[1024] = "hello world\r\nthis is a demo shm test";
-    int  lLength = strlen(lDataBuf);
+    int  lLength = (int)strlen(lDataBuf);
     memcpy(lpAddr, lDataBuf, lLength);
 
     ztl_shm_release(zshm);

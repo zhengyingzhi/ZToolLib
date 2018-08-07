@@ -113,7 +113,7 @@ void Test_ztl_strdelimiter(ZuTest* zt)
     zditem_t lArr[16] = { 0 };
     int   lArrSize = 16;
 
-    lArrSize = str_delimiter_ex(lBuffer, strlen(lBuffer) - 2, lArr, lArrSize, "|");
+    lArrSize = str_delimiter_ex(lBuffer, (int)strlen(lBuffer) - 2, lArr, lArrSize, "|");
     ZuAssertIntEquals(zt, 6, lArrSize);
 
     ZuAssertTrue(zt, 0 == strncmp("MD001", lArr[0].ptr, lArr[0].len));

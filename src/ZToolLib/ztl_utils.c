@@ -388,7 +388,7 @@ int str_delimiter(char* apSrc, char** apRetArr, int aArrSize, char aDelimiter)
 
 int str_delimiter_ex(const char* src, int length, zditem_t* retArr, int arrSize, const char* sep)
 {
-    int lenSep = strlen(sep);
+    int lenSep = (int)strlen(sep);
     int index = 0;
     const char* sentinel = src + length;
     while (index < arrSize)

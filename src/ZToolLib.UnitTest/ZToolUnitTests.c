@@ -17,6 +17,7 @@ extern void Test_ztl_ztlncpy(ZuTest* zt);
 extern void Test_ztl_buffer(ZuTest* zt);
 extern void Test_ztl_buffer2(ZuTest* zt);
 extern void Test_ztl_linklist(ZuTest* zt);
+extern void Test_ztl_dlist(ZuTest* zt);
 
 extern void Test_ztl_mempool(ZuTest* zt);
 extern void Test_ztl_shm_readonly(ZuTest* zt);
@@ -56,6 +57,7 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_buffer);
     SUITE_ADD_TEST(suite, Test_ztl_buffer2);
     SUITE_ADD_TEST(suite, Test_ztl_linklist);
+    SUITE_ADD_TEST(suite, Test_ztl_dlist);
     SUITE_ADD_TEST(suite, Test_ztl_mempool);
     SUITE_ADD_TEST(suite, Test_ztl_shm_readonly);
     SUITE_ADD_TEST(suite, Test_ztl_shm_readwrite);

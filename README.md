@@ -37,7 +37,9 @@
     
     ztl_hash        常用的hash算法
     
-    ztl_linklist    从nginx来的双向链表实现
+    ztl_linklist    从nginx来的双向链表实现，将自己的结点包含ztl_queue_t的变量成员，即可进行链表操作，方便自己管理内存
+    
+    ztl_dlist       一个简单易用的双向链表，链表结点由内部自动分配/释放
     
     ztl_locks       基于原子操作的自旋锁/读写锁实现
     

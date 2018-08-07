@@ -52,6 +52,20 @@ void Test_ztl_array(ZuTest* zt)
     ztl_array_release(lArray);
 }
 
+static int test_array_cmp(void* expect, void* actual)
+{
+    int* pe = (int*)expect;
+    int* pa = (int*)actual;
+    if (*pe == *pa) {
+        return 0;
+    }
+    else if (*pe < *pa) {
+        return -1;
+    }
+    else {
+        return 1;
+    }
+}
 
 void Test_ztl_array2(ZuTest* zt)
 {
@@ -62,23 +76,31 @@ void Test_ztl_array2(ZuTest* zt)
     lArray = ztl_array_create(pool, 1024, sizeof(uint64_t));
 
     uint64_t lCount = 65536;
-    for (uint64_t x = 0; x < lCount; ++x)
+    for (uint64_t x = 1; x <= lCount; ++x)
     {
         uint64_t* lpValue = ztl_array_push(lArray);
         ZuAssertTrue(zt, lpValue != NULL);
 
         *lpValue = x;
-        ZuAssertTrue(zt, (x + 1) == ztl_array_size(lArray));
+        ZuAssertTrue(zt, x == ztl_array_size(lArray));
     }
 
-    for (uint64_t x = 0; x < lCount; ++x)
+    uint64_t* lpData = (uint64_t*)ztl_array_data(lArray);
+    ZuAssertTrue(zt, NULL != lpData);
+    ZuAssertTrue(zt, 1 == *lpData);
+    ZuAssertTrue(zt, 2 == *(lpData + 1));
+
+    for (uint64_t x = 1; x <= lCount; ++x)
     {
-        uint64_t* lpValue = (uint64_t*)ztl_array_at(lArray, x);
+        uint64_t* lpValue = (uint64_t*)ztl_array_at(lArray, x - 1);
         ZuAssertTrue(zt, x == *lpValue);
+
+        if (x % 33 == 0)
+            ZuAssertTrue(zt, ztl_array_find(lArray, &x, test_array_cmp) != NULL);
     }
 
     uint64_t* lpValue = ztl_array_pop_back(lArray);
-    ZuAssertTrue(zt, (lCount - 1) == *lpValue);
+    ZuAssertTrue(zt, (lCount) == *lpValue);
     ZuAssertTrue(zt, (lCount - 1) == ztl_array_size(lArray));
 
     uint64_t lNewVal = 11;

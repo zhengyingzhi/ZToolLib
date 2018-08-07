@@ -166,7 +166,7 @@ ZTL_INLINE int ztl_bitset_tostring(ztl_bitset_t* bits, char* buf, uint32_t size)
     }
 
     buf[size - 1] = 0;
-    return strlen(buf);
+    return (int)strlen(buf);
 }
 
 /* release the object */
