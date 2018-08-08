@@ -45,10 +45,11 @@ HEADERS += lockfreequeue.h \
     ztl_buffer.h \
     ztl_common.h \
     ztl_config.h \
+    ztl_crc.h \
     ztl_crypt.h \
     ztl_dict.h \
     ztl_dyso.h \
-    ztl_event_timer.h \
+    ztl_evtimer.h \
     ztl_evloop.h \
     ztl_evloop_private.h \
     ztl_fixapi.h \
@@ -58,6 +59,8 @@ HEADERS += lockfreequeue.h \
     ztl_logger.h \
     ztl_malloc.h \
     ztl_map.h \
+    ztl_md5.h \
+    ztl_memcpy.h \
     ztl_mempool.h \
     ztl_msg_buffer.h \
     ztl_network.h \
@@ -65,6 +68,7 @@ HEADERS += lockfreequeue.h \
     ztl_producer_consumer.h \
     ztl_protocol.h \
     ztl_rbtree.h \
+    ztl_sha1.h \
     ztl_shm.h \
     ztl_simple_event.h \
     ztl_threadpool.h \
@@ -80,10 +84,11 @@ SOURCES += lockfreequeue.c \
     ztl_base64.c \
     ztl_buffer.c \
     ztl_config.c \
+    ztl_crc.c \
     ztl_crypt.c \
     ztl_dict.c \
     ztl_dyso.c \
-    ztl_event_timer.c \
+    ztl_evtimer.c \
     ztl_evloop.c \
     ztl_evloop_epoll.c \
     ztl_evloop_private.c \
@@ -93,12 +98,15 @@ SOURCES += lockfreequeue.c \
     ztl_logger.c \
     ztl_malloc.c \
     ztl_map.c \
+    ztl_md5.c \
+    ztl_memcpy.c \
     ztl_mempool.c \
     ztl_msg_buffer.c \
     ztl_network.c \
     ztl_palloc.c \
     ztl_producer_consumer.c \
     ztl_rbtree.c \
+    ztl_sha1.c \
     ztl_shm.c \
     ztl_simple_event.c \
     siphash.c \

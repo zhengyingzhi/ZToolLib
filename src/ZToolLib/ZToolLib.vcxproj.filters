@@ -153,6 +153,18 @@
     <ClInclude Include="ztl_evtimer.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_md5.h">
+      <Filter>Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_sha1.h">
+      <Filter>Hash</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_memcpy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ztl_crc.h">
+      <Filter>Hash</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -271,6 +283,18 @@
     </ClCompile>
     <ClCompile Include="ztl_evtimer.c">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_md5.c">
+      <Filter>Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_sha1.c">
+      <Filter>Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_memcpy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_crc.c">
+      <Filter>Hash</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

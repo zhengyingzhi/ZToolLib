@@ -274,6 +274,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ztl_aes.h" />
+    <ClInclude Include="ztl_crc.h" />
     <ClInclude Include="ztl_crypt.h" />
     <ClInclude Include="ztl_array.h" />
     <ClInclude Include="ztl_bitset.h" />
@@ -290,6 +291,8 @@
     <ClInclude Include="ztl_hash.h" />
     <ClInclude Include="ztl_linklist.h" />
     <ClInclude Include="ztl_malloc.h" />
+    <ClInclude Include="ztl_md5.h" />
+    <ClInclude Include="ztl_memcpy.h" />
     <ClInclude Include="ztl_mempool.h" />
     <ClInclude Include="ztl_atomic.h" />
     <ClInclude Include="lockfreequeue.h" />
@@ -299,6 +302,7 @@
     <ClInclude Include="ztl_palloc.h" />
     <ClInclude Include="ztl_producer_consumer.h" />
     <ClInclude Include="ztl_protocol.h" />
+    <ClInclude Include="ztl_sha1.h" />
     <ClInclude Include="ztl_shm.h" />
     <ClInclude Include="ztl_simple_event.h" />
     <ClInclude Include="ztl_tcp_server.h" />
@@ -316,6 +320,7 @@
   <ItemGroup>
     <ClCompile Include="siphash.c" />
     <ClCompile Include="ztl_aes.c" />
+    <ClCompile Include="ztl_crc.c" />
     <ClCompile Include="ztl_crypt.c" />
     <ClCompile Include="ztl_array.c" />
     <ClCompile Include="ztl_buffer.c" />
@@ -334,12 +339,15 @@
     <ClCompile Include="ztl_hash.c" />
     <ClCompile Include="ztl_linklist.c" />
     <ClCompile Include="ztl_malloc.c" />
+    <ClCompile Include="ztl_md5.c" />
+    <ClCompile Include="ztl_memcpy.c" />
     <ClCompile Include="ztl_mempool.c" />
     <ClCompile Include="ztl_logger.c" />
     <ClCompile Include="ztl_msg_buffer.c" />
     <ClCompile Include="ztl_network.c" />
     <ClCompile Include="ztl_palloc.c" />
     <ClCompile Include="ztl_producer_consumer.c" />
+    <ClCompile Include="ztl_sha1.c" />
     <ClCompile Include="ztl_shm.c" />
     <ClCompile Include="ztl_simple_event.c" />
     <ClCompile Include="ztl_tcp_server.c" />
