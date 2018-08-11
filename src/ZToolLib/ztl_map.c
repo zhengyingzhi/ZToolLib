@@ -172,3 +172,56 @@ ztl_rbtree_node_t* ztl_map_find_ex(ztl_map_t* pmap, uint64_t key)
 
     return NULL;
 }
+
+
+//////////////////////////////////////////////////////////////////////////
+struct ztl_set_st
+{
+    ztl_map_t* map;
+};
+
+ztl_set_t* ztl_set_create(uint32_t reserve)
+{
+    ztl_set_t* pset;
+    pset = (ztl_set_t*)malloc(sizeof(ztl_set_t));
+
+    pset->map = ztl_map_create(reserve);
+
+    return pset;
+}
+
+void ztl_set_release(ztl_set_t* pset)
+{
+    if (pset) 
+    {
+        if (pset->map)
+            ztl_map_release(pset->map);
+        free(pset);
+    }
+}
+
+void ztl_set_clear(ztl_set_t* pset)
+{
+    ztl_map_clear(pset->map);
+}
+
+int ztl_set_size(ztl_set_t* pset)
+{
+    return ztl_map_size(pset->map);
+}
+
+bool ztl_set_empty(ztl_set_t* pset)
+{
+    return ztl_map_empty(pset->map);
+}
+
+int ztl_set_add(ztl_set_t* pset, uint64_t key)
+{
+    return ztl_map_add(pset->map, key, 0);
+}
+
+int ztl_set_del(ztl_set_t* pset, uint64_t key)
+{
+    return ztl_map_del(pset->map, key) != NULL ? 0 : -1;
+}
+

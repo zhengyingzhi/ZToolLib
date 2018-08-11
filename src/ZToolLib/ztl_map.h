@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-
+/* a simple map implement by C */
 typedef struct ztl_map_st ztl_map_t;
 
 /* init a map which is implemented by rb-tree,
@@ -65,6 +65,25 @@ ztl_rbtree_node_t* ztl_map_del_ex(ztl_map_t* pmap, uint64_t key);
 /* find the value by the key
 */
 ztl_rbtree_node_t* ztl_map_find_ex(ztl_map_t* pmap, uint64_t key);
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
+typedef struct ztl_set_st ztl_set_t;
+ztl_set_t* ztl_set_create(uint32_t reserve);
+
+void ztl_set_release(ztl_set_t* pset);
+
+void ztl_set_clear(ztl_set_t* pset);
+
+int ztl_set_size(ztl_set_t* pset);
+
+bool ztl_set_empty(ztl_set_t* pset);
+
+int ztl_set_add(ztl_set_t* pset, uint64_t key);
+
+int ztl_set_del(ztl_set_t* pset, uint64_t key);
 
 
 #ifdef __cplusplus
