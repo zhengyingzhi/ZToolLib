@@ -16,6 +16,7 @@ struct ztl_map_st
     ztl_mempool_t*      mp;
     int32_t             size;
     uint32_t            reserve;
+    uint32_t            accessIndex;
 };
 
 
@@ -140,6 +141,45 @@ void* ztl_map_find(ztl_map_t* pmap, uint64_t key)
     return NULL;
 }
 
+static void _ztl_rbtree_traverse(ztl_map_t* pmap, ztl_rbtree_t *tree, ztl_rbtree_node_t* cur, 
+    ztl_map_access_pt func, void* context1, int context2)
+{
+    if (cur && cur != tree->sentinel)
+    {
+        if (func)
+            func(pmap, context1, context2, cur->key, cur->udata);
+
+        if (cur->left)
+            _ztl_rbtree_traverse(pmap, tree, cur->left, func, context1, context2);
+        if (cur->right)
+            _ztl_rbtree_traverse(pmap, tree, cur->right, func, context1, context2);
+    }
+}
+
+void ztl_map_traverse(ztl_map_t* pmap, ztl_map_access_pt func, void* context1, int context2)
+{
+    ztl_rbtree_node_t* cur = pmap->rbtree.root;
+    _ztl_rbtree_traverse(pmap, &pmap->rbtree, cur, func, context1, context2);
+}
+
+static void _ztl_map_array_push(ztl_map_t* pmap, void* context1, int context2, uint64_t key, void* value)
+{
+    if (pmap->accessIndex >= context2) {
+        return;
+    }
+    ztl_map_pair_t* kv_arr, *pkv;
+    kv_arr = (ztl_map_pair_t*)context1;
+    pkv = &(kv_arr[pmap->accessIndex++]);
+    pkv->Key = key;
+    pkv->Value = value;
+}
+
+void ztl_map_to_array(ztl_map_t* pmap, ztl_map_pair_t* kvArray, int arrSize)
+{
+    pmap->accessIndex = 0;
+    ztl_rbtree_node_t* cur = pmap->rbtree.root;
+    ztl_map_traverse(pmap, _ztl_map_array_push, kvArray, arrSize);
+}
 
 
 int ztl_map_add_ex(ztl_map_t* pmap, uint64_t key, ztl_rbtree_node_t* nodeval)

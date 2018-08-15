@@ -17,7 +17,7 @@ typedef void* ztl_hlib_t;
 #endif//_MSC_VER
 
 /// exported types
-struct dso_handle_st
+struct ztl_dso_handle_st
 {
     char path[256];
     ztl_hlib_t hlib;
@@ -53,9 +53,9 @@ static void* symbol_lib(ztl_hlib_t hlib, const char* symname)
 #endif//_MSC_VER
 
 
-dso_handle_t* dso_load(const char* libpath)
+ztl_dso_handle_t* ztl_dso_load(const char* libpath)
 {
-    dso_handle_t* dso = (dso_handle_t*)malloc(sizeof(dso_handle_t));
+    ztl_dso_handle_t* dso = (ztl_dso_handle_t*)malloc(sizeof(ztl_dso_handle_t));
     if (dso != NULL)
     {
         dso->hlib = load_lib(libpath);
@@ -64,7 +64,7 @@ dso_handle_t* dso_load(const char* libpath)
     return dso;
 }
 
-void dso_unload(dso_handle_t* dso)
+void ztl_dso_unload(ztl_dso_handle_t* dso)
 {
     if (dso)
     {
@@ -74,7 +74,7 @@ void dso_unload(dso_handle_t* dso)
     }
 }
 
-void* dos_symbol(dso_handle_t* dso, const char* symname)
+void* ztl_dso_symbol(ztl_dso_handle_t* dso, const char* symname)
 {
     if (dso != NULL && dso->hlib != NULL)
     {
@@ -83,7 +83,7 @@ void* dos_symbol(dso_handle_t* dso, const char* symname)
     return NULL;
 }
 
-int apr_dso_error(dso_handle_t* dso, char* buf, int bufsize)
+int ztl_dso_error(ztl_dso_handle_t* dso, char* buf, int bufsize)
 {
 	if (dso)
 	{

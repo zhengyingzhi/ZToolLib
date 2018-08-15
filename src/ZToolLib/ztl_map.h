@@ -10,8 +10,16 @@
 extern "C" {
 #endif
 
+typedef struct
+{
+    int64_t     Key;
+    void*       Value;
+}ztl_map_pair_t;
+
 /* a simple map implement by C */
 typedef struct ztl_map_st ztl_map_t;
+
+typedef void (*ztl_map_access_pt)(ztl_map_t* pmap, void* context1, int context2, uint64_t key, void* value);
 
 /* init a map which is implemented by rb-tree,
  * if reserve > 0, it will internally pre-reserve memory space
@@ -49,6 +57,13 @@ void* ztl_map_del(ztl_map_t* pmap, uint64_t key);
  */
 void* ztl_map_find(ztl_map_t* pmap, uint64_t key);
 
+/* traverse all elems of the map
+ */
+void ztl_map_traverse(ztl_map_t* pmap, ztl_map_access_pt func, void* context1, int context2);
+
+/* convert to array
+ */
+void ztl_map_to_array(ztl_map_t* pmap, ztl_map_pair_t* kvArray, int arrSize);
 
 //////////////////////////////////////////////////////////////////////////
 /* for quick insert key-value into map by using rbtree_node             */

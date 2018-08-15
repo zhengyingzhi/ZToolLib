@@ -3,6 +3,28 @@
 #include <ZToolLib/ztl_unit_test.h>
 #include <ZToolLib/ztl_map.h>
 
+static void _ztl_map_access(ztl_map_t* pmap, void* context1, int32_t context2, uint64_t key, void* value)
+{
+    int* arr = (int*)context1;
+    int* pi = (int*)value;
+    int size = context2;
+
+    printf("%d ", *pi);
+    bool found = false;
+    for (int i = 0; i < 10; ++i)
+    {
+        if (arr[i] == *pi)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        fprintf(stderr, "_ztl_map_access failed");
+    }
+}
+
 void Test_ztl_map(ZuTest* zt)
 {
     ztl_map_t* lmap;
@@ -21,6 +43,17 @@ void Test_ztl_map(ZuTest* zt)
     }
 
     ZuAssertTrue(zt, 10 == ztl_map_size(lmap));
+
+    ztl_map_traverse(lmap, _ztl_map_access, arr, 10);
+    printf("\n");
+
+    ztl_map_pair_t arr2[10] = { 0 };
+    ztl_map_to_array(lmap, arr2, 8);
+    for (int i = 0; i < 8; ++i)
+    {
+        printf("%d ", *(int*)arr2[i].Value);
+    }
+    printf("\n");
 
     // find elem
     int* pi;
