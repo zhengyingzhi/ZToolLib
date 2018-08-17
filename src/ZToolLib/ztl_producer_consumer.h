@@ -18,7 +18,7 @@ typedef struct ztl_producer_consumer_st ztl_producer_consumer_t;
 /* the consumer callback handler,
  * @note, if return false, the consumer thread would break
  */
-typedef bool(*ztl_pc_handler_pt)(ztl_producer_consumer_t* zpc, void* data);
+typedef bool(*ztl_pc_handler_pt)(ztl_producer_consumer_t* zpc, int64_t type, void* data);
 
 
 /* create a producer and consumer model object within a fixed-size queue
@@ -32,7 +32,7 @@ int ztl_pc_start(ztl_producer_consumer_t* zpc);
 /* post data to consumer thread
  * @return -1 if queue is full, -2 if the not start working thread
  */
-int ztl_pc_post(ztl_producer_consumer_t* zpc, ztl_pc_handler_pt handler, void* data);
+int ztl_pc_post(ztl_producer_consumer_t* zpc, ztl_pc_handler_pt handler, int64_t type, void* data);
 
 /* stop working thread
  */

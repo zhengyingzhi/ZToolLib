@@ -12,7 +12,8 @@
 typedef struct 
 {
     ztl_pc_handler_pt handler;
-    void* data;
+    void*   data;
+    int64_t type;
 }ztl_pc_data_t;
 
 struct ztl_producer_consumer_st
@@ -26,9 +27,10 @@ struct ztl_producer_consumer_st
     volatile uint32_t   count;
 };
 
-static bool _ztl_pc_handler_empty(ztl_producer_consumer_t* zpc, void* data)
+static bool _ztl_pc_handler_empty(ztl_producer_consumer_t* zpc, int64_t type, void* data)
 {
     (void)zpc;
+    (void)type;
     (void)data;
     return false;
 }
@@ -53,7 +55,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _zpc_work_thread(void* arg)
         ztl_atomic_dec(&zpc->count, 1);
 
         if (pcdata.handler &&
-            !pcdata.handler(zpc, pcdata.data)) {
+            !pcdata.handler(zpc, pcdata.type, pcdata.data)) {
             break;
         }
     }
@@ -87,7 +89,7 @@ int ztl_pc_start(ztl_producer_consumer_t* zpc)
     return 0;
 }
 
-int ztl_pc_post(ztl_producer_consumer_t* zpc, ztl_pc_handler_pt handler, void* data)
+int ztl_pc_post(ztl_producer_consumer_t* zpc, ztl_pc_handler_pt handler, int64_t type, void* data)
 {
     if (!zpc->started) {
         return -2;
@@ -95,8 +97,9 @@ int ztl_pc_post(ztl_producer_consumer_t* zpc, ztl_pc_handler_pt handler, void* d
 
     uint32_t        count;
     ztl_pc_data_t   pcdata;
-    pcdata.data    = data;
     pcdata.handler = handler;
+    pcdata.type = type;
+    pcdata.data    = data;
 
     if (0 != lfqueue_push_value(zpc->queue, &pcdata)) {
         return -1;
@@ -116,7 +119,7 @@ int ztl_pc_stop(ztl_producer_consumer_t* zpc)
         return -1;
     }
 
-    ztl_pc_post(zpc, _ztl_pc_handler_empty, NULL);
+    ztl_pc_post(zpc, _ztl_pc_handler_empty, 0, NULL);
 
     zpc->started = 0;
 

@@ -9,7 +9,7 @@
 static uint32_t gCounter = 0;
 static uint64_t gSum = 0;
 
-static bool _Test_pc_consumer_entry(ztl_producer_consumer_t* zpc, void* arg);
+static bool _Test_pc_consumer_entry(ztl_producer_consumer_t* zpc, int64_t type, void* arg);
 
 void Test_ztl_producer_consumer(ZuTest* zt)
 {
@@ -27,7 +27,7 @@ void Test_ztl_producer_consumer(ZuTest* zt)
         int* pi = (int*)malloc(sizeof(int));
         *pi = i;
 
-        while (0 != ztl_pc_post(zpc, _Test_pc_consumer_entry, pi))
+        while (0 != ztl_pc_post(zpc, _Test_pc_consumer_entry, i, pi))
             sleepms(0);
 
         lCounter++;
@@ -41,7 +41,7 @@ void Test_ztl_producer_consumer(ZuTest* zt)
 }
 
 
-static bool _Test_pc_consumer_entry(ztl_producer_consumer_t* zpc, void* arg)
+static bool _Test_pc_consumer_entry(ztl_producer_consumer_t* zpc, int64_t type, void* arg)
 {
     int* pi = (int*)arg;
     gCounter++;

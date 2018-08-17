@@ -128,6 +128,16 @@ union zudi {
             *(uint64_t*)dst     = *(uint64_t*)src;                  \
             *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
             break;                                                  \
+        case 20:                                                    \
+            *(uint64_t*)dst     = *(uint64_t*)src;                  \
+            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
+            *(uint32_t*)((char*)dst+16) = *(uint32_t*)((char*)src+16);\
+            break;                                                  \
+        case 24:                                                    \
+            *(uint64_t*)dst     = *(uint64_t*)src;                  \
+            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
+            *(uint64_t*)((char*)dst+16) = *(uint64_t*)((char*)src+16);\
+            break;                                                  \
         default:                                                    \
             memcpy(dst,src,size);                                   \
         }                                                           \
