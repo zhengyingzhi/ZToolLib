@@ -291,3 +291,55 @@ void* ztl_array_find(ztl_array_t* arr, void* expect, int(*cmp)(void* expect, voi
 
     return actual;
 }
+
+void ztl_array_remove_value(ztl_array_t* arr, void* value, int(*cmp)(void* value, void* actual))
+{
+    if (!cmp)
+        cmp = _ztl_array_cmp;
+
+    uint32_t arrsize;
+    char* actual;
+
+    arrsize = ztl_array_size(arr);
+
+    for (uint32_t x = 0; x < arrsize; ++x)
+    {
+        actual = ztl_array_at(arr, x);
+        if (cmp(value, actual) == 0)
+        {
+            if (x != arrsize - 1)
+            {
+                memmove(actual, actual + arr->eltsize, (arrsize - x - 1) * arr->eltsize);
+            }
+
+            arr->nelts -= 1;
+            break;
+        }
+        actual = NULL;
+    }
+}
+
+void* ztl_array_remove_index(ztl_array_t* arr, uint32_t index)
+{
+    char* addr = NULL;
+    if (index > arr->nelts) {
+        return NULL;
+    }
+
+    addr = ztl_array_at(arr, index);
+    if (index != arr->nelts - 1)
+    {
+        memmove(addr, addr + arr->eltsize, (arr->nelts - index - 1) * arr->eltsize);
+    }
+
+    arr->nelts -= 1;
+    return arr;
+}
+
+void ztl_array_foreach(ztl_array_t* arr, void* udata, void(*fn)(void* value, void* udata))
+{
+    for (uint32_t x = 0; x < ztl_array_size(arr); ++x)
+    {
+        fn(ztl_array_at(arr, x), udata);
+    }
+}
