@@ -57,6 +57,9 @@
     <ClCompile Include="test_ztl_shm.c">
       <Filter>TestCases</Filter>
     </ClCompile>
+    <ClCompile Include="test_cJSON.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ZToolUnitTest.h">

@@ -31,6 +31,9 @@
     <Filter Include="Hash">
       <UniqueIdentifier>{e510a505-129d-49b3-88eb-a70a31630b9a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="cJSON">
+      <UniqueIdentifier>{98e7ac3e-6886-4f7d-9526-0ddcbf7ac73c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -165,6 +168,9 @@
     <ClInclude Include="ztl_crc.h">
       <Filter>Hash</Filter>
     </ClInclude>
+    <ClInclude Include="cJSON.h">
+      <Filter>cJSON</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -295,6 +301,9 @@
     </ClCompile>
     <ClCompile Include="ztl_crc.c">
       <Filter>Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="cJSON.c">
+      <Filter>cJSON</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

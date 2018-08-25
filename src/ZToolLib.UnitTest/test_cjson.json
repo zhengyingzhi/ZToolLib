@@ -1,0 +1,33 @@
+[
+    {
+        "AccountID": "030303",
+        "Password": "12121",
+        "TradeAPI": "ctp",
+        "TradeAddr": "tcp://180.168.146.187:10000",
+        "BrokerID": "9999",
+        "MdAPI": "ctp",
+        "MdAddr": "tcp://180.168.146.187:10010",
+        "Strategy" : [
+            {"name": "EMAStrategy.dll", "symbol": "rb1809,ni1811"},
+            {"name": "BollStrategy.dll", "symbol": "rb1809,au1901"}
+        ]
+    },
+
+    {
+        "AccountID": "000100000009",
+        "Password": "111",
+        "TradeAPI": "xspeed",
+        "TradeAddr": "tcp://203.187.171.250:10910",
+        "MdAPI": "xspeed",
+        "MdAddr": "tcp://203.187.171.250:10915",
+        "Strategy" : [
+            {"name": "EMAStrategy.dll", "symbol": "m1809"}
+        ]
+    },
+
+    {
+        "a":"1", 
+        "b":2.0, 
+        "c": [11, 22, 33]
+    }
+]

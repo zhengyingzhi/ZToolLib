@@ -273,6 +273,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cJSON.h" />
     <ClInclude Include="ztl_aes.h" />
     <ClInclude Include="ztl_crc.h" />
     <ClInclude Include="ztl_crypt.h" />
@@ -318,6 +319,7 @@
     <ClInclude Include="ztl_win32_stacktrace.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cJSON.c" />
     <ClCompile Include="siphash.c" />
     <ClCompile Include="ztl_aes.c" />
     <ClCompile Include="ztl_crc.c" />
