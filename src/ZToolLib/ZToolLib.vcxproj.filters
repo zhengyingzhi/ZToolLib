@@ -171,6 +171,9 @@
     <ClInclude Include="cJSON.h">
       <Filter>cJSON</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_event_dispatcher.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -304,6 +307,9 @@
     </ClCompile>
     <ClCompile Include="cJSON.c">
       <Filter>cJSON</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_event_dispatcher.c">
+      <Filter>Threads</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

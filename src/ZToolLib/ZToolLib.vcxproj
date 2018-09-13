@@ -285,6 +285,7 @@
     <ClInclude Include="ztl_dict.h" />
     <ClInclude Include="ztl_dlist.h" />
     <ClInclude Include="ztl_dyso.h" />
+    <ClInclude Include="ztl_event_dispatcher.h" />
     <ClInclude Include="ztl_evloop.h" />
     <ClInclude Include="ztl_evloop_private.h" />
     <ClInclude Include="ztl_evtimer.h" />
@@ -331,6 +332,7 @@
     <ClCompile Include="ztl_dlist.c" />
     <ClCompile Include="ztl_dyso.c" />
     <ClCompile Include="lockfreequeue.c" />
+    <ClCompile Include="ztl_event_dispatcher.c" />
     <ClCompile Include="ztl_evloop.c" />
     <ClCompile Include="ztl_evloop_epoll.c" />
     <ClCompile Include="ztl_evloop_iocp.c" />
