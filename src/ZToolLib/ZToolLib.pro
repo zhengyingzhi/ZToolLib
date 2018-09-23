@@ -42,6 +42,7 @@ HEADERS += lockfreequeue.h \
     ztl_atomic.h \
     ztl_base64.h \
     ztl_bitset.h \
+    ztl_blocking_queue.h \
     ztl_buffer.h \
     ztl_common.h \
     ztl_config.h \
@@ -83,6 +84,7 @@ SOURCES += lockfreequeue.c \
     ztl_aes.c \
     ztl_array.c \
     ztl_base64.c \
+    ztl_blocking_queue.c \
     ztl_buffer.c \
     ztl_config.c \
     ztl_crc.c \

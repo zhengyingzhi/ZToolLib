@@ -174,6 +174,9 @@
     <ClInclude Include="ztl_event_dispatcher.h">
       <Filter>Threads</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_blocking_queue.h">
+      <Filter>Threads</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -309,6 +312,9 @@
       <Filter>cJSON</Filter>
     </ClCompile>
     <ClCompile Include="ztl_event_dispatcher.c">
+      <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_blocking_queue.c">
       <Filter>Threads</Filter>
     </ClCompile>
   </ItemGroup>
