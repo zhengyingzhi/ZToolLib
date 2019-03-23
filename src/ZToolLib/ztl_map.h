@@ -53,6 +53,10 @@ int ztl_map_add(ztl_map_t* pmap, uint64_t key, void* value);
  */
 void* ztl_map_del(ztl_map_t* pmap, uint64_t key);
 
+/* have the value by the key
+ */
+bool ztl_map_count(ztl_map_t* pmap, uint64_t key);
+
 /* find the value by the key
  */
 void* ztl_map_find(ztl_map_t* pmap, uint64_t key);
@@ -95,6 +99,8 @@ void ztl_set_clear(ztl_set_t* pset);
 int ztl_set_size(ztl_set_t* pset);
 
 bool ztl_set_empty(ztl_set_t* pset);
+
+bool ztl_set_count(ztl_set_t* pset, uint64_t key);
 
 int ztl_set_add(ztl_set_t* pset, uint64_t key);
 
