@@ -23,6 +23,9 @@ void test_base64();
 
 void test_read_file();
 
+void test_char_conv();
+
+
 int main(int argc, char* argv[])
 {
     ZTL_NOTUSED(argc);
@@ -33,9 +36,11 @@ int main(int argc, char* argv[])
 
     //test_lfqueue();
 
-	//test_base64();
+    //test_base64();
 
-    test_read_file();
+    // test_read_file();
+
+    test_char_conv();
 
     return 0;
 }
@@ -103,46 +108,46 @@ void test_lfqueue()
 
 void test_base64()
 {
-	char lString[256] = "111111";
-	char* lpChanged, *lpRaw;
+    char lString[256] = "111111";
+    char* lpChanged, *lpRaw;
 
-	char lBase64String[256] = "";
-	char lRawString[256] = "";
-	uint32_t lBase64Length, lRawLength;
-	
+    char lBase64String[256] = "";
+    char lRawString[256] = "";
+    uint32_t lBase64Length, lRawLength;
+
 #if 0
-	lpChanged = zpassword_change(lString);
-	lpRaw = zpassword_change(lpChanged);
+    lpChanged = zpassword_change(lString);
+    lpRaw = zpassword_change(lpChanged);
 
-	assert(strcmp(lpRaw, lString) == 0);
+    assert(strcmp(lpRaw, lString) == 0);
 
-	char lBase64String[256] = "";
-	uint32_t lBase64Length = sizeof(lBase64String) - 1;
-	ztl_base64_encode(lpRaw, strlen(lpRaw), lBase64String, &lBase64Length);
+    char lBase64String[256] = "";
+    uint32_t lBase64Length = sizeof(lBase64String) - 1;
+    ztl_base64_encode(lpRaw, strlen(lpRaw), lBase64String, &lBase64Length);
 
-	char lRawString[256] = "";
-	uint32_t lRawLength = sizeof(lRawString) - 1;
-	ztl_base64_decode(lBase64String, lBase64Length, lRawString, &lRawLength);
+    char lRawString[256] = "";
+    uint32_t lRawLength = sizeof(lRawString) - 1;
+    ztl_base64_decode(lBase64String, lBase64Length, lRawString, &lRawLength);
 
-	assert(strcmp(lRawString, lString) == 0);
+    assert(strcmp(lRawString, lString) == 0);
 
-	printf("%s\n", lRawString);
+    printf("%s\n", lRawString);
 
 #endif
 
-	// change and encode
-	lpChanged = zpassword_change(lString);
-	lBase64Length = sizeof(lBase64String) - 1;
-	ztl_base64_encode(lpChanged, strlen(lpChanged), lBase64String, &lBase64Length);
+    // change and encode
+    lpChanged = zpassword_change(lString);
+    lBase64Length = sizeof(lBase64String) - 1;
+    ztl_base64_encode(lpChanged, strlen(lpChanged), lBase64String, &lBase64Length);
 
-	// decode and change
-	char lTemp[256] = "";
-	strcpy(lTemp, lBase64String);
-	lRawLength = sizeof(lRawString) - 1;
-	ztl_base64_decode(lTemp, lBase64Length, lRawString, &lRawLength);
-	lpRaw = zpassword_change(lRawString);
+    // decode and change
+    char lTemp[256] = "";
+    strcpy(lTemp, lBase64String);
+    lRawLength = sizeof(lRawString) - 1;
+    ztl_base64_decode(lTemp, lBase64Length, lRawString, &lRawLength);
+    lpRaw = zpassword_change(lRawString);
 
-	assert(strcmp(lpRaw, "111111") == 0);
+    assert(strcmp(lpRaw, "111111") == 0);
 }
 
 void test_read_file()
@@ -177,3 +182,27 @@ void test_read_file()
     read_file_content(filename2, (char*)&rfst2, sizeof(rfst2));
     printf("rfst2: %s,%d,%lf\n", rfst2.name, rfst2.age, rfst2.score);
 }
+
+static const uint32_t powers_of_10_32[] = {
+    UINT32_C(0),          UINT32_C(10),       UINT32_C(100),
+    UINT32_C(1000),       UINT32_C(10000),    UINT32_C(100000),
+    UINT32_C(1000000),    UINT32_C(10000000), UINT32_C(100000000),
+    UINT32_C(1000000000)
+};
+
+static inline uint32_t to_chars_len(int value)
+{
+    const unsigned t = (32 - __builtin_clz(value | 1)) * 1233 >> 12;
+    return t - (value < powers_of_10_32[t]) + 1;
+}
+
+void test_char_conv()
+{
+    for (int i = 0; i < 10; ++i)
+    {
+        int x = powers_of_10_32[i];
+        printf("%d,%d\n", x, to_chars_len(x));
+    }
+    printf("\n");
+}
+
