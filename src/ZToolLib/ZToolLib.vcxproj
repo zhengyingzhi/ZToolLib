@@ -318,6 +318,7 @@
     <ClInclude Include="ztl_locks.h" />
     <ClInclude Include="ztl_rbtree.h" />
     <ClInclude Include="ztl_map.h" />
+    <ClInclude Include="ztl_vector.h" />
     <ClInclude Include="ztl_win32_stacktrace.h" />
   </ItemGroup>
   <ItemGroup>
@@ -366,6 +367,7 @@
     <ClCompile Include="ztl_locks.c" />
     <ClCompile Include="ztl_rbtree.c" />
     <ClCompile Include="ztl_map.c" />
+    <ClCompile Include="ztl_vector.c" />
     <ClCompile Include="ztl_win32_stacktrace.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

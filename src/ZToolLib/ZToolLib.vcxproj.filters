@@ -177,6 +177,9 @@
     <ClInclude Include="ztl_blocking_queue.h">
       <Filter>Threads</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_vector.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -316,6 +319,9 @@
     </ClCompile>
     <ClCompile Include="ztl_blocking_queue.c">
       <Filter>Threads</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_vector.c">
+      <Filter>Containers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

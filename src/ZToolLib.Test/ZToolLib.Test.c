@@ -192,7 +192,9 @@ static const uint32_t powers_of_10_32[] = {
 
 static inline uint32_t to_chars_len(int value)
 {
-    const unsigned t = (32 - __builtin_clz(value | 1)) * 1233 >> 12;
+    // FIXME error
+    // const unsigned t = (32 - __builtin_clz(value | 1)) * 1233 >> 12;
+    const unsigned t = 0;
     return t - (value < powers_of_10_32[t]) + 1;
 }
 
