@@ -45,7 +45,8 @@ ztl_array_t* ztl_array_create(ztl_pool_t* pool, uint32_t num, size_t eltsize)
     array->const_obj = 0;
 
     if (_ztl_array_init(array, pool, num, eltsize) != 0) {
-        free(array);
+        if (!pool)
+            free(array);
         return NULL;
     }
 

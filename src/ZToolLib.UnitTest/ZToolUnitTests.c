@@ -6,6 +6,9 @@
 
 extern void Test_ztl_array(ZuTest*);
 extern void Test_ztl_array2(ZuTest* zt);
+extern void Test_ztl_vector1(ZuTest* zt);
+extern void Test_ztl_vector2(ZuTest* zt);
+extern void Test_ztl_vector3(ZuTest* zt);
 extern void Test_cJSON(ZuTest* zt);
 extern void Test_cJSON2(ZuTest* zt);
 extern void Test_ztl_util(ZuTest*);
@@ -48,6 +51,9 @@ void RunAllTests(void)
 
     SUITE_ADD_TEST(suite, Test_ztl_array);
     SUITE_ADD_TEST(suite, Test_ztl_array2);
+    SUITE_ADD_TEST(suite, Test_ztl_vector1);
+    SUITE_ADD_TEST(suite, Test_ztl_vector2);
+    SUITE_ADD_TEST(suite, Test_ztl_vector3);
     SUITE_ADD_TEST(suite, Test_cJSON);
     SUITE_ADD_TEST(suite, Test_cJSON2);
     SUITE_ADD_TEST(suite, Test_ztl_util);

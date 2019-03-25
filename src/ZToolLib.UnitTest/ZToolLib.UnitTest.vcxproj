@@ -308,6 +308,7 @@
     <ClCompile Include="test_ztl_shm.c" />
     <ClCompile Include="test_ztl_times.c" />
     <ClCompile Include="test_ztl_utils.c" />
+    <ClCompile Include="test_ztl_vector.c" />
     <ClCompile Include="ZToolUnitTests.c" />
   </ItemGroup>
   <ItemGroup>
