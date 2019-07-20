@@ -13,12 +13,15 @@
 #ifdef _MSC_VER
 #include <Windows.h>
 #include <process.h>
+#include <sys/stat.h>
 
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
 #else
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+
 #include <unistd.h>
 #include <pthread.h>
 #endif//_MSC_VER
@@ -354,6 +357,22 @@ int get_cpu_number()
 #endif//_WIN32
     }
     return ncpu;
+}
+
+uint32_t get_file_length(const char* filename)
+{
+    FILE* fp;
+    uint32_t sz;
+
+    sz = 0;
+    fp = fopen(filename, "r");
+    if (fp)
+    {
+        fseek(fp, 0, SEEK_END);
+        sz = ftell(fp);
+        fclose(fp);
+    }
+    return sz;
 }
 
 static void print_array(int arr[], int size)

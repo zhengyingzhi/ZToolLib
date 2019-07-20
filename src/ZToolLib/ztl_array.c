@@ -279,7 +279,7 @@ void* ztl_array_find(ztl_array_t* arr, void* expect, int(*cmp)(void* expect, voi
     if (!cmp)
         cmp = _ztl_array_cmp;
 
-    void* actual;
+    void* actual = NULL;
 
     for (uint32_t x = 0; x < ztl_array_size(arr); ++x)
     {

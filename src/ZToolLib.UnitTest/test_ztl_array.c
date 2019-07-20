@@ -111,3 +111,36 @@ void Test_ztl_array2(ZuTest* zt)
 
     ztl_array_release(lArray);
 }
+
+
+void Test_ztl_array3(ZuTest* zt)
+{
+    ztl_pool_t*  pool;
+    pool = ztl_create_pool(4096);
+
+    ztl_array_t* lArray;
+    lArray = ztl_array_create(pool, 1024, sizeof(void*));
+
+    int values[] = { 1, 2, 3 };
+    int* p1 = malloc(sizeof(uint32_t));
+    *p1 = values[0];
+    int* p2 = malloc(sizeof(uint32_t));
+    *p2 = values[1];
+    int* p3 = malloc(sizeof(uint32_t));
+    *p3 = values[2];
+
+    ztl_array_push_back(lArray, &p1);
+    ztl_array_push_back(lArray, &p2);
+    ztl_array_push_back(lArray, &p3);
+
+    int* ptr;
+    ptr = ztl_array_at2(lArray, 0);
+    ZuAssertTrue(zt, p1 == ptr);
+
+    int* ptr2;
+    ptr2 = *(int**)ztl_array_at(lArray, 1);
+    ZuAssertTrue(zt, p2 == ptr2);
+
+
+    ztl_array_release(lArray);
+}

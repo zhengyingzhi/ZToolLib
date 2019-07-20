@@ -66,6 +66,8 @@ int64_t parse_size(const char* str, int len);
 /// get cpu core number
 int get_cpu_number();
 
+/// get file size
+uint32_t get_file_length(const char* filename);
 
 /// parse the string ptr into the array by the delemiter charactor like '|', return array size 
 int str_delimiter(char* apSrc, char** apRetArr, int aArrSize, char aDelimiter);

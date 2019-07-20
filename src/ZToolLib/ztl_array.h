@@ -13,7 +13,7 @@
 
 
 typedef struct {
-    void*       elts;
+    char*       elts;
     uint32_t    nelts;
     uint32_t    nalloc;
     uint32_t    eltsize   : 30;
@@ -50,7 +50,7 @@ void ztl_array_clear(ztl_array_t* arr);
 bool ztl_array_reserve(ztl_array_t* arr, uint32_t reserve_num);
 
 /* push an element at tail */
-bool ztl_array_push_back(ztl_array_t* arr, void* elem);
+bool ztl_array_push_back(ztl_array_t* arr, void* elem_addr);
 /* pop an element from tail */
 void* ztl_array_pop_back(ztl_array_t* arr);
 
@@ -68,9 +68,10 @@ void* ztl_array_remove_index(ztl_array_t* arr, uint32_t index);
 void ztl_array_foreach(ztl_array_t* arr, void* udata, void(*fn)(void* value, void* udata));
 
 
-#define ztl_array_head(arr,pos) ((uint8_t*)(arr)->elts = 0)
-#define ztl_array_tail(arr)     ((uint8_t*)(arr)->elts + ((arr)->nelts-1) * (arr)->eltsize)
-#define ztl_array_at(arr, pos)  ((uint8_t*)(arr)->elts + (pos) * (arr)->eltsize)
+#define ztl_array_head(arr,pos) ((arr)->elts + 0)
+#define ztl_array_tail(arr)     ((arr)->elts + ((arr)->nelts-1) * (arr)->eltsize)
+#define ztl_array_at(arr, pos)  ((arr)->elts + (pos) * (arr)->eltsize)
+#define ztl_array_at2(arr, pos) *(void**)((arr)->elts + (pos) * (arr)->eltsize)
 #define ztl_array_size(arr)     ((arr)->nelts)
 #define ztl_array_isempty(arr)  ((arr)->nelts == 0)
 #define ztl_array_data(arr)     ((arr)->elts)
