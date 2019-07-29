@@ -23,7 +23,7 @@
 static const char* levels[11] = {
     "NONE ",
     "STDER",
-    "TRACE"
+    "TRACE",
     "DEBUG",
     "INFO ",
     "NOTICE",
