@@ -73,8 +73,8 @@ void test_ztl_log()
     ztl_log_set_level(log1, ZTL_LOG_DEBUG);
     ztl_log_set_level(log2, ZTL_LOG_INFO);
 
-    ztl_log_error(log1, ZTL_LOG_INFO, "hello log %d", 1);
-    ztl_log_error(log2, ZTL_LOG_WARN, "hello log 2");
+    ztl_log_info(log1, "hello log %d", 1);
+    ztl_log_warn(log2, "hello log 2");
     getchar();
 
     ztl_log_close(log1);

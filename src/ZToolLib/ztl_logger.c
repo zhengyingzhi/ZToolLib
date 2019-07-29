@@ -20,8 +20,9 @@
 #include <linux/kernel.h>
 #endif//_MSC_VER
 
-static const char* levels[10]	= {
+static const char* levels[11] = {
     "NONE ",
+    "STDER",
     "TRACE"
     "DEBUG",
     "INFO ",
@@ -50,11 +51,11 @@ typedef struct
 struct ztl_log_st {
     FILE*               logfp;          // log file pointer
     int                 log_level;      // log level
-    int                 outputType;     // log output type
-    int                 bAsyncLog;      // is use async log
+    int                 output_type;    // log output type
+    int                 is_async;       // is use async log
     int                 running;        // is running for async log thread
-    int                 bExited;        // the log thread whether exit or not
-    OutputFunc          pfLogFunc;
+    int                 bexited;        // the log thread whether exit or not
+    OutputFunc          log_func;
 
     ztl_thread_t        thr;            // the thread handle
 
@@ -120,10 +121,10 @@ static ztl_log_t* _InitNewLogger()
 
     log->logfp      = NULL;
     log->log_level  = ZTL_LOG_INFO;
-    log->outputType = ZTL_WritFile;
-    log->bAsyncLog  = true;
+    log->output_type= ZTL_WritFile;
+    log->is_async   = true;
     log->running    = 1;
-    log->bExited    = 0;
+    log->bexited    = 0;
 
     memset(log->filename, 0, sizeof(log->filename));
 
@@ -179,20 +180,20 @@ static ztl_thread_result_t ZTL_THREAD_CALL _LogWorkThread(void* arg)
 
         lpHead = (ztl_log_header_t*)lpBuf;
 
-        if (log->pfLogFunc)
-            log->pfLogFunc(log->logfp, lpBuf + ZTL_LOG_HEAD_OFFSET, 
+        if (log->log_func)
+            log->log_func(log->logfp, lpBuf + ZTL_LOG_HEAD_OFFSET, 
                 lpHead->size - ZTL_LOG_HEAD_OFFSET);
 
         ztl_mp_free(log->pool, lpBuf);
     }
 
     // set the log thread as exited
-    log->bExited = 1;
+    log->bexited = 1;
     return 0;
 }
 
 /// udp msg receiver thread
-static ztl_thread_result_t ZTL_THREAD_CALL _UdpLogWorkThread(void* arg)
+static ztl_thread_result_t ZTL_THREAD_CALL _udp_log_work_thread(void* arg)
 {
     ztl_log_t* log = (ztl_log_t*)arg;
     ztl_log_header_t* lpHead;
@@ -229,20 +230,20 @@ static ztl_thread_result_t ZTL_THREAD_CALL _UdpLogWorkThread(void* arg)
             lTempLen += _MakeLogLineTime(lTempBuf, ZTL_LOG_WARN);
             lTempLen += sprintf(lTempBuf + lTempLen, "udp log message lost expect:%d, actual:%d\r\n", lSequence + 1, lpHead->sequence);
 
-            log->pfLogFunc(log->logfp, lTempBuf, lTempLen);
+            log->log_func(log->logfp, lTempBuf, lTempLen);
         }
 
         lBuffer[rv] = '\0';
-        log->pfLogFunc(log->logfp, lBuffer + ZTL_LOG_HEAD_OFFSET, rv - ZTL_LOG_HEAD_OFFSET);
+        log->log_func(log->logfp, lBuffer + ZTL_LOG_HEAD_OFFSET, rv - ZTL_LOG_HEAD_OFFSET);
     }
 
-    log->bExited = 1;
+    log->bexited = 1;
     return 0;
 }
 
 static int _ztl_log_createfile(ztl_log_t* log)
 {
-    if (log->outputType == ZTL_WritFile)
+    if (log->output_type == ZTL_WritFile)
     {
         // create a file
         char lRealFileName[512] = "";
@@ -270,48 +271,48 @@ static int _ztl_log_createfile(ztl_log_t* log)
         if (!log->logfp) {
             return -1;
         }
-        log->pfLogFunc = _Output2File;
+        log->log_func = _Output2File;
     }
-    else if (log->outputType == ZTL_PrintScrn)
+    else if (log->output_type == ZTL_PrintScrn)
     {
         log->logfp = stderr;
-        log->pfLogFunc = _Output2Scrn;
+        log->log_func = _Output2Scrn;
     }
-    else if (log->outputType == ZTL_Debugview)
+    else if (log->output_type == ZTL_Debugview)
     {
         log->logfp = NULL;
-        log->pfLogFunc = _Output2DbgView;
+        log->log_func = _Output2DbgView;
     }
-    else if (log->outputType == ZTL_SygLog)
+    else if (log->output_type == ZTL_SygLog)
     {
         log->logfp = NULL;
-        log->pfLogFunc = _Output2Syslog;
+        log->log_func = _Output2Syslog;
     }
     else {
         log->logfp = stderr;
-        log->pfLogFunc = _Output2Scrn;
+        log->log_func = _Output2Scrn;
     }
 
     return 0;
 }
 
 /// create a logger by the filename, and specify how to output log msgs
-ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool bAsyncLog)
+ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool is_async)
 {
     ztl_log_t* log = _InitNewLogger();
     if (log == NULL)
         return NULL;
 
     strncpy(log->filename, filename, sizeof(log->filename) - 1);
-    log->outputType = outType;
-    log->bAsyncLog = bAsyncLog;
+    log->output_type = outType;
+    log->is_async = is_async;
 
     if (_ztl_log_createfile(log) != 0) {
         free(log);
         return NULL;
     }
 
-    if (log->bAsyncLog)
+    if (log->is_async)
     {
 #ifdef _WIN32
         ztl_thread_mutex_init(&log->lock, NULL);
@@ -355,8 +356,8 @@ ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t outType,
     }
 
     strncpy(log->filename, filename, sizeof(log->filename) - 1);
-    log->outputType = outType;
-    log->bAsyncLog = false;
+    log->output_type = outType;
+    log->is_async = false;
 
     if (_ztl_log_createfile(log) != 0) {
         free(log);
@@ -399,7 +400,7 @@ ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t outType,
         ztl_thread_cond_init(&log->cond, NULL);
 
         // create udp log recv thread
-        ztl_thread_create(&log->thr, NULL, _UdpLogWorkThread, log);
+        ztl_thread_create(&log->thr, NULL, _udp_log_work_thread, log);
     }
 
     return log;
@@ -425,7 +426,7 @@ void ztl_log_close(ztl_log_t* log)
         log->udpsock = -1;
     }
 
-    if (log->bAsyncLog)
+    if (log->is_async)
     {
         ztl_thread_cond_signal(&log->cond);
 
@@ -450,10 +451,10 @@ void ztl_log_close(ztl_log_t* log)
     free(log);
 }
 
-void ztl_log_set_level(ztl_log_t* log, ztl_log_level_t minLevel)
+void ztl_log_set_level(ztl_log_t* log, ztl_log_level_t level)
 {
     if (log)
-        log->log_level = minLevel;
+        log->log_level = level;
 }
 
 extern ztl_log_level_t ztl_log_get_level(ztl_log_t* log)
@@ -474,7 +475,7 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
 
     lLength = ZTL_LOG_HEAD_OFFSET;
 
-    if (log->bAsyncLog) {
+    if (log->is_async) {
         lpBuff = ztl_mp_alloc(log->pool);
     }
     else {
@@ -501,7 +502,7 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
     lpHead->size    = (uint16_t)(lLength - ZTL_LOG_HEAD_OFFSET);
     lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
 
-    if (log->bAsyncLog) {
+    if (log->is_async) {
         lfqueue_push(log->queue, &lpBuff);
         if (ztl_atomic_add(&log->itemCount, 1) == 0) {
             ztl_thread_cond_signal(&log->cond);
@@ -512,8 +513,8 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
         udp_send(log->udpsock, lpBuff, lLength, &log->udpaddr);
     }
     else {
-        if (log->pfLogFunc)
-            log->pfLogFunc(log->logfp, lpBuff + ZTL_LOG_HEAD_OFFSET, lLength - ZTL_LOG_HEAD_OFFSET);
+        if (log->log_func)
+            log->log_func(log->logfp, lpBuff + ZTL_LOG_HEAD_OFFSET, lLength - ZTL_LOG_HEAD_OFFSET);
     }
 
 }
@@ -529,7 +530,7 @@ void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
 
     lLength = ZTL_LOG_HEAD_OFFSET;
 
-    if (log->bAsyncLog) {
+    if (log->is_async) {
         lpBuff = ztl_mp_alloc(log->pool);
     }
     else {
@@ -556,7 +557,7 @@ void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
     lpHead->size    = (uint16_t)(lLength - ZTL_LOG_HEAD_OFFSET);
     lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
 
-    if (log->bAsyncLog) {
+    if (log->is_async) {
         lfqueue_push(log->queue, &lpBuff);
         if (ztl_atomic_add(&log->itemCount, 1) == 0) {
             ztl_thread_cond_signal(&log->cond);
@@ -567,8 +568,8 @@ void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
         udp_send(log->udpsock, lpBuff, lLength, &log->udpaddr);
     }
     else {
-        if (log->pfLogFunc)
-            log->pfLogFunc(log->logfp, lpBuff + ZTL_LOG_HEAD_OFFSET, lLength - ZTL_LOG_HEAD_OFFSET);
+        if (log->log_func)
+            log->log_func(log->logfp, lpBuff + ZTL_LOG_HEAD_OFFSET, lLength - ZTL_LOG_HEAD_OFFSET);
     }
 }
 

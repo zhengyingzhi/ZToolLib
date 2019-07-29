@@ -12,10 +12,10 @@
 
 typedef enum
 {
-    ZTL_PrintScrn,      // to print screen
-    ZTL_WritFile,       // to log file
-    ZTL_Debugview,      // to debugview, only support on windows
-    ZTL_SygLog          // to sys log, only support on linux
+    ZTL_PrintScrn = 1,      // to print screen
+    ZTL_WritFile  = 2,      // to log file
+    ZTL_Debugview = 4,      // to debugview, only support on windows
+    ZTL_SygLog    = 8       // to sys log, only support on linux
 }ztl_log_output_t;
 
 typedef enum
@@ -41,14 +41,14 @@ extern "C" {
  * if filename contains '_YYYYMMDD', the log fine will has the current created date,
  * otherwise, all the log message will append to the tail of the specified file
  */
-extern ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool bAsyncLog);
+extern ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t out_type, bool is_async);
 
 /* create a udp logger
  * if 'issender' is true, log will send to peer machine
  * if 'issender' is false, this logger would recv udp log message from peer
  * and output log message to the file
  */
-extern ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t outType, 
+extern ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t out_type, 
     const char* udpip, uint16_t udpport, int issender);
 
 /* close the logger
@@ -57,7 +57,7 @@ extern void ztl_log_close(ztl_log_t* logger);
 
 /* set the minimum log level
  */
-extern void ztl_log_set_level(ztl_log_t* logger, ztl_log_level_t minLevel);
+extern void ztl_log_set_level(ztl_log_t* logger, ztl_log_level_t level);
 
 /* get current log level
  */
@@ -73,7 +73,11 @@ extern void ztl_log(ztl_log_t* logger, ztl_log_level_t level, const char* fmt, .
 
 extern void ztl_log2(ztl_log_t* logger, ztl_log_level_t level, const char* line, int len);
 
-#define ztl_log_error(log,level,...)    ztl_log(log, level, __VA_ARGS__)
+#define ztl_log_debug(log, ...)     ztl_log(log, ZTL_LOG_DEBUG, __VA_ARGS__)
+#define ztl_log_info(log, ...)      ztl_log(log, ZTL_LOG_INFO, __VA_ARGS__)
+#define ztl_log_warn(log, ...)      ztl_log(log, ZTL_LOG_WARN, __VA_ARGS__)
+#define ztl_log_error(log, ...)     ztl_log(log, ZTL_LOG_ERROR, __VA_ARGS__)
+#define ztl_log_critical(log, ...)  ztl_log(log, ZTL_LOG_CRITICAL, __VA_ARGS__)
 
 
 #ifdef __cplusplus
