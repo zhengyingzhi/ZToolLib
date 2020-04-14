@@ -1,201 +1,167 @@
 #include <string.h>
-#include "ztl_base64.h"  
+#include "ztl_base64.h"
 
-static char const table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-static char padding_char = '=';
+#define BASE64_PAD '='
+#define BASE64DE_FIRST '+'
+#define BASE64DE_LAST 'z'
+
+/* BASE 64 encode table */
+static const char base64en[] = {
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+    'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+    'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+    'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+    'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+    'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+    'w', 'x', 'y', 'z', '0', '1', '2', '3',
+    '4', '5', '6', '7', '8', '9', '+', '/',
+};
+
+/* ASCII order for BASE 64 decode, 255 in unused character */
+static const unsigned char base64de[] = {
+    /* nul, soh, stx, etx, eot, enq, ack, bel, */
+    255, 255, 255, 255, 255, 255, 255, 255,
+
+    /*  bs,  ht,  nl,  vt,  np,  cr,  so,  si, */
+    255, 255, 255, 255, 255, 255, 255, 255,
+
+    /* dle, dc1, dc2, dc3, dc4, nak, syn, etb, */
+    255, 255, 255, 255, 255, 255, 255, 255,
+
+    /* can,  em, sub, esc,  fs,  gs,  rs,  us, */
+    255, 255, 255, 255, 255, 255, 255, 255,
+
+    /*  sp, '!', '"', '#', '$', '%', '&', ''', */
+    255, 255, 255, 255, 255, 255, 255, 255,
+
+    /* '(', ')', '*', '+', ',', '-', '.', '/', */
+    255, 255, 255,  62, 255, 255, 255,  63,
+
+    /* '0', '1', '2', '3', '4', '5', '6', '7', */
+    52,  53,  54,  55,  56,  57,  58,  59,
+
+    /* '8', '9', ':', ';', '<', '=', '>', '?', */
+    60,  61, 255, 255, 255, 255, 255, 255,
+
+    /* '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', */
+    255,   0,   1,  2,   3,   4,   5,    6,
+
+    /* 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', */
+    7,   8,   9,  10,  11,  12,  13,  14,
+
+    /* 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', */
+    15,  16,  17,  18,  19,  20,  21,  22,
+
+    /* 'X', 'Y', 'Z', '[', '\', ']', '^', '_', */
+    23,  24,  25, 255, 255, 255, 255, 255,
+
+    /* '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', */
+    255,  26,  27,  28,  29,  30,  31,  32,
+
+    /* 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', */
+    33,  34,  35,  36,  37,  38,  39,  40,
+
+    /* 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', */
+    41,  42,  43,  44,  45,  46,  47,  48,
+
+    /* 'x', 'y', 'z', '{', '|', '}', '~', del, */
+    49,  50,  51, 255, 255, 255, 255, 255
+};
+
 
 int32_t ztl_base64_encode(const char* apInBinData, uint32_t aInLength, char* apOutBase64, uint32_t* apInOutLength)
 {
-#if 0
-    char* lpData = apOutBase64;
-    uint32_t bits = 0;
-    uint32_t left = aInLength;
-    int32_t  shift = 0;
+    int s;
+    unsigned int i;
+    unsigned int j;
+    unsigned char c;
+    unsigned char l;
 
-    if (!apInBinData || !apOutBase64 || *apInOutLength < _ZTL_BASE64_ENCODE_LENGTH_MIN(aInLength))
-        return -1;
-
-    while (left)
+    s = 0;
+    l = 0;
+    for (i = j = 0; i < aInLength; i++)
     {
-        bits = (bits << 8) + *apInBinData++;
-        left--;
-        shift += 8;
-
-        do
+        c = apInBinData[i];
+        switch (s)
         {
-            *lpData++ = table[(bits << 6 >> shift) & 0x3f];
-            shift -= 6;
-        } while (shift > 6 || (left == 0 && shift > 0));
-    }
-
-    while ((lpData - apOutBase64) & 3) *lpData++ = '=';
-    *lpData = '\0';
-
-    *apInOutLength = (uint32_t)(lpData - apOutBase64);
-#else
-    const char* src = apInBinData;
-    char* dst = apOutBase64;
-
-    int i = 0, j = 0;
-    unsigned char trans_index = 0;
-    const int datalength = aInLength;
-
-    for (; i < datalength; i += 3)
-    {
-        trans_index = ((src[i] >> 2) & 0x3f);
-        dst[j++] = table[(int)trans_index];
-
-        trans_index = ((src[i] << 4) & 0x30);
-        if (i + 1 < datalength)
-        {
-            trans_index |= ((src[i + 1] >> 4) & 0x0f);
-            dst[j++] = table[(int)trans_index];
-        }
-        else
-        {
-            dst[j++] = table[(int)trans_index];
-            dst[j++] = padding_char;
-            dst[j++] = padding_char;
+        case 0:
+            s = 1;
+            apOutBase64[j++] = base64en[(c >> 2) & 0x3F];
+            break;
+        case 1:
+            s = 2;
+            apOutBase64[j++] = base64en[((l & 0x3) << 4) | ((c >> 4) & 0xF)];
+            break;
+        case 2:
+            s = 0;
+            apOutBase64[j++] = base64en[((l & 0xF) << 2) | ((c >> 6) & 0x3)];
+            apOutBase64[j++] = base64en[c & 0x3F];
             break;
         }
-
-        trans_index = ((src[i + 1] << 2) & 0x3c);
-        if (i + 2 < datalength)
-        {
-            trans_index |= ((src[i + 2] >> 6) & 0x03);
-            dst[j++] = table[(int)trans_index];
-
-            trans_index = src[i + 2] & 0x3f;
-            dst[j++] = table[(int)trans_index];
-        }
-        else
-        {
-            dst[j++] = table[(int)trans_index];
-            dst[j++] = padding_char;
-            break;
-        }
+        l = c;
     }
 
-    apOutBase64[j] = '\0';
+    switch (s)
+    {
+    case 1:
+        apOutBase64[j++] = base64en[(l & 0x3) << 4];
+        apOutBase64[j++] = BASE64_PAD;
+        apOutBase64[j++] = BASE64_PAD;
+        break;
+    case 2:
+        apOutBase64[j++] = base64en[(l & 0xF) << 2];
+        apOutBase64[j++] = BASE64_PAD;
+        break;
+    }
+
+    apOutBase64[j] = 0;
+
     *apInOutLength = j;
-
-#endif
     return 0;
 }
 
-#if 0
-inline int num_strchr(const char *str, char c) // 
-{
-    const char *pindex = strchr(str, c);
-    if (NULL == pindex) {
-        return -1;
-    }
-    return pindex - str;
-}
-#else
-
-static uint8_t index_table[] =
-{
-    -1, -1, -1, -1, -1, -1, -1, -1
-    , -1, -1, -1, -1, -1, -1, -1, -1
-    , -1, -1, -1, -1, -1, -1, -1, -1
-    , -1, -1, -1, -1, -1, -1, -1, -1
-    , -1, -1, -1, -1, -1, -1, -1, -1    // 39
-    , -1, -1, -1, 62, -1, -1, -1, 63
-    , 52, 53, 54, 55, 56, 57, 58, 59    // 55
-    , 60, 61, -1, -1, -1, -1, -1, -1
-    , -1, 0,   1,  2,  3,  4,  5,  6
-    ,  7, 8,   9, 10, 11, 12, 13, 14    // 79
-    , 15, 16, 17, 18, 19, 20, 21, 22
-    , 23, 24, 25, -1, -1, -1, -1, -1
-    , -1, 26, 27, 28, 29, 30, 31, 32
-    , 33, 34, 35, 36, 37, 38, 39, 40
-    , 41, 42, 43, 44, 45, 46, 47, 48
-    , 49, 50, 51 - 1, -1, -1, -1, -1
-};
-
-#define num_strchr(str, c)  index_table[(uint8_t)c]
-
-#endif
-
 int32_t ztl_base64_decode(const char* apInBase64, uint32_t aInLength, char* apOutBinData, uint32_t* apInOutLength)
 {
-#if 0
-    static uint8_t table[] =
-    {
-        0x3e, 0xff, 0xff, 0xff, 0x3f, 0x34, 0x35, 0x36
-        ,   0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0xff
-        ,   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x01
-        ,   0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09
-        ,   0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11
-        ,   0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19
-        ,   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1a, 0x1b
-        ,   0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23
-        ,   0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b
-        ,   0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33
-    };
+    unsigned int i;
+    unsigned int j;
+    unsigned char c;
 
-    uint32_t    i = 0;
-    uint32_t    v = 0;
-    uint8_t*  lpData = (uint8_t*)apOutBinData;
-    uint32_t   tn = sizeof(table) / sizeof(uint8_t);
+    if (aInLength & 0x3) {
+        return 0;
+    }
 
+    for (i = j = 0; i < aInLength; i++) {
+        if (apInBase64[i] == BASE64_PAD) {
+            break;
+        }
+        if (apInBase64[i] < BASE64DE_FIRST || apInBase64[i] > BASE64DE_LAST) {
+            return 0;
+        }
 
-    if (!apInBase64 && !apOutBinData)
-        return -1;
+        c = base64de[(unsigned char)apInBase64[i]];
+        if (c == 255) {
+            return 0;
+        }
 
-    for (i = 0; i < aInLength && apInBase64[i] && apInBase64[i] != '='; i++)
-    {
-        uint32_t idx = apInBase64[i] - 43;
-        if (idx >= tn || table[idx] == 0xff) return 0;
-
-        v = (v << 6) + table[idx];
-        if (i & 3)
-        {
-            if ((uint32_t)(lpData - (uint8_t*)apOutBinData) < *apInOutLength)
-                *lpData++ = v >> (6 - 2 * (i & 3));
+        switch (i & 0x3) {
+        case 0:
+            apOutBinData[j] = (c << 2) & 0xFF;
+            break;
+        case 1:
+            apOutBinData[j++] |= (c >> 4) & 0x3;
+            apOutBinData[j] = (c & 0xF) << 4;
+            break;
+        case 2:
+            apOutBinData[j++] |= (c >> 2) & 0xF;
+            apOutBinData[j] = (c & 0x3) << 6;
+            break;
+        case 3:
+            apOutBinData[j++] |= c;
+            break;
         }
     }
 
-    *apInOutLength = (uint32_t)(lpData - (uint8_t*)apOutBinData);
-#else
-    const char* src = apInBase64;
-    char* dst = apOutBinData;
-
-    int i = 0, j = 0;
-    int trans[4] = {0, 0, 0, 0};
-    for (; src[i]; i += 4)
-    {
-        trans[0] = num_strchr(table, src[i]);
-        trans[1] = num_strchr(table, src[i + 1]);
-
-        dst[j++] = ((trans[0] << 2) & 0xfc) | ((trans[1] >> 4) & 0x03);
-
-        if (src[i + 2] == padding_char) {
-            continue;
-        }
-        else {
-            trans[2] = num_strchr(table, src[i + 2]);
-        }
-
-        // 2/3
-        dst[j++] = ((trans[1] << 4) & 0xf0) | ((trans[2] >> 2) & 0x0f);
-
-        if (src[i + 3] == padding_char) {
-            continue;
-        }
-        else {
-            trans[3] = num_strchr(table, src[i + 3]);
-        }
-
-        // 3/3
-        dst[j++] = ((trans[2] << 6) & 0xc0) | (trans[3] & 0x3f);
-    }
-
-    //dst[j] = '\0';
     *apInOutLength = j;
-
-#endif
     return 0;
 }
 

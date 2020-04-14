@@ -513,7 +513,7 @@ int tcp_readn(sockhandle_t sockfd, char* buf, int count)
 }
 
 /// make a simple tcp server, if new event, the callback functions will be invoked
-int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb)
+int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb, void* udata)
 {
     int rv;
     sockhandle_t maxfd = listenfd + 1;
@@ -538,7 +538,7 @@ int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb)
         {
             if (FD_ISSET(i, &rdfds) && i != listenfd)
             {
-                if (eventcb(i, false) <= 0) {
+                if (eventcb(udata, i, false) <= 0) {
                     FD_CLR(i, &rdfds0);
                     FD_CLR(i, &wtfds0);
                     continue;
@@ -548,7 +548,7 @@ int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb)
             }
             if (FD_ISSET(i, &wtfds) && i != listenfd)
             {
-                eventcb(i, true);
+                eventcb(udata, i, true);
             }
         }
 
@@ -574,7 +574,7 @@ int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb)
 }
 
 /// make a tcp echo server
-static int echo_func(sockhandle_t ns, int isoutev)
+static int echo_func(void* udata, sockhandle_t ns, int isoutev)
 {
     (void)isoutev;
     int rv;
@@ -603,7 +603,7 @@ int tcp_echo_server(const char* listenip, uint16_t listenport)
     }
     fprintf(stderr, "tcp echo server listen at %s:%d\n", listenip, listenport);
 
-    return tcp_simple_server(listenfd, echo_func);
+    return tcp_simple_server(listenfd, echo_func, NULL);
 }
 
 /// a udp receiver, return udp socket descriptor

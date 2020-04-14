@@ -156,8 +156,8 @@ int tcp_listen(sockhandle_t listenfd, const char* ip, uint16_t port, bool reuse,
 int tcp_readn(sockhandle_t sockfd, char* buf, int count);
 
 /// make a simple tcp server, if new event, the callback functions will be invoked
-typedef int (*pfonevent)(sockhandle_t fd, int isoutev);
-int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb);
+typedef int (*pfonevent)(void* udata, sockhandle_t fd, int isoutev);
+int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb, void* udata);
 
 /// make a tcp echo server
 int tcp_echo_server(const char* listenip, uint16_t listenport);

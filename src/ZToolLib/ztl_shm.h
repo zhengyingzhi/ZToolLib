@@ -30,8 +30,8 @@ typedef enum {
 typedef enum {
     ztl_read_only       = 0x01,
     ztl_read_write      = 0x02,
-    ztl_copy_on_write	= 0x03,
-    ztl_read_private	= 0x04
+    ztl_copy_on_write   = 0x03,
+    ztl_read_private    = 0x04
 }ztl_enum_mode_t;
 
 
@@ -77,6 +77,9 @@ uint64_t ztl_shm_get_size(ztl_shm_t* zshm);
 /* Return access mode */
 int ztl_shm_get_mode(ztl_shm_t* zshm);
 
+/* shm file lock */
+bool ztl_shm_trylock_exclusive(ztl_shm_t* zshm);
+bool ztl_shm_unlock_file(ztl_shm_t* zshm);
 
 #ifdef __cplusplus
 }

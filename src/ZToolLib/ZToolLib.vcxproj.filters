@@ -180,6 +180,9 @@
     <ClInclude Include="ztl_vector.h">
       <Filter>Containers</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_memdb.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -322,6 +325,9 @@
     </ClCompile>
     <ClCompile Include="ztl_vector.c">
       <Filter>Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_memdb.c">
+      <Filter>Memory</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
