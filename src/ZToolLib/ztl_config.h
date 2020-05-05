@@ -44,7 +44,7 @@ bool ztl_config_read_bool(ztl_config_t* zconf, const char* key, bool* outbool);
 /* parse bool desc string to true or false
  * desc string like: 1,0,yes,no,true,false,on,off,
  */
-bool ztl_boolvalue_loopup(const char* val_desc);
+bool ztl_boolvalue_lookup(const char* val_desc);
 
 /* have the configure item or not,
  * return the value ptr if find

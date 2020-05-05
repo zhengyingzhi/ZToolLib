@@ -67,7 +67,7 @@ void Test_ztl_dlist(ZuTest* zt)
     dl = ztl_dlist_create(4);
 
     void* head, *tail;
-    for (int i = 1; i <= 6; ++i)
+    for (int64_t i = 1; i <= 6; ++i)
     {
         rv = ztl_dlist_insert_tail(dl, (void*)i);
         ZuAssertTrue(zt, rv == 0);
@@ -90,7 +90,7 @@ void Test_ztl_dlist(ZuTest* zt)
     ZuAssertTrue(zt, (void*)6 == tail);
 
     // traverse dlist from head or tail
-    int iv = 2;
+    int64_t iv = 2;
     ztl_dlist_iterator_t* iter;
     iter = ztl_dlist_iter_new(dl, ZTL_DLSTART_HEAD);
     do 

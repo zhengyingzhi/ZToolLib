@@ -1,7 +1,7 @@
 /*
-* Copyright (C) Yingzhi Zheng
-* Copyright (C) <zhengyingzhi112@163.com>
-*/
+ * Copyright (C) Yingzhi Zheng
+ * Copyright (C) <zhengyingzhi112@163.com>
+ */
 
 #ifndef _LOCK_FREE_QUEUE_H_
 #define _LOCK_FREE_QUEUE_H_
@@ -15,14 +15,15 @@ extern "C" {
 
 /* exported types */
 
-/* a lock free queue based on a circular array
+/* a lock free queue based on a circular array,
  * supports multiple producers and multiple consumers
  */
 typedef struct lfqueue_st lfqueue_t;
 
+
 /* get minimum memory size for creating a lock free queue by queue size & elem size
  */
-int64_t lfqueue_memory_size(uint32_t queusize, uint32_t elemsize);
+int64_t lfqueue_memory_size(uint32_t quesize, uint32_t elemsize);
 
 /* @brief  create a queue by max queue size
  * @return the queue object
@@ -64,14 +65,26 @@ int lfqueue_pop(lfqueue_t* que, void** ppdata);
  */
 int lfqueue_pop_value(lfqueue_t* que, void* pdata);
 
+/* @brief  get the data of the queue head
+ */
+int lfqueue_head(lfqueue_t* que, void** ppdata);
+
+/* @brief  get the data of the queue head
+ */
+int lfqueue_head_value(lfqueue_t* que, void* pdata);
+
 
 /* @return the queue size which might be bogus value
  */
-int lfqueue_size(lfqueue_t* que);
+uint32_t lfqueue_size(lfqueue_t* que);
+
+/* @return the queue max size
+ */
+uint32_t lfqueue_max_size(lfqueue_t* que);
 
 /* @return the queue's element size
-*/
-int lfqueue_elem_size(lfqueue_t* que);
+ */
+uint32_t lfqueue_elem_size(lfqueue_t* que);
 
 /* @return true if the queue is empty or not
  */

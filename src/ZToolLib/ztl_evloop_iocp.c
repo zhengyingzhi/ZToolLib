@@ -341,7 +341,7 @@ static int iocp_add(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS 
     if (conn->added == 0)
     {
         conn->added = 1;
-        CreateIoCompletionPort((HANDLE)conn->sockfd, lpctx->hIocp, (DWORD)conn, 0);
+        CreateIoCompletionPort((HANDLE)conn->sockfd, lpctx->hIocp, (ULONG_PTR)conn, 0);
     }
 
     DWORD lTransBytes = 0, lFlag = 0;
@@ -398,7 +398,7 @@ static int iocp_poll(ztl_evloop_t* evloop, int timeoutMS)
     lpPerIO = NULL;
 
     // wait io completion
-    BOOL bOK = GetQueuedCompletionStatus(lpctx->hIocp, &dwTrans, (LPDWORD)&lpConn, 
+    BOOL bOK = GetQueuedCompletionStatus(lpctx->hIocp, &dwTrans, (PULONG_PTR)&lpConn, 
         (LPOVERLAPPED*)&lpPerIO, timeoutMS);
 
     // expire timers...

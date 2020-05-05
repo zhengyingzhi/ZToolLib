@@ -18,7 +18,7 @@ struct ztl_msg_buffer_st
 {
     ztl_msg_buffer_t* prev;
     ztl_msg_buffer_t* next;
-    void(*cleanup)(ztl_msg_buffer_t*);
+    void      (*cleanup)(ztl_msg_buffer_t*);
     void*       owner;
     void*       udata;
     uint32_t    flags;
@@ -27,15 +27,15 @@ struct ztl_msg_buffer_st
     uint32_t    refcount;
 };
 
-ztl_msg_buffer_t* zlt_msg_buffer_alloc(uint32_t size);
+ztl_msg_buffer_t* zlt_mb_alloc(uint32_t size);
 
-void zlt_msg_buffer_free(ztl_msg_buffer_t* zmb);
+void zlt_mb_free(ztl_msg_buffer_t* zmb);
 
 uint32_t ztl_mb_addref(ztl_msg_buffer_t* zmb);
 
 uint32_t ztl_mb_decref_release(ztl_msg_buffer_t* zmb);
 
-#define ztl_msg_body(zmb)   (char*)(zmb + 1)
+#define ztl_mb_body(zmb)    (char*)(zmb + 1)
 
 #ifdef __cplusplus
 }

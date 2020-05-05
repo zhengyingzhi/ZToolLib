@@ -46,9 +46,10 @@ extern void Test_ztl_dict(ZuTest* zt);
 
 void RunAllTests(void)
 {
+    fprintf(stderr, "ztl version:v%s\n", ZTL_Version);
+
     ZuString *output = ZuStringNew();
     ZuSuite* suite = ZuSuiteNew();
-
 
     SUITE_ADD_TEST(suite, Test_ztl_array);
     SUITE_ADD_TEST(suite, Test_ztl_array2);

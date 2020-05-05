@@ -104,7 +104,7 @@ void ztl_array_clear(ztl_array_t* arr)
 
 bool ztl_array_reserve(ztl_array_t* arr, uint32_t reserve_num)
 {
-    void        *enew;
+    void*       enew;
     size_t      size;
 
     if (reserve_num > arr->nalloc)
@@ -128,7 +128,8 @@ bool ztl_array_reserve(ztl_array_t* arr, uint32_t reserve_num)
                 arr->nalloc++;
 
             }
-            else {
+            else
+            {
                 /* allocate a new array */
 
                 enew = ztl_palloc(pool, reserve_num * arr->eltsize);
@@ -164,6 +165,9 @@ bool ztl_array_push_back(ztl_array_t* arr, void* elem)
         return false;
     }
 
+#if 1
+    ztlncpy(lpaddr, elem, arr->eltsize);
+#else
     switch (arr->eltsize)
     {
     case 1:
@@ -206,24 +210,24 @@ bool ztl_array_push_back(ztl_array_t* arr, void* elem)
     default:
         memcpy(lpaddr, elem, arr->eltsize);
     }
-
+#endif//0
     return true;
 }
 
 void* ztl_array_pop_back(ztl_array_t* arr)
 {
-    void* elem = NULL;
+    void* elt = NULL;
     if (arr->nelts > 0) {
         arr->nelts--;
-        elem = (uint8_t*)arr->elts + arr->nelts * arr->eltsize;
+        elt = (uint8_t*)arr->elts + arr->nelts * arr->eltsize;
     }
 
-    return elem;
+    return elt;
 }
 
 void* ztl_array_push(ztl_array_t* arr)
 {
-    void *elt;
+    void* elt;
 
     if (arr->nelts == arr->nalloc) {
 
@@ -243,7 +247,7 @@ void* ztl_array_push(ztl_array_t* arr)
 
 void* ztl_array_push_n(ztl_array_t* arr, uint32_t n)
 {
-    void *elt;
+    void* elt;
 
     if (arr->nelts + n > arr->nalloc) {
 

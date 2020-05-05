@@ -3,17 +3,17 @@
 #include <ZToolLib/ztl_unit_test.h>
 #include <ZToolLib/ztl_map.h>
 
-static void _ztl_map_access(ztl_map_t* pmap, void* context1, int32_t context2, uint64_t key, void* value)
+static void _ztl_map_access(ztl_map_t* pmap, void* context1, int32_t context2, uint64_t key, int64_t value)
 {
     int* arr = (int*)context1;
-    int* pi = (int*)value;
+    int  pi = (int)value;
     int size = context2;
 
-    printf("%d ", *pi);
+    fprintf(stderr, "%d ", pi);
     bool found = false;
     for (int i = 0; i < 10; ++i)
     {
-        if (arr[i] == *pi)
+        if (arr[i] == pi)
         {
             found = true;
             break;
@@ -35,11 +35,11 @@ void Test_ztl_map(ZuTest* zt)
     int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i)
     {
-        ztl_map_add(lmap, arr[i], &arr[i]);
+        ztl_map_add(lmap, arr[i], arr[i]);
         ZuAssertTrue(zt, arr[i] == ztl_map_size(lmap));
 
-        int* pi = ztl_map_find(lmap, arr[i]);
-        ZuAssertTrue(zt, arr[i] == *pi);
+        int64_t pi = ztl_map_find(lmap, arr[i]);
+        ZuAssertTrue(zt, arr[i] == pi);
     }
 
     ZuAssertTrue(zt, 10 == ztl_map_size(lmap));
@@ -51,37 +51,38 @@ void Test_ztl_map(ZuTest* zt)
     ztl_map_to_array(lmap, arr2, 8);
     for (int i = 0; i < 8; ++i)
     {
-        printf("%d ", *(int*)arr2[i].Value);
+        printf("%d ", (int)arr2[i].Value);
     }
     printf("\n");
 
     // find elem
-    int* pi;
-    pi = ztl_map_find(lmap, 0);
-    ZuAssertTrue(zt, NULL == pi);
+    int pi;
+    pi = (int)ztl_map_find(lmap, 0);
+    ZuAssertTrue(zt, -1 == pi);
 
-    pi = ztl_map_find(lmap, 1);
-    ZuAssertTrue(zt, 1 == *pi);
+    pi = (int)ztl_map_find(lmap, 1);
+    ZuAssertTrue(zt, 1 == pi);
 
-    pi = ztl_map_find(lmap, 10);
-    ZuAssertTrue(zt, 10 == *pi);
+    pi = (int)ztl_map_find(lmap, 10);
+    ZuAssertTrue(zt, 10 == pi);
 
     // delete elem
-    pi = ztl_map_del(lmap, 2);
-    ZuAssertTrue(zt, 2 == *pi);
+    pi = (int)ztl_map_del(lmap, 2);
+    ZuAssertTrue(zt, 2 == pi);
 
-    pi = ztl_map_del(lmap, 2);
-    ZuAssertTrue(zt, NULL == pi);
+    pi = (int)ztl_map_del(lmap, 2);
+    ZuAssertTrue(zt, -1 == pi);
     ZuAssertTrue(zt, 9 == ztl_map_size(lmap));
 
-    pi = ztl_map_del(lmap, 5);
-    ZuAssertTrue(zt, 5 == *pi);
+    pi = (int)ztl_map_del(lmap, 5);
+    ZuAssertTrue(zt, 5 == pi);
 
     ztl_map_release(lmap);
 }
 
 void Test_ztl_map_ex(ZuTest* zt)
 {
+    ztl_rbtree_node_t* node;
     ztl_map_t* lmap;
     lmap = ztl_map_create(0);
 
@@ -90,8 +91,8 @@ void Test_ztl_map_ex(ZuTest* zt)
     int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i)
     {
-        ztl_rbtree_node_t* node = (ztl_rbtree_node_t*)malloc(sizeof(ztl_rbtree_node_t));
-        node->udata = (void*)arr[i];
+        node = (ztl_rbtree_node_t*)malloc(sizeof(ztl_rbtree_node_t));
+        node->udata = arr[i];
 
         ztl_map_add_ex(lmap, arr[i], node);
         ZuAssertTrue(zt, arr[i] == ztl_map_size(lmap));

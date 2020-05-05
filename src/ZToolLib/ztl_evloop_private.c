@@ -64,12 +64,12 @@ ztl_connection_t* ztl_do_accept(ztl_evloop_t* evloop)
     newconn->port = ntohs(addr.sin_port);
     newconn->addr = addr.sin_addr.s_addr;
 
-#ifdef _DEBUG
+#ifdef ZTL_DEBUG
     char addrtext[64];
     inet_ntop(AF_INET, &addr.sin_addr, addrtext, sizeof(addrtext));
     sprintf(addrtext, "%s:%d", addrtext, ntohs(addr.sin_port));
-    fprintf(stderr, "connection: new %d %s -> %p\n", ns, addrtext, newconn);
-#endif
+    fprintf(stderr, "connection: new %ld %s -> %p\n", (long)ns, addrtext, newconn);
+#endif//ZTL_DEBUG
 
     return newconn;
 }

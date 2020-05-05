@@ -10,11 +10,11 @@
 #include <stdbool.h>
 
 #define DOUBLE_ZERO             double(1E-307)
-#define IS_DOUBLE_ZERO(D)       (D <= DOUBLE_ZERO && D >= -DOUBLE_ZERO)
+#define IS_DOUBLE_ZERO(D)       ((D) <= DOUBLE_ZERO && (D) >= -DOUBLE_ZERO)
 #define STR_ZERO_DOUBLE         "0.0000000000000"
 
-#define ztl_align(d,align)      (((d) + (align - 1)) & ~(align - 1))
-#define ztl_align_ptr(p, a)     (uint8_t*) (((uintptr_t) (p) + ((uintptr_t) a - 1)) & ~((uintptr_t) a - 1))
+#define ztl_align(d,align)      (((d) + ((align) - 1)) & ~((align) - 1))
+#define ztl_align_ptr(p, a)     (uint8_t*) (((uintptr_t) (p) + ((uintptr_t)(a) - 1)) & ~((uintptr_t)(a) - 1))
 
 #define ztl_min(a,b)            (a) < (b) ? (a) : (b)
 #define ztl_max(a,b)            (a) > (b) ? (a) : (b)
@@ -39,16 +39,24 @@ static void DebugBreak() {}
 #endif//DEBUG
 
 
+typedef union {
+    int64_t     i64;
+    double      f64;
+    void*       ptr;    // FIXME 4 bytes on 32bit system
+    int32_t     i32;
+    float       f32;
+}union_dtype_t;
+
 /// high perf counter at micro-second
 int64_t query_tick_count();
-int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd);
+int32_t tick_to_us(int64_t tick_beg, int64_t tick_end);
 
 
 /// convert a long long value to string, return length
 int ll2string(char* dst, uint32_t dstlen, int64_t value);
 
 /// convert previous len data to an integer
-int64_t atoi_n(const char* pszData, int len);
+int64_t atoi_n(const char* data, int len);
 
 /// print memory by hex
 void print_mem(void* pm, unsigned int size, int nperline);
@@ -122,23 +130,27 @@ union zudi {
         case 2: *(uint16_t*)dst = *(uint16_t*)src;  break;          \
         case 4: *(uint32_t*)dst = *(uint32_t*)src;  break;          \
         case 8: *(uint64_t*)dst = *(uint64_t*)src;  break;          \
-        case 12:                                                    \
-            *(uint64_t*)dst     = *(uint64_t*)src;                  \
-            *(uint32_t*)((char*)dst+8) = *(uint32_t*)((char*)src+8);\
+        case 6: {                                                   \
+            *(uint32_t*)dst     = *(uint32_t*)src;                  \
+            *(uint16_t*)((char*)dst+4) = *(uint16_t*)((char*)src+4); } \
             break;                                                  \
-        case 16:                                                    \
+        case 12: {                                                  \
+            *(uint64_t*)dst     = *(uint64_t*)src;                  \
+            *(uint32_t*)((char*)dst+8) = *(uint32_t*)((char*)src+8); } \
+            break;                                                  \
+        case 16: {                                                  \
+            *(uint64_t*)dst     = *(uint64_t*)src;                  \
+            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8); } \
+            break;                                                  \
+        case 20: {                                                  \
             *(uint64_t*)dst     = *(uint64_t*)src;                  \
             *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
+            *(uint32_t*)((char*)dst+16) = *(uint32_t*)((char*)src+16); } \
             break;                                                  \
-        case 20:                                                    \
+        case 24: {                                                  \
             *(uint64_t*)dst     = *(uint64_t*)src;                  \
             *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
-            *(uint32_t*)((char*)dst+16) = *(uint32_t*)((char*)src+16);\
-            break;                                                  \
-        case 24:                                                    \
-            *(uint64_t*)dst     = *(uint64_t*)src;                  \
-            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
-            *(uint64_t*)((char*)dst+16) = *(uint64_t*)((char*)src+16);\
+            *(uint64_t*)((char*)dst+16) = *(uint64_t*)((char*)src+16); } \
             break;                                                  \
         default:                                                    \
             memcpy(dst,src,size);                                   \

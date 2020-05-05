@@ -9,7 +9,8 @@
 
 #include "ztl_msg_buffer.h"
 
-ztl_msg_buffer_t* zlt_msg_buffer_alloc(uint32_t size)
+
+ztl_msg_buffer_t* zlt_mb_alloc(uint32_t size)
 {
     ztl_msg_buffer_t* zmb;
     zmb = (ztl_msg_buffer_t*)malloc(sizeof(ztl_msg_buffer_t));
@@ -17,7 +18,7 @@ ztl_msg_buffer_t* zlt_msg_buffer_alloc(uint32_t size)
     return zmb;
 }
 
-void zlt_msg_buffer_free(ztl_msg_buffer_t* zmb)
+void zlt_mb_free(ztl_msg_buffer_t* zmb)
 {
     if (zmb)
     {
@@ -35,7 +36,7 @@ uint32_t ztl_mb_decref_release(ztl_msg_buffer_t* zmb)
     uint32_t lOld = ztl_atomic_dec(&zmb->refcount, 1);
     if (1 == lOld)
     {
-        zlt_msg_buffer_free(zmb);
+        zlt_mb_free(zmb);
     }
 
     return lOld;

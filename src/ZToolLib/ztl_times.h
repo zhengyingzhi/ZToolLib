@@ -45,31 +45,66 @@ typedef struct ztl_tm_s
     //int tm_yday;  // days since January 1 - [0, 365]
 }ztl_tm;
 
+
+typedef struct {
+    uint16_t    year;
+    uint8_t     month;
+    uint8_t     day;
+}ztl_tm_date_t;
+
+typedef union {
+    ztl_tm_date_t   date;
+    int32_t         id32;
+}ztl_union_date_t;
+
+typedef struct {
+    uint8_t     hour;
+    uint8_t     minute;
+    uint8_t     second;
+    uint8_t     padding;
+}ztl_tm_time_t;
+
+typedef union {
+    ztl_tm_time_t   time;
+    int32_t         it32;
+}ztl_union_time_t;
+
+typedef struct {
+    ztl_tm_date_t   date;
+    ztl_tm_time_t   time;
+}ztl_tm_dt_t;
+
+typedef union {
+    int64_t     i64;
+    ztl_tm_dt_t dt;
+}ztl_union_dt_t;
+
+
 /// precision to milli-second
 int64_t get_timestamp();
 
 /// get time of day
-#ifdef _WIN32
+#ifdef _MSC_VER
 void gettimeofday(struct timeval *tp, void* reserve);
 #else
 #include <sys/time.h>
-#endif//_WIN32
+#endif//_MSC_VER
 
 
 // 2018-01-02
-int ztl_ymd(char* buf);
+int ztl_ymd(char* buf, time_t t);
 
 // 20180102
-int ztl_ymd0(char* buf);
+int ztl_ymd0(char* buf, time_t t);
 
 // 20:13:46
-int ztl_hms(char* buf);
+int ztl_hms(char* buf, time_t t);
 
-// 20:13:46.500
+// 20:13:46.500123
 int ztl_hmsu(char* buf);
 
 // 2018-01-02 20:13:46
-int ztl_ymdhms(char* buf);
+int ztl_ymdhms(char* buf, time_t t);
 
 // 2018-01-02 20:13:46.500
 int ztl_ymdhmsf(char* buf);
@@ -103,6 +138,20 @@ int64_t ztl_intdatetime();
 
 // got 20180102201346500 within millisecond
 int64_t ztl_intdatetimef();
+
+
+// 10:35:22 -->> pt
+int ztl_str_to_ptime(ztl_tm_time_t* pt, const char* time_buf, int len);
+// 103522 -->> pt
+int ztl_int_to_ptime(ztl_tm_time_t* pt, int time_int, int have_millisec);
+
+// 20200315 or 2020-03-15 -->> pd
+int ztl_str_to_pdate(ztl_tm_date_t* pd, const char* date_buf, int len);
+int ztl_int_to_pdate(ztl_tm_date_t* pd, int32_t date_int);
+
+// convert to i64 dt, which could be easily extract to ztl_tm_dt_t
+int ztl_intdt_to_tm(ztl_tm_dt_t* pdt, int32_t date_int, int32_t time_int, int have_millisec);
+int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt);
 
 
 #ifdef __cplusplus

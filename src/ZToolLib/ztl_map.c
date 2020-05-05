@@ -14,9 +14,10 @@ struct ztl_map_st
     ztl_rbtree_t        rbtree;
     ztl_rbtree_node_t   sentinel;
     ztl_mempool_t*      mp;
+    int64_t             invalid_value;
     int32_t             size;
     uint32_t            reserve;
-    uint32_t            access_index;
+    int32_t             access_index;
 };
 
 
@@ -57,6 +58,8 @@ ztl_map_t* ztl_map_create(uint32_t reserve)
     ztl_map_t* lmap;
     lmap = (ztl_map_t*)malloc(sizeof(ztl_map_t));
     memset(lmap, 0, sizeof(ztl_map_t));
+
+    lmap->invalid_value = ZTL_MAP_INVALID_VALUE;
 
     lmap->reserve = reserve;
     if (reserve > 0) {
@@ -100,7 +103,7 @@ bool ztl_map_empty(ztl_map_t* pmap)
     return pmap->size == 0;
 }
 
-int ztl_map_add(ztl_map_t* pmap, uint64_t key, void* value)
+int ztl_map_add(ztl_map_t* pmap, uint64_t key, int64_t value)
 {
     ztl_rbtree_node_t* rbnode;
 
@@ -115,9 +118,9 @@ int ztl_map_add(ztl_map_t* pmap, uint64_t key, void* value)
     return ztl_map_add_ex(pmap, key, rbnode);
 }
 
-void* ztl_map_del(ztl_map_t* pmap, uint64_t key)
+int64_t ztl_map_del(ztl_map_t* pmap, uint64_t key)
 {
-    void* value = NULL;
+    int64_t value = pmap->invalid_value;
     ztl_rbtree_node_t* rbnode;
 
     rbnode = ztl_map_del_ex(pmap, key);
@@ -141,7 +144,7 @@ bool ztl_map_count(ztl_map_t* pmap, uint64_t key)
     return false;
 }
 
-void* ztl_map_find(ztl_map_t* pmap, uint64_t key)
+int64_t ztl_map_find(ztl_map_t* pmap, uint64_t key)
 {
     ztl_rbtree_node_t* rbnode;
     rbnode = _ztl_rbtree_find(&pmap->rbtree, key);
@@ -149,7 +152,7 @@ void* ztl_map_find(ztl_map_t* pmap, uint64_t key)
         return rbnode->udata;
     }
 
-    return NULL;
+    return pmap->invalid_value;
 }
 
 static void _ztl_rbtree_traverse(ztl_map_t* pmap, ztl_rbtree_t *tree, ztl_rbtree_node_t* cur, 
@@ -173,7 +176,7 @@ void ztl_map_traverse(ztl_map_t* pmap, ztl_map_access_pt func, void* context1, i
     _ztl_rbtree_traverse(pmap, &pmap->rbtree, cur, func, context1, context2);
 }
 
-static void _ztl_map_array_push(ztl_map_t* pmap, void* context1, int context2, uint64_t key, void* value)
+static void _ztl_map_array_push(ztl_map_t* pmap, void* context1, int context2, uint64_t key, int64_t value)
 {
     if (pmap->access_index >= context2) {
         return;
@@ -185,11 +188,11 @@ static void _ztl_map_array_push(ztl_map_t* pmap, void* context1, int context2, u
     pkv->Value = value;
 }
 
-void ztl_map_to_array(ztl_map_t* pmap, ztl_map_pair_t* kvArray, int arrSize)
+void ztl_map_to_array(ztl_map_t* pmap, ztl_map_pair_t* kv_array, int arr_size)
 {
     pmap->access_index = 0;
     ztl_rbtree_node_t* cur = pmap->rbtree.root;
-    ztl_map_traverse(pmap, _ztl_map_array_push, kvArray, arrSize);
+    ztl_map_traverse(pmap, _ztl_map_array_push, kv_array, arr_size);
 }
 
 
@@ -278,6 +281,6 @@ int ztl_set_add(ztl_set_t* pset, uint64_t key)
 
 int ztl_set_del(ztl_set_t* pset, uint64_t key)
 {
-    return ztl_map_del(pset->map, key) != NULL ? 0 : -1;
+    return ztl_map_del(pset->map, key) != pset->map->invalid_value ? 0 : -1;
 }
 

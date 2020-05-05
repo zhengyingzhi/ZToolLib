@@ -72,6 +72,7 @@ static void ztl_now(ztl_tm* ptm)
 #endif//_MSC_VER
 }
 
+
 int64_t get_timestamp()
 {
 #ifdef _MSC_VER
@@ -119,34 +120,37 @@ void gettimeofday(struct timeval *tp, void* reserve)
 
 #endif//_MSC_VER
 
-int ztl_ymd(char* buf)
+int ztl_ymd(char* buf, time_t t)
 {
     const size_t sz = sizeof("0000-00-00");
 
     struct tm ltm;
-    time_t now = time(NULL);
-    LOCALTIME_S(&ltm, &now);
+    if (t <= 0)
+        t = time(NULL);
+    LOCALTIME_S(&ltm, &t);
     return (int)strftime(buf, sz, DATE_FORMAT, &ltm);
 }
 
 // 20180102
-int ztl_ymd0(char* buf)
+int ztl_ymd0(char* buf, time_t t)
 {
     const size_t sz = sizeof("00000000");
 
     struct tm ltm;
-    time_t now = time(NULL);
-    LOCALTIME_S(&ltm, &now);
+    if (t <= 0)
+        t = time(NULL);
+    LOCALTIME_S(&ltm, &t);
     return (int)strftime(buf, sz, "%Y%m%d", &ltm);
 }
 
-int ztl_hms(char* buf)
+int ztl_hms(char* buf, time_t t)
 {
     const size_t sz = sizeof(TIME_FORMAT);
 
     struct tm ltm;
-    time_t now = time(NULL);
-    LOCALTIME_S(&ltm, &now);
+    if (t <= 0)
+        t = time(NULL);
+    LOCALTIME_S(&ltm, &t);
     return (int)strftime(buf, sz, TIME_FORMAT, &ltm);
 }
 
@@ -164,13 +168,14 @@ int ztl_hmsu(char* buf)
     return len;
 }
 
-int ztl_ymdhms(char* buf)
+int ztl_ymdhms(char* buf, time_t t)
 {
     const size_t sz = sizeof("0000-00-00 00:00:00");
 
     struct tm ltm;
-    time_t now = time(NULL);
-    LOCALTIME_S(&ltm, &now);
+    if (t <= 0)
+        t = time(NULL);
+    LOCALTIME_S(&ltm, &t);
     return (int)strftime(buf, sz, DATE_TIME_FORMAT, &ltm);
 }
 
@@ -291,3 +296,71 @@ int64_t ztl_intdatetimef()
     return ldtf;
 }
 
+int ztl_str_to_ptime(ztl_tm_time_t* pt, const char* time_buf, int len)
+{
+    (void)len;
+#if 0
+    // 14:50:50.500
+    ptm->tm_hour = atoi(buf);
+    ptm->tm_min = atoi(buf + 3);
+    ptm->tm_sec = atoi(buf + 6);
+    // ptm->ms = atoi(buf + 9);
+#else
+    pt->hour= (time_buf[0] - '0') * 10 + (time_buf[1] - '0');
+    pt->minute = (time_buf[3] - '0') * 10 + (time_buf[4] - '0');
+    pt->second = (time_buf[6] - '0') * 10 + (time_buf[7] - '0');
+#endif
+    return 0;
+}
+
+int ztl_int_to_ptime(ztl_tm_time_t* pt, int time_int, int have_millisec)
+{
+    int hhmmss = time_int;
+    if (have_millisec)
+        hhmmss /= 1000;
+
+    pt->hour = time_int / 10000;
+    pt->minute = (time_int / 100) % 100;
+    pt->second = time_int % 100;
+    return 0;
+}
+
+int ztl_str_to_pdate(ztl_tm_date_t* pd, const char* date_buf, int len)
+{
+    pd->year = (uint16_t)atoi_n(date_buf, 4);
+    if (len == 8) {
+        pd->month = (uint8_t)atoi_n(date_buf + 4, 2);
+        pd->day = (uint8_t)atoi_n(date_buf + 6, 2);
+    }
+    else if (len == 10) {
+        pd->month = (uint8_t)atoi_n(date_buf + 5, 2);
+        pd->day = (uint8_t)atoi_n(date_buf + 8, 2);
+    }
+    else {
+        return -1;
+    }
+    return 0;
+}
+
+int ztl_int_to_pdate(ztl_tm_date_t* pd, int32_t date_int)
+{
+    pd->year = date_int / 10000;
+    pd->month = date_int / 10000 % 100;
+    pd->day = date_int % 100;
+    return 0;
+}
+
+int ztl_intdt_to_tm(ztl_tm_dt_t* pdt, int32_t date_int, int32_t time_int, int have_millisec)
+{
+    ztl_int_to_pdate(&pdt->date, date_int);
+    ztl_int_to_ptime(&pdt->time, time_int, have_millisec);
+    return 0;
+}
+
+int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt)
+{
+    ztl_union_dt_t ud;
+    ud.dt.date = pdt->date;
+    ud.dt.time = pdt->time;
+    return ud.i64;
+}

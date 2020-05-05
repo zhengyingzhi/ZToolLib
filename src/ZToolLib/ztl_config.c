@@ -208,14 +208,14 @@ bool ztl_config_read_bool(ztl_config_t* zconf, const char* key, bool* outbool)
     char* lpv;
     lpv = ztl_config_have(zconf, key);
     if (lpv) {
-        *outbool = ztl_boolvalue_loopup(lpv);
+        *outbool = ztl_boolvalue_lookup(lpv);
         return true;
     }
     return false;
 }
 
 
-bool ztl_boolvalue_loopup(const char* desc)
+bool ztl_boolvalue_lookup(const char* desc)
 {
     if (!desc || !desc[0]) {
         return false;

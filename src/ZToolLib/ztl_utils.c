@@ -40,19 +40,19 @@ int64_t query_tick_count()
 #endif//_MSC_VER
 }
 
-int32_t tick_to_us(int64_t aTickCountBeg, int64_t aTickCountEnd)
+int32_t tick_to_us(int64_t tick_beg, int64_t tick_end)
 {
 #ifdef _MSC_VER
     LARGE_INTEGER freq;
     QueryPerformanceFrequency(&freq);
-    if (aTickCountEnd == 0)
-        return (int32_t)((double)aTickCountBeg / (double)(freq.QuadPart) * 1000000);
+    if (tick_end == 0)
+        return (int32_t)((double)tick_beg / (double)(freq.QuadPart) * 1000000);
     else
-        return (int32_t)((double)(aTickCountEnd - aTickCountBeg) / (double)(freq.QuadPart) * 1000000);
+        return (int32_t)((double)(tick_end - tick_beg) / (double)(freq.QuadPart) * 1000000);
 #else
-    if (aTickCountEnd == 0)
-        return aTickCountBeg;
-    return aTickCountEnd - aTickCountBeg;
+    if (tick_end == 0)
+        return tick_beg;
+    return tick_end - tick_beg;
 #endif//_MSC_VER
 }
 
@@ -141,42 +141,40 @@ int ll2string(char* dst, uint32_t dstlen, int64_t svalue)
     return length;
 }
 
-/// convert previous len data to an integer
-int64_t atoi_n(const char* pszData, int len)
+int64_t atoi_n(const char* data, int len)
 {
     int64_t val = 0;
     int isigned = 1;
     int i = 0;
     while (i++ < len) {
-        if (*pszData == ' ') {
-            ++pszData;
+        if (*data == ' ') {
+            ++data;
             continue;
         }
         break;
     }
 
-    if (*pszData == '+') {
+    if (*data == '+') {
         isigned = 1;
         ++i;
-        ++pszData;
+        ++data;
     }
-    else if (*pszData == '-') {
+    else if (*data == '-') {
         isigned = -1;
         ++i;
-        ++pszData;
+        ++data;
     }
 
     while (i++ <= len) {
-        if (!isdigit(*pszData))
+        if (!isdigit(*data))
             break;
 
-        val = (val * 10) + (*pszData - '0');
-        ++pszData;
+        val = (val * 10) + (*data - '0');
+        ++data;
     }
     return val * isigned;
 }
 
-/// print memory by hex
 void print_mem(void* pm, unsigned int size, int nperline)
 {
     FILE* fp = stdout;
@@ -200,7 +198,6 @@ void print_mem(void* pm, unsigned int size, int nperline)
     fprintf(fp, "\n");
 }
 
-/// generate random string
 #if 0
 void random_string(char* buf, int size, bool onlyhexchar)
 {
@@ -384,36 +381,36 @@ static void print_array(int arr[], int size)
     printf("\n");
 }
 
-int str_delimiter(char* apSrc, char** apRetArr, int aArrSize, char aDelimiter)
+int str_delimiter(char* src, char** ret_arr, int arr_size, char delimiter)
 {
-    if (!apSrc) {
+    if (!src) {
         return 0;
     }
 
-    char* lpCur = apSrc;
+    char* pur = src;
     int n = 0;
-    while (n < aArrSize)
+    while (n < arr_size)
     {
-        apRetArr[n++] = lpCur;
-        lpCur = strchr(lpCur, aDelimiter);
-        if (!lpCur) {
+        ret_arr[n++] = pur;
+        pur = strchr(pur, delimiter);
+        if (!pur) {
             break;
         }
 
-        *lpCur++ = 0x00;
+        *pur++ = 0x00;
     }
     return n;
 }
 
-int str_delimiter_ex(const char* src, int length, zditem_t* retArr, int arrSize, const char* sep)
+int str_delimiter_ex(const char* src, int length, zditem_t* ret_arr, int arr_size, const char* sep)
 {
-    int lenSep = (int)strlen(sep);
+    int sep_len = (int)strlen(sep);
     int index = 0;
     const char* sentinel = src + length;
-    while (index < arrSize)
+    while (index < arr_size)
     {
         char* end;
-        if (lenSep == 1)
+        if (sep_len == 1)
             end = strchr(src, *sep);
         else
             end = strstr(src, sep);
@@ -423,19 +420,19 @@ int str_delimiter_ex(const char* src, int length, zditem_t* retArr, int arrSize,
             // last item
             if (sentinel - src > 0)
             {
-                retArr[index].ptr = (char*)src;
-                retArr[index].len = (int)(sentinel - src);
+                ret_arr[index].ptr = (char*)src;
+                ret_arr[index].len = (int)(sentinel - src);
                 index++;
             }
             break;
         }
 
-        retArr[index].ptr = (char*)src;
-        retArr[index].len = (int)(end - src);
+        ret_arr[index].ptr = (char*)src;
+        ret_arr[index].len = (int)(end - src);
         index++;
 
         // next pos
-        src = end + lenSep;
+        src = end + sep_len;
     }
 
     return index;

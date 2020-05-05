@@ -13,13 +13,13 @@ void Test_ztl_base64(ZuTest* zt)
 
     char b64[64] = "";
     uint32_t bLen64 = sizeof(b64);
-    ztl_base64_encode(key, strlen(key), b64, &bLen64);
+    ztl_base64_encode(key, (uint32_t)strlen(key), b64, &bLen64);
 
     char rawdata[64] = "";
     uint32_t rawlen = sizeof(rawdata);
     ztl_base64_decode(b64, bLen64, rawdata, &rawlen);
 
-    ZuAssertTrue(zt, strlen(key) == rawlen);
+    ZuAssertTrue(zt, (uint32_t)strlen(key) == rawlen);
     ZuAssertTrue(zt, strncmp(key, rawdata, rawlen) == 0);
 
     // base64 encode a struct
@@ -31,6 +31,7 @@ void Test_ztl_base64(ZuTest* zt)
         char male;
         short flag;
     };
+    fprintf(stderr, "sizeof testStruect:%d\n", (int)sizeof(struct testStruct));
     struct testStruct ts = { 0 };
     strcpy(ts.buf, "helloworld");
     ts.age = 30;
@@ -41,14 +42,17 @@ void Test_ztl_base64(ZuTest* zt)
     bLen64 = sizeof(b64);
     ztl_base64_encode((const char*)&ts, sizeof(ts), b64, &bLen64);
 
-    struct testStruct ts2 = { 0 };
-    rawlen = sizeof(ts2);
-    ztl_base64_decode(b64, bLen64, (char*)&ts2, &rawlen);
-    ZuAssertStrEquals(zt, ts2.buf, ts.buf);
-    ZuAssertTrue(zt, ts2.age == ts.age);
-    ZuAssertTrue(zt, ts2.male == ts.male);
-    ZuAssertTrue(zt, ts2.flag == ts.flag);
-    ZuAssertTrue(zt, ts2.score == ts.score);
+    char ts_decode[sizeof(struct testStruct) + 1] = "";
+    rawlen = sizeof(ts_decode);
+    // ztl_base64_decode(b64, bLen64, (char*)&ts2, &rawlen);    // error maybe callstack corrupt
+    ztl_base64_decode(b64, bLen64, ts_decode, &rawlen);
+
+    struct testStruct* ts2 = (struct testStruct*)ts_decode;
+    ZuAssertStrEquals(zt, ts2->buf, ts.buf);
+    ZuAssertTrue(zt, ts2->age == ts.age);
+    ZuAssertTrue(zt, ts2->male == ts.male);
+    ZuAssertTrue(zt, ts2->flag == ts.flag);
+    ZuAssertTrue(zt, ts2->score == ts.score);
 }
 
 void Test_ztl_encrypt(ZuTest* zt)
@@ -59,13 +63,13 @@ void Test_ztl_encrypt(ZuTest* zt)
     char rawdata[64] = "hello world, 123";
     char encryptdata[64] = "";
     int  encryptlen = sizeof(encryptdata);
-    ztl_aes_encrypt(key, rawdata, strlen(rawdata), encryptdata, &encryptlen);
+    ztl_aes_encrypt(key, rawdata, (int)strlen(rawdata), encryptdata, &encryptlen);
     ZuAssertTrue(zt, strlen(encryptdata) > 0);
     ZuAssertTrue(zt, encryptlen > 0);
 
     char rawdata2[64] = "";
     int  rawlen2 = sizeof(rawdata2);
-    ztl_aes_decrypt(key, encryptdata, strlen(encryptdata), rawdata2, &rawlen2);
+    ztl_aes_decrypt(key, encryptdata, (int)strlen(encryptdata), rawdata2, &rawlen2);
     ZuAssertTrue(zt, 0 == strcmp(rawdata, rawdata2));
     ZuAssertTrue(zt, strlen(rawdata) == rawlen2);
 }

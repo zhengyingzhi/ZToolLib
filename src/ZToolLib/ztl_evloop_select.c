@@ -21,7 +21,7 @@
 
 typedef struct select_ctx_st
 {
-    int    maxfd;
+    sockhandle_t    maxfd;
     fd_set in_read_set;
     fd_set in_write_set;
     fd_set in_except_set;
@@ -62,7 +62,7 @@ static inline void _set_connection(select_ctx_t* pctx, ztl_connection_t* conn, s
     pctx->conn_map[sockfd] = conn;
 }
 
-static inline ztl_connection_t* _get_connection(select_ctx_t* pcts, int sockfd) {
+static inline ztl_connection_t* _get_connection(select_ctx_t* pcts, sockhandle_t sockfd) {
     return pcts->conn_map[sockfd];
 }
 
@@ -265,7 +265,7 @@ static int select_del(ztl_evloop_t* evloop, ztl_connection_t* conn)
     FD_CLR(conn->sockfd, &lpctx->in_write_set);
     FD_CLR(conn->sockfd, &lpctx->in_except_set);
 
-    uint32_t lmaxfd = 0;
+    sockhandle_t lmaxfd = 0;
 
     SOCKET* lfdarray;
 

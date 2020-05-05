@@ -49,19 +49,19 @@ void Test_lfqueue(ZuTest* zt)
     ZuAssertTrue(zt, 3 == lfqueue_size(que));
 
     int64_t outdata = 0;
-    rv = lfqueue_pop(que, &outdata);
+    rv = lfqueue_pop(que, (void**)&outdata);
     ZuAssertTrue(zt, rv == 0);
     ZuAssertTrue(zt, outdata == 1);
 
-    lfqueue_pop(que, &outdata);
+    lfqueue_pop(que, (void**)&outdata);
     ZuAssertTrue(zt, rv == 0);
     ZuAssertTrue(zt, outdata == 2);
 
-    lfqueue_pop(que, &outdata);
+    lfqueue_pop(que, (void**)&outdata);
     ZuAssertTrue(zt, rv == 0);
     ZuAssertTrue(zt, outdata == 3);
 
-    rv = lfqueue_pop(que, &outdata);
+    rv = lfqueue_pop(que, (void**)&outdata);
     ZuAssertTrue(zt, rv != 0);
 
     lfqueue_release(que);

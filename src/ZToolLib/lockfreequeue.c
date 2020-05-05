@@ -46,7 +46,7 @@ struct lfqueue_st
     /// to wait for those other threads to save the data into the queue
     ///
     /// note this index is only used for MultipleProducerThread queues
-    volatile uint32_t*	maxreadindex;
+    volatile uint32_t*  maxreadindex;
 
     char*    arrdata;           // array to keep the elements
 
@@ -83,12 +83,12 @@ static void lfqueue_initmember(lfqueue_t* que, uint32_t quesize, void* addr)
 }
 
 
-int64_t lfqueue_memory_size(uint32_t queusize, uint32_t elemsize)
+int64_t lfqueue_memory_size(uint32_t quesize, uint32_t elemsize)
 {
     int64_t size;
     elemsize = ztl_align(elemsize, sizeof(void*));
 
-    size = sizeof(queue_op_data_t) + (queusize + 1) * elemsize;
+    size = sizeof(queue_op_data_t) + (quesize + 1) * elemsize;
     size = ztl_align(size, 64);
 
     return size;
@@ -283,7 +283,38 @@ int lfqueue_pop_value(lfqueue_t* que, void* pdata)
     return -1;
 }
 
-int lfqueue_size(lfqueue_t* que)
+int lfqueue_head(lfqueue_t* que, void** ppdata)
+{
+    uint32_t curMaxReadIndex;
+    uint32_t curReadIndex;
+    char*    srcaddr;
+
+    curReadIndex = *que->rdindex;
+    curMaxReadIndex = *que->maxreadindex;
+
+    // empty or not
+    if (curReadIndex == curMaxReadIndex) {
+        return -1;
+    }
+
+    // retrieve the data pointer from the queue
+    srcaddr = que->arrdata + que->eltsize * curReadIndex;
+    ztlncpy(ppdata, srcaddr, que->eltsize);
+    return 0;
+}
+
+int lfqueue_head_value(lfqueue_t* que, void* pdata)
+{
+    void* lpdata;
+    if (lfqueue_head(que, &lpdata) == 0) {
+        ztlncpy(pdata, lpdata, que->eltsize);
+        return 0;
+    }
+    return -1;
+}
+
+
+uint32_t lfqueue_size(lfqueue_t* que)
 {
     if (que)
     {
@@ -299,7 +330,12 @@ int lfqueue_size(lfqueue_t* que)
     return 0;
 }
 
-int lfqueue_elem_size(lfqueue_t* que)
+uint32_t lfqueue_max_size(lfqueue_t* que)
+{
+    return que->size;
+}
+
+uint32_t lfqueue_elem_size(lfqueue_t* que)
 {
     return que->eltsize;
 }

@@ -10,16 +10,23 @@
 extern "C" {
 #endif
 
+
+#define ZTL_MAP_INVALID_VALUE       (-1)
+
+
+typedef uint64_t    ztl_map_key_t;
+typedef uint64_t    ztl_map_value_t;
+
 typedef struct
 {
-    int64_t     Key;
-    void*       Value;
+    ztl_map_key_t   Key;
+    ztl_map_value_t Value;
 }ztl_map_pair_t;
 
 /* a simple map implement by C */
 typedef struct ztl_map_st ztl_map_t;
 
-typedef void (*ztl_map_access_pt)(ztl_map_t* pmap, void* context1, int context2, uint64_t key, void* value);
+typedef void (*ztl_map_access_pt)(ztl_map_t* pmap, void* context1, int context2, uint64_t key, int64_t value);
 
 /* init a map which is implemented by rb-tree,
  * if reserve > 0, it will internally pre-reserve memory space
@@ -46,12 +53,12 @@ bool ztl_map_empty(ztl_map_t* pmap);
 /* add a key-value into map
  * note: only allowed use ztl_map_del to delete elem
  */
-int ztl_map_add(ztl_map_t* pmap, uint64_t key, void* value);
+int ztl_map_add(ztl_map_t* pmap, uint64_t key, int64_t value);
 
 /* del the key-value from map
  * return the value of the key
  */
-void* ztl_map_del(ztl_map_t* pmap, uint64_t key);
+int64_t ztl_map_del(ztl_map_t* pmap, uint64_t key);
 
 /* have the value by the key
  */
@@ -59,7 +66,7 @@ bool ztl_map_count(ztl_map_t* pmap, uint64_t key);
 
 /* find the value by the key
  */
-void* ztl_map_find(ztl_map_t* pmap, uint64_t key);
+int64_t ztl_map_find(ztl_map_t* pmap, uint64_t key);
 
 /* traverse all elems of the map
  */
@@ -67,7 +74,7 @@ void ztl_map_traverse(ztl_map_t* pmap, ztl_map_access_pt func, void* context1, i
 
 /* convert to array
  */
-void ztl_map_to_array(ztl_map_t* pmap, ztl_map_pair_t* kvArray, int arrSize);
+void ztl_map_to_array(ztl_map_t* pmap, ztl_map_pair_t* kv_array, int arr_size);
 
 //////////////////////////////////////////////////////////////////////////
 /* for quick insert key-value into map by using rbtree_node             */
@@ -77,12 +84,12 @@ void ztl_map_to_array(ztl_map_t* pmap, ztl_map_pair_t* kvArray, int arrSize);
 int ztl_map_add_ex(ztl_map_t* pmap, uint64_t key, ztl_rbtree_node_t* nodeval);
 
 /* del the key-value from map
-* return the ztl_rbtree_node_t value of the key
-*/
+ * return the ztl_rbtree_node_t value of the key
+ */
 ztl_rbtree_node_t* ztl_map_del_ex(ztl_map_t* pmap, uint64_t key);
 
 /* find the value by the key
-*/
+ */
 ztl_rbtree_node_t* ztl_map_find_ex(ztl_map_t* pmap, uint64_t key);
 
 

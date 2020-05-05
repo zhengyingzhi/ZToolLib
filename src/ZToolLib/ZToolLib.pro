@@ -28,7 +28,7 @@ build_pass:CONFIG(debug, debug|release) {
         DEFINES += DEBUG _DEBUG ZTL_DEBUG
         DESTDIR = ../../build/debug
 } else {
-        DEFINES += NDEBUG
+        DEFINES += NDEBUG ZTL_NDEBUG
         DESTDIR = ../../build/release
 }
 
@@ -37,6 +37,7 @@ QMAKE_CFLAGS += -std=c99
 
 # Input
 HEADERS += lockfreequeue.h \
+    cJSON.h \
     ztl_aes.h \
     ztl_array.h \
     ztl_atomic.h \
@@ -83,6 +84,8 @@ HEADERS += lockfreequeue.h \
     ztl_vector.h 
 
 SOURCES += lockfreequeue.c \
+    cJSON.c \
+    siphash.c \
     ztl_aes.c \
     ztl_array.c \
     ztl_base64.c \
@@ -116,7 +119,6 @@ SOURCES += lockfreequeue.c \
     ztl_sha1.c \
     ztl_shm.c \
     ztl_simple_event.c \
-    siphash.c \
     ztl_threadpool.c \
     ztl_tcp_server.c \
     ztl_threads.c \

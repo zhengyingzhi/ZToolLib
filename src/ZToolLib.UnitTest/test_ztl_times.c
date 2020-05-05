@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <ZToolLib/ztl_times.h>
@@ -7,33 +8,39 @@
 
 void Test_ztl_times(ZuTest* zt)
 {
-    time_t lTime = 1532653072;   // time(0);
+    // time_t lTime = 1532653072;
+    time_t lTime = time(0);
     struct tm* ptm = localtime(&lTime);
     char expect_date1[32] = "";
-    sprintf(expect_date1, "%04d-%02d-%02d", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
     char expect_date2[32] = "";
+    int  expect_date_int = 0;
+    int  expect_time_int = 0;
+
+    sprintf(expect_date1, "%04d-%02d-%02d", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
     sprintf(expect_date2, "%04d%02d%02d", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
+    expect_date_int = atoi(expect_date2);
+    expect_time_int = ptm->tm_hour * 10000 + ptm->tm_min * 100 + ptm->tm_sec;
 
     int len = 0, dt;
     char buf[64] = "";
 
-    len = ztl_ymd(buf);
+    len = ztl_ymd(buf, 0);
     ZuAssertTrue(zt, 0 == strcmp(buf, expect_date1));
     ZuAssertTrue(zt, len == 10);
 
-    len = ztl_ymd0(buf);
+    len = ztl_ymd0(buf, 0);
     ZuAssertTrue(zt, 0 == strcmp(buf, expect_date2));
     ZuAssertTrue(zt, len == 8);
 
-    len = ztl_hms(buf);
+    len = ztl_hms(buf, 0);
     //ZuAssertTrue(zt, 0 == strcmp(buf, "09:01:48"));
     ZuAssertTrue(zt, len == 8);
 
     len = ztl_hmsu(buf);
     //ZuAssertTrue(zt, 0 == strncmp(buf, "09:01:48.", 9));
-    ZuAssertTrue(zt, len == 12);
+    ZuAssertTrue(zt, len == 15);
 
-    len = ztl_ymdhms(buf);
+    len = ztl_ymdhms(buf, 0);
     //ZuAssertTrue(zt, 0 == strcmp(buf, "2018-07-27 09:01:48"));
     ZuAssertTrue(zt, len == 19);
 
@@ -65,10 +72,10 @@ void Test_ztl_times(ZuTest* zt)
     ZuAssertTrue(zt, len == 12);
 
     dt = ztl_tointdate(lTime);
-    ZuAssertTrue(zt, dt == 20180727);
+    ZuAssertTrue(zt, dt == expect_date_int);
 
     dt = ztl_tointtime(lTime);
-    ZuAssertTrue(zt, dt == 85752);
+    ZuAssertTrue(zt, dt == expect_time_int);
 
     // got 201346500
     dt = ztl_tointtimef(lTime);
