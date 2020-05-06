@@ -22,8 +22,10 @@ extern void Test_ztl_ztlncpy(ZuTest* zt);
 
 extern void Test_ztl_buffer(ZuTest* zt);
 extern void Test_ztl_buffer2(ZuTest* zt);
+#ifdef _MSC_VER // @202005 since linux compile error
 extern void Test_ztl_linklist(ZuTest* zt);
 extern void Test_ztl_dlist(ZuTest* zt);
+#endif//_MSC_VER
 
 extern void Test_ztl_mempool(ZuTest* zt);
 extern void Test_ztl_shm_readonly(ZuTest* zt);
@@ -69,8 +71,10 @@ void RunAllTests(void)
 
     SUITE_ADD_TEST(suite, Test_ztl_buffer);
     SUITE_ADD_TEST(suite, Test_ztl_buffer2);
+#ifdef _MSC_VER
     SUITE_ADD_TEST(suite, Test_ztl_linklist);
     SUITE_ADD_TEST(suite, Test_ztl_dlist);
+#endif//_MSC_VER
     SUITE_ADD_TEST(suite, Test_ztl_mempool);
     SUITE_ADD_TEST(suite, Test_ztl_shm_readonly);
     SUITE_ADD_TEST(suite, Test_ztl_shm_readwrite);

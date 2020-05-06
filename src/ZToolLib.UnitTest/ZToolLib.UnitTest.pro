@@ -49,11 +49,11 @@ SOURCES += ZToolUnitTests.c \
     test_ztl_buffer.c \
     test_ztl_crypt.c \
     test_ztl_dict.c \
-    test_ztl_linklist.c \
+#     test_ztl_linklist.c \
     test_ztl_map.c \
     test_ztl_mempool.c \
     test_ztl_pc.c \
     test_ztl_shm.c \
     test_ztl_times.c \
     test_ztl_utils.c \
-    test_ztl_vector
+    test_ztl_vector.c

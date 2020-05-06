@@ -50,6 +50,7 @@ HEADERS += lockfreequeue.h \
     ztl_crc.h \
     ztl_crypt.h \
     ztl_dict.h \
+#     ztl_dlist.h \
     ztl_dyso.h \
     ztl_event_dispatcher.h \
     ztl_evtimer.h \
@@ -95,6 +96,7 @@ SOURCES += lockfreequeue.c \
     ztl_crc.c \
     ztl_crypt.c \
     ztl_dict.c \
+#     ztl_dlist.c \
     ztl_dyso.c \
     ztl_event_dispatcher.c \
     ztl_evtimer.c \
@@ -103,6 +105,7 @@ SOURCES += lockfreequeue.c \
     ztl_evloop_private.c \
     ztl_fixapi.c \
     ztl_hash.c \
+    ztl_linklist.c \
     ztl_locks.c \
     ztl_logger.c \
     ztl_malloc.c \
