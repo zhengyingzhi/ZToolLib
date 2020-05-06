@@ -58,7 +58,8 @@ static void ztl_now(ztl_tm* ptm)
     localtime_r(&tv.tv_sec, &ltm);
 #else
     ltm = *localtime(&tv.tv_sec);
-    
+#endif
+
     ptm->tm_usec    = tv.tv_usec;
     ptm->tm_sec     = ltm.tm_sec;
     ptm->tm_min     = ltm.tm_min;
@@ -67,7 +68,6 @@ static void ztl_now(ztl_tm* ptm)
     ptm->tm_mon     = ltm.tm_mon + 1;
     ptm->tm_year    = ltm.tm_year + 1900;
     ptm->tm_wday    = ltm.tm_wday;
-#endif
 
 #endif//_MSC_VER
 }
@@ -277,7 +277,7 @@ int64_t ztl_intdatetime()
     ztl_now(&ltm);
 
     int64_t ldate = (ltm.tm_year + 1900) * 10000 + (ltm.tm_mon + 1) * 100 + ltm.tm_mday;
-    int64_t ltime = (ltm.tm_sec * 10000) + (ltm.tm_min * 100) + ltm.tm_sec;
+    int64_t ltime = (ltm.tm_hour * 10000) + (ltm.tm_min * 100) + ltm.tm_sec;
     ldt = ldate * 1000000 + ltime;
     return ldt;
 }
@@ -290,7 +290,7 @@ int64_t ztl_intdatetimef()
     ztl_now(&ltm);
 
     int64_t ldate = (ltm.tm_year + 1900) * 10000 + (ltm.tm_mon + 1) * 100 + ltm.tm_mday;
-    int64_t ltimef = (ltm.tm_sec * 10000000) + (ltm.tm_min * 100000) + ltm.tm_sec * 1000
+    int64_t ltimef = (ltm.tm_hour * 10000000) + (ltm.tm_min * 100000) + ltm.tm_sec * 1000
         + ltm.tm_usec / 1000;
     ldtf = ldate * 1000000000ULL + ltimef;
     return ldtf;

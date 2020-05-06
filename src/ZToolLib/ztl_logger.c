@@ -98,7 +98,7 @@ static void _Output2DbgView(FILE* logfp, char* buf, int len)
 static void _Output2Scrn(FILE* logfp, char* buf, int len)
 {
     (void)len;
-    fprintf(logfp, buf);
+    fprintf(logfp, "%s", buf);
 }
 static void _Output2Syslog(FILE* logfp, char* buf, int len)
 {
@@ -143,7 +143,7 @@ static char* _WaitLogMsg(ztl_log_t* log)
     do 
     {
         lpBuff = NULL;
-        if (lfqueue_pop(log->queue, &lpBuff) != 0) {
+        if (lfqueue_pop(log->queue, (void**)&lpBuff) != 0) {
             ztl_thread_cond_wait(&log->cond, &log->lock);
             continue;
         }

@@ -17,33 +17,31 @@
 #ifdef _MSC_VER
 #pragma comment(lib, "winmm.lib")
 #endif
-#elif defined(__unix)
+#else
 #include <sys/time.h>
 #include <unistd.h>
-#else
-#error it can only be compiled under windows or unix
+// #error it can only be compiled under windows or unix
 #endif
 
 #include "ztl_memcpy.h"
 
 static unsigned int gettime()
 {
-	#if (defined(_WIN32) || defined(WIN32))
-	return timeGetTime();
-	#else
-	static struct timezone tz={ 0,0 };
-	struct timeval time;
-	gettimeofday(&time,&tz);
-	return (time.tv_sec * 1000 + time.tv_usec / 1000);
-	#endif
+#if (defined(_WIN32) || defined(WIN32))
+    return timeGetTime();
+#else
+    // static struct timezone tz={ 0,0 };    struct timeval time;
+    gettimeofday(&time, NULL);
+    return (time.tv_sec * 1000 + time.tv_usec / 1000);
+#endif
 }
 
 static void sleepms(unsigned int millisec)
 {
 #if defined(_WIN32) || defined(WIN32)
-	Sleep(millisec);
+    Sleep(millisec);
 #else
-	usleep(millisec * 1000);
+    usleep(millisec * 1000);
 #endif
 }
 

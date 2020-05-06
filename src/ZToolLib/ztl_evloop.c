@@ -64,6 +64,9 @@ static int _ztl_make_listen(sockhandle_t* plisten_fd, uint32_t listen_addr, uint
 
 static int _ztl_listen_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS events)
 {
+    (void)conn;
+    (void)events;
+
     ztl_connection_t* newconn;
     while (evloop->running)
     {
@@ -81,6 +84,9 @@ static int _ztl_listen_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL
 
 static int _ztl_pipe_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS events)
 {
+    (void)evloop;
+    (void)conn;
+    (void)events;
     return 0;
 }
 

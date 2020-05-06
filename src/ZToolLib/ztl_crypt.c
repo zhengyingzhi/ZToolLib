@@ -13,7 +13,7 @@ int ztl_aes_encrypt(const char* key, const char* rawdata, int rawlen, char* encr
 
     char lrawbuf[4000] = "";
     char* lpraw;
-    if (rawlen > sizeof(lrawbuf)) {
+    if (rawlen > (int)sizeof(lrawbuf)) {
         lpraw = (char*)malloc(rawlen + 1);
     }
     else {
@@ -43,7 +43,7 @@ int ztl_aes_decrypt(const char* key, const char* encryptdata, int encryptlen, ch
     ztl_base64_decode(encryptdata, encryptlen, rawdata, (uint32_t*)rawlen);
 
     ztl_aes_t aes;
-    ztl_aes_init(&aes, key);
+    ztl_aes_init(&aes, (const unsigned char*)key);
     rawdata = (char*)ztl_aes_decode_withlen(&aes, rawdata, *rawlen);
     return 0;
 }

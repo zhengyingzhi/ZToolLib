@@ -26,9 +26,9 @@ extern "C" {
 #define ztl_inline 
 #endif//__cplusplus
 
-#ifndef _MSC_VER
-static void DebugBreak() {}
-#endif//_MSC_VER
+// #ifndef _MSC_VER
+// static void DebugBreak() {}
+// #endif//_MSC_VER
 
 #if defined(_DEBUG) || defined(DEBUG)
 #define ztl_assert(condition)  do { if(!(condition)){ \

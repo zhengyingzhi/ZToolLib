@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "ztl_evloop_private.h"
+#include "ztl_evtimer.h"
 #include "ztl_network.h"
 #include "ztl_utils.h"
 #include "ztl_mempool.h"
@@ -150,7 +151,7 @@ static int epoll_stop(ztl_evloop_t* evloop)
     }
 
     while (ztl_atomic_add(&evloop->nexited, 0) != (uint32_t)evloop->thrnum) {
-        sleep_ms(1);
+        sleepms(1);
     }
 
     return 0;

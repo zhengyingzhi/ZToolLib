@@ -14,6 +14,7 @@ int os_error() { return GetLastError(); }
 #define FMT64   "%lld"
 #define SEQ_FMT "%u"
 #else
+#include <errno.h>
 int os_error() { return errno; }
 #define FMT64   "%ld"
 #define SEQ_FMT "%u"
@@ -608,6 +609,8 @@ void* ztl_memdb_ctrl_buffer(ztl_memdb_t* memdb)
 
 void ztl_memdb_reserve(ztl_memdb_t* memdb, uint32_t count)
 {
+    (void)memdb;
+    (void)count;
     // 
 }
 
@@ -766,6 +769,7 @@ void ztl_memdb_initialize(ztl_memdb_t* memdb, uint8_t* apAddr, uint64_t aSize)
             }
 
             uint32_t lPos = (uint32_t)(lpHI->Sequence - lStartIndex);
+            (void)lPos;
             // memdb->SeqVec[lPos] = lpCurAddr + MHEAD_SIZE; // TODO:
             memdb->TotalBytes += lpHI->Length;
         }
