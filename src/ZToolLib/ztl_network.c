@@ -38,6 +38,12 @@ bool is_einterrupt(int nErrno) {
 
 #else /* linux platform */
 
+struct ip_mreq
+{
+    struct in_addr imr_multiaddr;
+    struct in_addr imr_interface;
+};
+
 void ignore_sigpipe()
 {
     signal(SIGPIPE, SIG_IGN);
@@ -148,27 +154,30 @@ int set_broadcast(sockhandle_t sockfd, bool on)
 /// multicast operations
 int join_multicast(sockhandle_t sockfd, const char* multiip, const char* bindip)
 {
-    struct ip_mreq mreqInfo;
-    memset(&mreqInfo, 0, sizeof(mreqInfo));
-    inet_pton(AF_INET, multiip, &mreqInfo.imr_multiaddr);
+    struct ip_mreq mreq_info;
+    memset(&mreq_info, 0, sizeof(mreq_info));
+    inet_pton(AF_INET, multiip, &mreq_info.imr_multiaddr);
 
     if (bindip == NULL || *bindip == '\0')
-        mreqInfo.imr_interface.s_addr = htonl(INADDR_ANY);
+        mreq_info.imr_interface.s_addr = htonl(INADDR_ANY);
     else
-        inet_pton(AF_INET, bindip, &mreqInfo.imr_interface);
-    return setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&mreqInfo, sizeof(mreqInfo));
+        inet_pton(AF_INET, bindip, &mreq_info.imr_interface);
+
+    // ---- below is for linux ? ----
+    // setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_IF, &mreq_info, sizeof(mreq_info));
+    return setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&mreq_info, sizeof(mreq_info));
 }
 int leave_multicast(sockhandle_t sockfd, const char* multiip, const char* bindip)
 {
-    struct ip_mreq mreqInfo;
-    memset(&mreqInfo, 0, sizeof(mreqInfo));
-    inet_pton(AF_INET, multiip, &mreqInfo.imr_multiaddr);
+    struct ip_mreq mreq_info;
+    memset(&mreq_info, 0, sizeof(mreq_info));
+    inet_pton(AF_INET, multiip, &mreq_info.imr_multiaddr);
 
     if (bindip == NULL || *bindip == '\0')
-        mreqInfo.imr_interface.s_addr = htonl(INADDR_ANY);
+        mreq_info.imr_interface.s_addr = htonl(INADDR_ANY);
     else
-        inet_pton(AF_INET, bindip, &mreqInfo.imr_interface);
-    return setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (const char*)&mreqInfo, sizeof(mreqInfo));
+        inet_pton(AF_INET, bindip, &mreq_info.imr_interface);
+    return setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (const char*)&mreq_info, sizeof(mreq_info));
 }
 
 int set_multicase_interface(sockhandle_t sockfd, const char* bindip)
@@ -576,6 +585,7 @@ int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb, void* udata)
 /// make a tcp echo server
 static int echo_func(void* udata, sockhandle_t ns, int isoutev)
 {
+    (void)udata;
     (void)isoutev;
     int rv;
     char buf[4096] = "";
