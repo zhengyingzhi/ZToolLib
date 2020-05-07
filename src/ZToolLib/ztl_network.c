@@ -38,11 +38,13 @@ bool is_einterrupt(int nErrno) {
 
 #else /* linux platform */
 
+#if 0 // -std=c99 or -std=gnu99
 struct ip_mreq
 {
     struct in_addr imr_multiaddr;
     struct in_addr imr_interface;
 };
+#endif
 
 void ignore_sigpipe()
 {

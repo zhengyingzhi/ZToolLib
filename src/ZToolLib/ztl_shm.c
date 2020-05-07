@@ -12,10 +12,11 @@
 
 #else
 
+#if 0
 #define _GNU_SOURCE     // for MAP_HUGETLB before mman.h, but sims not work yet
 #define MAP_HUGETLB     0
 #define MAP_ANONYMOUS   0
-#define __USE_MISC
+#endif//0
 
 #include <errno.h>
 #include <unistd.h>
@@ -560,8 +561,8 @@ int ztl_shm_map_region(ztl_shm_t* zshm, int aAccessMode)
             lShmFlag |= SHM_W;
 
         // with hugetlb flag
-        // if (zshm->m_Hugepage)
-        //     lShmFlag |= SHM_HUGETLB;
+        if (zshm->m_Hugepage)
+            lShmFlag |= SHM_HUGETLB;
 
         zshm->m_Handle = shmget(lShmKey, zshm->m_Size, lShmFlag);
         if (zshm->m_Handle == INVALID_HANDLE_VALUE && errno == EEXIST && 
@@ -570,8 +571,8 @@ int ztl_shm_map_region(ztl_shm_t* zshm, int aAccessMode)
             lShmFlag = SHM_R;
             if (lAccessMode != ztl_read_only)
                 lShmFlag |= SHM_W;
-            // if (zshm->m_Hugepage)
-            //     lShmFlag |= SHM_HUGETLB;
+            if (zshm->m_Hugepage)
+                lShmFlag |= SHM_HUGETLB;
             zshm->m_Handle = shmget(lShmKey, zshm->m_Size, lShmFlag);
         }
 

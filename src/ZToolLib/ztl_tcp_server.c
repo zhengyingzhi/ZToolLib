@@ -112,11 +112,13 @@ typedef struct
     ztl_tcp_server_t*   tcpsvr;
     char                buf[32];
 }ztl_server_conn_t;
+
 static int _ztl_ev_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS events)
 {
     int rv;
     ztl_tcp_server_t*   tcpsvr;
     tcpsvr = (ztl_tcp_server_t*)ztl_evloop_get_usedata(evloop);
+    (void)tcpsvr;
 
     if (events == ZEV_NEWCONN)
     {
@@ -134,6 +136,7 @@ static int _ztl_ev_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_
         rv = _ztl_write_handle(evloop, conn);
     }
 
+    (void)rv;
     return 0;
 }
 
@@ -163,6 +166,7 @@ static int _ztl_read_handle(ztl_evloop_t* evloop, ztl_connection_t* conn)
 {
     ztl_server_conn_t* svrconn;
     svrconn = (ztl_server_conn_t*)conn->userdata;
+    (void)svrconn;
 
     if (conn->bytes_recved == 0 && conn->rbuf == NULL) {
         // buffer could be from memory pool
