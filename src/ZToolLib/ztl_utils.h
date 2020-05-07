@@ -26,9 +26,12 @@ extern "C" {
 #define ztl_inline 
 #endif//__cplusplus
 
-// #ifndef _MSC_VER
+#ifdef _MSC_VER
+#define ZTL_I64_FMT     "%lld"
+#else
+#define ZTL_I64_FMT     "%ld"
 // static void DebugBreak() {}
-// #endif//_MSC_VER
+#endif//_MSC_VER
 
 #if defined(_DEBUG) || defined(DEBUG)
 #define ztl_assert(condition)  do { if(!(condition)){ \
@@ -37,6 +40,12 @@ extern "C" {
 #else
 #define ztl_assert(condition) 
 #endif//DEBUG
+
+#if defined(_WIN64) || defined(__x86_64__)
+#define ZTL_X64 1
+#else
+#define ZTL_X86 1
+#endif//X64
 
 
 typedef union {

@@ -32,7 +32,8 @@ build_pass:CONFIG(debug, debug|release) {
         DESTDIR = ../../build/release
 }
 
-QMAKE_CFLAGS += -std=c99
+# QMAKE_CFLAGS += -std=c99
+# QMAKE_CFLAGS += -std=gnu99
 
 
 # Input
@@ -50,7 +51,7 @@ HEADERS += lockfreequeue.h \
     ztl_crc.h \
     ztl_crypt.h \
     ztl_dict.h \
-#     ztl_dlist.h \
+    ztl_dlist.h \
     ztl_dyso.h \
     ztl_event_dispatcher.h \
     ztl_evtimer.h \
@@ -96,7 +97,7 @@ SOURCES += lockfreequeue.c \
     ztl_crc.c \
     ztl_crypt.c \
     ztl_dict.c \
-#     ztl_dlist.c \
+    ztl_dlist.c \
     ztl_dyso.c \
     ztl_event_dispatcher.c \
     ztl_evtimer.c \

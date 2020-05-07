@@ -33,7 +33,8 @@ build_pass:CONFIG(debug, debug|release) {
         DESTDIR = ../../build/release
 }
 
-QMAKE_CFLAGS += -std=c99
+# QMAKE_CFLAGS += -std=c99
+# QMAKE_CFLAGS += -std=gnu99
 
 INCLUDEPATH += ../
 

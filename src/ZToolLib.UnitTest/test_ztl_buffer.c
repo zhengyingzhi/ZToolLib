@@ -58,7 +58,6 @@ static void  _ztl_buffer_dealloc(void* ctx, void* addr)
 
 void Test_ztl_buffer2(ZuTest* zt)
 {
-    char ldata[256] = "";
     ztl_buffer_t zbuf;
     ztl_buffer_init(&zbuf);
 

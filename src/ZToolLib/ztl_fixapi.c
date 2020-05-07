@@ -22,6 +22,7 @@ struct ztl_fixapi_s
 #define _avail_size(fixapi) (fixapi->capacity <= fixapi->length ? fixapi->capacity - fixapi->length : 0)
 #define _data_len(fixapi)   (fixapi->length)
 
+#if 0 // not used currently
 static ztl_inline void _ztl_insert_item(ztl_fixapi_t* fixapi, fixkey_t id, int64_t value)
 {
     ztl_rbtree_node_t* pnode;
@@ -30,6 +31,7 @@ static ztl_inline void _ztl_insert_item(ztl_fixapi_t* fixapi, fixkey_t id, int64
     pnode->udata = value;
     ztl_map_add_ex(fixapi->fixmap, id, pnode);
 }
+#endif//0
 
 static ztl_inline int64_t _ztl_find_data(ztl_fixapi_t* fixapi, fixkey_t id)
 {
@@ -121,7 +123,7 @@ int ztl_fixapi_set_int32(ztl_fixapi_t* fixapi, fixkey_t id, const uint32_t val)
 
 int ztl_fixapi_set_int64(ztl_fixapi_t* fixapi, fixkey_t id, const int64_t val)
 {
-    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi), _avail_size(fixapi), "%u=%lld%c",
+    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi), _avail_size(fixapi), "%u="ZTL_I64_FMT"%c",
         id, val, ZTL_FIX_SEP);
     return 0;
 }
@@ -164,7 +166,7 @@ int ztl_fixapi_get_char(ztl_fixapi_t* fixapi, fixkey_t id, char* pval)
     char* pdata = (char*)_ztl_find_data(fixapi, id);
     if (pdata)
     {
-        *pval = (char)pdata;
+        *pval = *pdata;
         return 0;
     }
     return -1;
@@ -175,7 +177,7 @@ int ztl_fixapi_get_int16(ztl_fixapi_t* fixapi, fixkey_t id, uint16_t* pval)
     uint16_t* pdata = (uint16_t*)_ztl_find_data(fixapi, id);
     if (pdata)
     {
-        *pval = (uint16_t)pdata;
+        *pval = *pdata;
         return 0;
     }
     return -1;

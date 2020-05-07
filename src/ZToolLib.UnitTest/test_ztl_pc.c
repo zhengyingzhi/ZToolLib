@@ -9,7 +9,7 @@
 static uint32_t gCounter = 0;
 static uint64_t gSum = 0;
 
-static bool _Test_pc_consumer_entry(ztl_producer_consumer_t* zpc, int64_t type, void* arg);
+static bool _Test_pc_consumer_entry(ztl_producer_consumer_t* zpc, int64_t dtype, void* arg);
 
 void Test_ztl_producer_consumer(ZuTest* zt)
 {
@@ -41,8 +41,11 @@ void Test_ztl_producer_consumer(ZuTest* zt)
 }
 
 
-static bool _Test_pc_consumer_entry(ztl_producer_consumer_t* zpc, int64_t type, void* arg)
+static bool _Test_pc_consumer_entry(ztl_producer_consumer_t* zpc, int64_t dtype, void* arg)
 {
+    (void)zpc;
+    (void)dtype;
+
     int* pi = (int*)arg;
     gCounter++;
     gSum += *pi;

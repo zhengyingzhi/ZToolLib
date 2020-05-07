@@ -5,9 +5,13 @@
 
 static void _ztl_map_access(ztl_map_t* pmap, void* context1, int32_t context2, uint64_t key, int64_t value)
 {
+    (void)pmap;
+    (void)context2;
+    (void)key;
+
     int* arr = (int*)context1;
     int  pi = (int)value;
-    int size = context2;
+    // int size = context2;
 
     fprintf(stderr, "%d ", pi);
     bool found = false;
@@ -33,7 +37,7 @@ void Test_ztl_map(ZuTest* zt)
     ZuAssertTrue(zt, ztl_map_empty(lmap));
 
     int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-    for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i)
+    for (size_t i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i)
     {
         ztl_map_add(lmap, arr[i], arr[i]);
         ZuAssertTrue(zt, arr[i] == ztl_map_size(lmap));
@@ -89,7 +93,7 @@ void Test_ztl_map_ex(ZuTest* zt)
     ZuAssertTrue(zt, ztl_map_empty(lmap));
 
     int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-    for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i)
+    for (size_t i = 0; i < sizeof(arr) / sizeof(arr[0]); ++i)
     {
         node = (ztl_rbtree_node_t*)malloc(sizeof(ztl_rbtree_node_t));
         node->udata = arr[i];

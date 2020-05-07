@@ -2,6 +2,7 @@
 #define _ZTL_LINKLIST_H_INCLUDED_
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 

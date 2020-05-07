@@ -5,6 +5,15 @@
 #include <ZToolLib/lockfreequeue.h>
 
 
+typedef union {
+    void* ptr;
+#if defined(_WIN64) || defined(__x86_64__)
+    int64_t iv;
+#else
+    int32_t iv;
+#endif
+}lfque_union_type_t;
+
 void Test_lfqueue0(ZuTest* zt)
 {
     lfqueue_t*  que;
@@ -13,8 +22,9 @@ void Test_lfqueue0(ZuTest* zt)
     ZuAssertTrue(zt, lfqueue_empty(que));
 
     // push and pop an integer pointer
-    int i1 = 1;
-    void* p1 = (void*)i1;
+    lfque_union_type_t ud;
+    ud.iv = 1;
+    void* p1 = ud.ptr;
     lfqueue_push(que, p1);
 
     void* p2 = NULL;
@@ -43,7 +53,9 @@ void Test_lfqueue(ZuTest* zt)
     int data[] = { 1, 2, 3, 4, 5 };
     for (int i = 0; i < TEST_QUEUE_SIZE_A - 1; ++i)
     {
-        ZuAssertTrue(zt, 0 == lfqueue_push(que, (void*)data[i]));
+        lfque_union_type_t ud;
+        ud.iv = data[i];
+        ZuAssertTrue(zt, 0 == lfqueue_push(que, ud.ptr));
     }
 
     ZuAssertTrue(zt, 3 == lfqueue_size(que));
@@ -136,9 +148,11 @@ void Test_lfqueue3(ZuTest* zt)
 
     ZuAssertTrue(zt, lfqueue_empty(que));
 
-    for (int i = 1; i <= 3; ++i)
+    for (uint32_t i = 1; i <= 3; ++i)
     {
-        test_lfpush_data_t ldata = { (void*)i, (void*)i };
+        lfque_union_type_t ud;
+        ud.iv = i;
+        test_lfpush_data_t ldata = { ud.ptr, ud.ptr };
 
         // push element into queue, queue internally would do a copy of ldata
         ZuAssertTrue(zt, 0 == lfqueue_push_value(que, &ldata));
@@ -148,12 +162,14 @@ void Test_lfqueue3(ZuTest* zt)
     for (int i = 1; i <= 3; ++i)
     {
         test_lfpush_data_t ldata;
+        lfque_union_type_t ud;
+        ud.iv = i;
 
         // pop element from queue,
         // !attention, the sizeof of ldata must be >= eltsize (which used to create the queue)
         ZuAssertTrue(zt, 0 == lfqueue_pop_value(que, &ldata));
-        ZuAssertPtrEquals(zt, (void*)i, ldata.handler);
-        ZuAssertPtrEquals(zt, (void*)i, ldata.param);
+        ZuAssertPtrEquals(zt, ud.ptr, ldata.handler);
+        ZuAssertPtrEquals(zt, ud.ptr, ldata.param);
     }
 
     test_lfpush_data_t ldata;
@@ -161,14 +177,17 @@ void Test_lfqueue3(ZuTest* zt)
     ZuAssertTrue(zt, lfqueue_empty(que));
 
     // push & pop again
-    ldata.handler = (void*)10;
-    ldata.param = (void*)11;
+    lfque_union_type_t ud0, ud1;
+    ud0.iv = 10;
+    ldata.handler = ud0.ptr;
+    ud1.iv = 11;
+    ldata.param = ud1.ptr;
     ZuAssertTrue(zt, 0 == lfqueue_push_value(que, &ldata));
     ldata.handler = 0;
     ldata.param = 0;
     ZuAssertTrue(zt, 0 == lfqueue_pop_value(que, &ldata));
-    ZuAssertPtrEquals(zt, (void*)10, ldata.handler);
-    ZuAssertPtrEquals(zt, (void*)11, ldata.param);
+    ZuAssertPtrEquals(zt, ud0.ptr, ldata.handler);
+    ZuAssertPtrEquals(zt, ud1.ptr, ldata.param);
 
     lfqueue_release(que);
 

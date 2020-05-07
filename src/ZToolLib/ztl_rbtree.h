@@ -54,6 +54,8 @@ void ztl_rbtree_delete(ztl_rbtree_t *tree, ztl_rbtree_node_t *node);
 void ztl_rbtree_insert_value(ztl_rbtree_node_t *root, ztl_rbtree_node_t *node, ztl_rbtree_node_t *sentinel);
 void ztl_rbtree_insert_timer_value(ztl_rbtree_node_t *root, ztl_rbtree_node_t *node, ztl_rbtree_node_t *sentinel);
 
+ztl_rbtree_node_t* ztl_rbtree_min(ztl_rbtree_node_t *node, ztl_rbtree_node_t *sentinel);
+
 
 #define ztl_rbt_red(node)               ((node)->color = 1)
 #define ztl_rbt_black(node)             ((node)->color = 0)
@@ -65,17 +67,6 @@ void ztl_rbtree_insert_timer_value(ztl_rbtree_node_t *root, ztl_rbtree_node_t *n
 /* a sentinel must be black */
 #define ztl_rbtree_sentinel_init(node)	ztl_rbt_black(node)
 
-
-static ztl_rbtree_node_t* ztl_rbtree_min(
-    ztl_rbtree_node_t *node, 
-    ztl_rbtree_node_t *sentinel)
-{
-    while (node->left != sentinel) {
-        node = node->left;
-    }
-
-    return node;
-}
 
 #ifdef __cplusplus
 }

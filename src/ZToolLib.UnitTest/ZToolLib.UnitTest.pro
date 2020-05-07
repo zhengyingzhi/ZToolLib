@@ -33,7 +33,8 @@ build_pass:CONFIG(debug, debug|release) {
         DESTDIR = ../../build/release
 }
 
-QMAKE_CFLAGS += -std=c99
+# QMAKE_CFLAGS += -std=c99
+# QMAKE_CFLAGS += -std=gnu99
 
 INCLUDEPATH += ../
 
@@ -49,7 +50,7 @@ SOURCES += ZToolUnitTests.c \
     test_ztl_buffer.c \
     test_ztl_crypt.c \
     test_ztl_dict.c \
-#     test_ztl_linklist.c \
+    test_ztl_linklist.c \
     test_ztl_map.c \
     test_ztl_mempool.c \
     test_ztl_pc.c \

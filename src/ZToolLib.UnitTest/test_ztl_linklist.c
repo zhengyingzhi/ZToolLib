@@ -22,7 +22,7 @@ void Test_ztl_linklist(ZuTest* zt)
 
     // insert
     test_zque_t lnode1 = { 0 };
-    lnode1.data = (void*)1;
+    lnode1.data = (void*)0x01;
     ztl_queue_insert_tail(&que, &lnode1.link);
     ZuAssertTrue(zt, ztl_queue_head(&que) == ztl_queue_last(&que));
     ZuAssertTrue(zt, ztl_queue_head(&que) == &lnode1.link);
@@ -31,7 +31,7 @@ void Test_ztl_linklist(ZuTest* zt)
     ZuAssertTrue(zt, zh1->data == (void*)1);
 
     test_zque_t lnode2 = { 0 };
-    lnode1.data = (void*)2;
+    lnode1.data = (void*)0x02;
     ztl_queue_insert_tail(&que, &lnode2.link);
     ZuAssertTrue(zt, ztl_queue_head(&que) == &lnode1.link);
     ZuAssertTrue(zt, ztl_queue_last(&que) == &lnode2.link);

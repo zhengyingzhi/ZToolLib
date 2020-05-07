@@ -313,6 +313,15 @@ ztl_rbtree_delete(ztl_rbtree_t *tree, ztl_rbtree_node_t *node)
 }
 
 
+ztl_rbtree_node_t* ztl_rbtree_min(ztl_rbtree_node_t *node, ztl_rbtree_node_t *sentinel)
+{
+    while (node->left != sentinel) {
+        node = node->left;
+    }
+
+    return node;
+}
+
 static void ztl_rbtree_left_rotate(
 	ztl_rbtree_node_t **root, 
 	ztl_rbtree_node_t *sentinel,

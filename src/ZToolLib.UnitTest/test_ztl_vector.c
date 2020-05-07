@@ -35,14 +35,14 @@ void Test_ztl_vector1(ZuTest* zt)
     ZuAssertTrue(zt, 0 == lvec->nelts);
 
     int count = 10;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < count; ++i)
     {
         lvec->push_int(lvec, i);
     }
-    ZuAssertTrue(zt, count == lvec->nelts);
+    ZuAssertTrue(zt, (uint32_t)count == lvec->nelts);
 
     pv = (int*)lvec->elts;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < count; ++i)
     {
         ZuAssertTrue(zt, i == pv[i]);
     }
@@ -84,14 +84,14 @@ void Test_ztl_vector2(ZuTest* zt)
     ZuAssertTrue(zt, 0 == lvec.nelts);
 
     int count = 10;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < count; ++i)
     {
         lvec.push_int(&lvec, i);
     }
-    ZuAssertTrue(zt, count == lvec.nelts);
+    ZuAssertTrue(zt, (uint32_t)count == lvec.nelts);
 
     pv = (int*)lvec.elts;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < count; ++i)
     {
         ZuAssertTrue(zt, i == pv[i]);
     }
@@ -139,16 +139,16 @@ void Test_ztl_vector3(ZuTest* zt)
     ZuAssertTrue(zt, 0 == lvec.nelts);
 
     int count = 10;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < count; ++i)
     {
         lValue.iv = i;
         sprintf(lValue.name, "s%02d", lValue.iv);
         lvec.push_x(&lvec, &lValue);
     }
-    ZuAssertTrue(zt, count == lvec.nelts);
+    ZuAssertTrue(zt, (uint32_t)count == lvec.nelts);
 
     pv = (vec_elem_t*)lvec.elts;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < count; ++i)
     {
         ZuAssertTrue(zt, i == pv[i].iv);
     }
