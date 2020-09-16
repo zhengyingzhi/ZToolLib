@@ -10,7 +10,7 @@
 #include <ZToolLib/lockfreequeue.h>
 
 #include <ZToolLib/ztl_base64.h>
-
+#include <ZToolLib/ztl_memdb.h>
 #include <ZToolLib/ztl_utils.h>
 
 
@@ -25,6 +25,8 @@ void test_read_file();
 
 void test_char_conv();
 
+void test_memdb();
+
 
 int main(int argc, char* argv[])
 {
@@ -35,12 +37,11 @@ int main(int argc, char* argv[])
     //test_ztl_log();
 
     //test_lfqueue();
-
     //test_base64();
-
     // test_read_file();
+    // test_char_conv();
 
-    test_char_conv();
+    test_memdb();
 
     return 0;
 }
@@ -208,3 +209,85 @@ void test_char_conv()
     printf("\n");
 }
 
+
+
+typedef struct sim_tick_s
+{
+    char instrument[8];
+    double last_price;
+    double turnover;
+    int64_t volume;
+}sim_tick_t;
+
+void test_memdb()
+{
+    const char* dbname = "mdb_test.dat";
+    uint32_t dbsize = 32 * 1024 * 1024;
+    int rv;
+    ztl_memdb_t* mdb;
+    mdb = ztl_memdb_create(dbname, dbsize, 4096, 0);
+    rv = ztl_memdb_open(mdb);
+    fprintf(stderr, "ztl_memdb_open rv1:%d\n", rv);
+
+    uint32_t exist_count;
+    exist_count = ztl_memdb_count(mdb);
+    fprintf(stderr, "ztl_memdb_count:%d\n", exist_count);
+
+    ztl_seq_t seq;
+    ztl_entry_t* entry;
+    sim_tick_t* stick;
+    sim_tick_t* rtick;
+
+    ztl_seq_t seqs[1024] = { 0 };
+    uint32_t count = 5;
+    for (uint32_t i = exist_count; i < exist_count + count; ++i)
+    {
+        // write some data here
+        entry = ztl_memdb_alloc_entry(mdb, ztl_align(sizeof(sim_tick_t), 8));
+        stick = (sim_tick_t*)entry;
+        sprintf(stick->instrument, "%06d", i + 1);
+        stick->last_price = 20 + i + i * 0.1;
+        stick->volume = 100 * (i + 1);
+        stick->turnover = stick->last_price * stick->volume;
+        seq = ztl_memdb_direct_append(mdb, entry);
+
+        if (seq != 0) {
+            seqs[i] = seq;
+        }
+    }
+
+    // read
+    for (uint32_t i = 1; i <= exist_count + count; ++i)
+    {
+        // rtick = (sim_tick_t*)ztl_memdb_get_entry(mdb, seqs[i]);
+        rtick = (sim_tick_t*)ztl_memdb_get_entry(mdb, i);
+        if (!rtick)
+        {
+            fprintf(stderr, "11 tick null when read index:%d\n", i);
+            break;
+        }
+        fprintf(stderr, "tick%d instr:%s, price:%.2lf, vol:%lld\n", i, rtick->instrument, rtick->last_price, rtick->volume);
+    }
+
+    ztl_memdb_release(mdb);
+    mdb = NULL;
+
+    // re-open the db
+    mdb = ztl_memdb_create(dbname, dbsize, 4096, 0);
+    rv = ztl_memdb_open(mdb);
+    fprintf(stderr, "ztl_memdb_open rv2:%d\n", rv);
+
+    // check some data here
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        rtick = (sim_tick_t*)ztl_memdb_get_entry(mdb, seqs[i]);
+        if (!rtick)
+        {
+            fprintf(stderr, "22 tick null when read index:%d\n", i);
+            break;
+        }
+        fprintf(stderr, "tick%d instr:%s, price:%.2lf, vol:%lld\n", i, rtick->instrument, rtick->last_price, rtick->volume);
+    }
+
+    ztl_memdb_release(mdb);
+}

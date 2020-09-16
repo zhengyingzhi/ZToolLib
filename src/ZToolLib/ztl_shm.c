@@ -430,7 +430,7 @@ int ztl_shm_truncate(ztl_shm_t* zshm, uint64_t aSize)
     }
 
     //avoid unused variable warnings in 32 bit systems
-    if (aSize > (uint64_t)INT_MAX)
+    if (aSize > (uint64_t)INT64_MAX)
     {
         return -3;
     }

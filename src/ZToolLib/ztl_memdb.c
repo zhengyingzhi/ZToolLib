@@ -170,12 +170,21 @@ ztl_memdb_t* ztl_memdb_create(const char* dbname, uint64_t dbsize,
     memdb->CtrlBufSize = ctrl_buf_size;
     memdb->UseHugepage = use_hugepage;
 
+#if MEMDB_DEBUG
+    uint32_t num = 2 * 1024 * 1024;
+#else
+    uint32_t num = 2;
+#endif//MEMDB_DEBUG
+    ztl_array_init(&memdb->SeqVec, NULL, num, sizeof(void*));
+
     return memdb;
 }
 
 void ztl_memdb_release(ztl_memdb_t* memdb)
 {
     ztl_memdb_close(memdb);
+
+    ztl_array_release(&memdb->SeqVec);
 }
 
 bool ztl_memdb_trylock_exclusive(ztl_memdb_t* memdb)
@@ -196,19 +205,19 @@ ztl_seq_t ztl_memdb_last_seq(ztl_memdb_t* memdb)
 
 uint8_t* ztl_memdb_seq2entry(ztl_memdb_t* memdb, ztl_seq_t seq)
 {
-    return ztl_array_at(&memdb->SeqVec, (uint32_t)(seq- *memdb->pStartIndex));
+    return *(void**)ztl_array_at(&memdb->SeqVec, (uint32_t)(seq- *memdb->pStartIndex));
 }
 
 bool ztl_memdb_remove(const char* dbname)
 {
     if (!ztl_shm_remove(dbname))
     {
-        DBDebugInfo(DBDbgFd, "HASMDB: Remove db %s failed!\n", dbname);
+        DBDebugInfo(DBDbgFd, "MEMDB: Remove db %s failed!\n", dbname);
         return false;
     }
     else
     {
-        DBDebugInfo(DBDbgFd, "HASMDB: Removed db %s\n", dbname);
+        DBDebugInfo(DBDbgFd, "MEMDB: Removed db %s\n", dbname);
         return true;
     }
 }
@@ -236,7 +245,7 @@ int ztl_memdb_open(ztl_memdb_t* memdb)
     do {
         lpBase = (uint8_t*)_open_shm(memdb, memdb->DBName, memdb->Capacity);
 
-        DBDebugInfo(DBDbgFd, "HASMDB: shared memory %s, " FMT64 "bytes at [%p]\n",
+        DBDebugInfo(DBDbgFd, "MEMDB: shared memory %s, " FMT64 "bytes at [%p]\n",
             memdb->DBName, memdb->Capacity, (void*)lpBase);
 
         if (NULL == lpBase)
@@ -264,7 +273,7 @@ int ztl_memdb_open(ztl_memdb_t* memdb)
         }
         else if (lpInfo->ShmSize != memdb->Capacity)
         {
-            DBDebugInfo(DBDbgFd, "HASMDB: share memory %p, old_size:" FMT64 ", now_size:" FMT64 "\n",
+            DBDebugInfo(DBDbgFd, "MEMDB: share memory %p, old_size:" FMT64 ", now_size:" FMT64 "\n",
                 memdb->DBName, lpInfo->ShmSize, memdb->Capacity);
             if (memdb->Capacity < lpInfo->ShmSize)
             {
@@ -377,7 +386,7 @@ int ztl_memdb_free_entry(ztl_memdb_t* memdb, ztl_entry_t entry)
     // if the buffer was appended before
     if (0 != lSequence)
     {
-        ztl_spinlock(&memdb->MemMutex, 1, 2048);
+        ztl_spinlock(&memdb->SeqMutex, 1, 2048);
 
         if (lSequence < ztl_memdb_start_seq(memdb) ||
             lSequence > ztl_memdb_last_seq(memdb))
@@ -398,7 +407,7 @@ int ztl_memdb_free_entry(ztl_memdb_t* memdb, ztl_entry_t entry)
         *memdb->pMaxIndex -= 1;
         memdb->TotalBytes -= lpHI->Length;
         ztl_array_pop_back(&memdb->SeqVec);
-        ztl_unlock(&memdb->MemMutex);
+        ztl_unlock(&memdb->SeqMutex);
     }
 
     ztl_spinlock(&memdb->MemMutex, 1, 2048);
@@ -415,8 +424,6 @@ int ztl_memdb_free_seq_prefix(ztl_memdb_t* memdb, ztl_seq_t seq)
     DBDebugInfo(DBDbgFd, "FreeSequencePrefix: aSequence:" SEQ_FMT ", StartIndex:" SEQ_FMT "\n",
         seq, ztl_memdb_start_seq(memdb));
     ztl_memdb_clear_error(memdb);
-
-    ztl_spinlock(&memdb->SeqMutex, 1, 2048);
 
     if (seq < ztl_memdb_start_seq(memdb) ||
         seq > ztl_memdb_last_seq(memdb))
@@ -446,6 +453,7 @@ int ztl_memdb_free_seq_prefix(ztl_memdb_t* memdb, ztl_seq_t seq)
         // ztl_array_pop_front(&memdb->SeqVec);
     }
 
+    ztl_unlock(&memdb->MemMutex);
     return ZTL_MEMDB_OK;
 }
 
@@ -559,6 +567,7 @@ ztl_entry_t ztl_memdb_get_entry(ztl_memdb_t* memdb, ztl_seq_t seq)
     if (seq < ztl_memdb_start_seq(memdb) ||
         seq > ztl_memdb_last_seq(memdb))
     {
+        ztl_unlock(&memdb->SeqMutex);
         return NULL;
     }
 
@@ -765,12 +774,12 @@ void ztl_memdb_initialize(ztl_memdb_t* memdb, uint8_t* apAddr, uint64_t aSize)
             int64_t lTempN = lpHI->Sequence - ztl_memdb_last_seq(memdb);
             for (int64_t i = 0; i < lTempN; ++i)
             {
-                ztl_array_pop_back(&memdb->SeqVec);
+                ztl_array_push(&memdb->SeqVec);
             }
 
             uint32_t lPos = (uint32_t)(lpHI->Sequence - lStartIndex);
-            (void)lPos;
-            // memdb->SeqVec[lPos] = lpCurAddr + MHEAD_SIZE; // TODO:
+            void** lpTail = (void**)ztl_array_tail(&memdb->SeqVec);
+            *lpTail = lpCurAddr + MHEAD_SIZE;
             memdb->TotalBytes += lpHI->Length;
         }
 

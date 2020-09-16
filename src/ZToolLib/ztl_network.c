@@ -247,13 +247,13 @@ int get_ipport(char* ip, int size, uint16_t* port, const struct sockaddr_in* psa
 /// get local client socket's address
 int get_localaddr(sockhandle_t sockfd, struct sockaddr_in* localaddr)
 {
-    socklen_t addrlen;
+    socklen_t addrlen = sizeof(struct sockaddr);
     return getsockname(sockfd, (struct sockaddr*)localaddr, &addrlen);
 }
 
 int get_peeraddr(sockhandle_t sockfd, struct sockaddr_in* peeraddr)
 {
-    socklen_t addrlen;
+    socklen_t addrlen = sizeof(struct sockaddr);
     return getpeername(sockfd, (struct sockaddr*)peeraddr, &addrlen);
 }
 
