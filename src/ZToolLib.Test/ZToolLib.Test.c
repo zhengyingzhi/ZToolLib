@@ -7,6 +7,7 @@
 #include <ZToolLib/ztl_common.h>
 #include <ZToolLib/ztl_config.h>
 #include <ZToolLib/ztl_logger.h>
+#include <ZToolLib/ztl_dstr.h>
 #include <ZToolLib/lockfreequeue.h>
 
 #include <ZToolLib/ztl_base64.h>
@@ -16,16 +17,12 @@
 
 void test_ztl_config();
 void test_ztl_log();
-
 void test_lfqueue();
-
 void test_base64();
-
 void test_read_file();
-
 void test_char_conv();
-
 void test_memdb();
+void test_dstr();
 
 
 int main(int argc, char* argv[])
@@ -36,12 +33,13 @@ int main(int argc, char* argv[])
     //test_ztl_config();
     //test_ztl_log();
 
-    //test_lfqueue();
-    //test_base64();
+    // test_lfqueue();
+    // test_base64();
     // test_read_file();
     // test_char_conv();
 
-    test_memdb();
+    // test_memdb();
+    test_dstr();
 
     return 0;
 }
@@ -290,4 +288,27 @@ void test_memdb()
     }
 
     ztl_memdb_release(mdb);
+}
+
+void test_dstr()
+{
+    dstr s1;
+    dstr s2;
+    dstr res;
+
+    s1 = dstr_new("hello");
+    printf("s1 len:%zu, data:%s\n", dstr_length(s1), s1);
+
+    s2 = dstr_new_len(NULL, 32);
+    printf("s2 len:%zu, data:%s\n", dstr_length(s2), s2);
+
+    s2 = dstr_cat(s2, "this ");
+    s2 = dstr_cat_len(s2, "game", 2);
+    printf("s2 len:%zu, data:%s\n", dstr_length(s2), s2);
+
+    res = dstr_new("HELLO");
+    res = dstr_cat(res, "|192.168.1.178");
+    res = dstr_cat(res, "|PC");
+    res = dstr_cat(res, "\r\n");
+    printf("res len:%zu, data:%s\n", dstr_length(res), res);
 }

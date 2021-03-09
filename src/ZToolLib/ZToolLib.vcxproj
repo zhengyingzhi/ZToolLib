@@ -287,6 +287,7 @@
     <ClInclude Include="ztl_config.h" />
     <ClInclude Include="ztl_dict.h" />
     <ClInclude Include="ztl_dlist.h" />
+    <ClInclude Include="ztl_dstr.h" />
     <ClInclude Include="ztl_dyso.h" />
     <ClInclude Include="ztl_event_dispatcher.h" />
     <ClInclude Include="ztl_evloop.h" />
@@ -294,9 +295,11 @@
     <ClInclude Include="ztl_evtimer.h" />
     <ClInclude Include="ztl_fixapi.h" />
     <ClInclude Include="ztl_hash.h" />
+    <ClInclude Include="ztl_heap.h" />
     <ClInclude Include="ztl_linklist.h" />
     <ClInclude Include="ztl_malloc.h" />
     <ClInclude Include="ztl_md5.h" />
+    <ClInclude Include="ztl_mem.h" />
     <ClInclude Include="ztl_memcpy.h" />
     <ClInclude Include="ztl_mempool.h" />
     <ClInclude Include="ztl_atomic.h" />
@@ -308,9 +311,11 @@
     <ClInclude Include="ztl_palloc.h" />
     <ClInclude Include="ztl_producer_consumer.h" />
     <ClInclude Include="ztl_protocol.h" />
+    <ClInclude Include="ztl_ring.h" />
     <ClInclude Include="ztl_sha1.h" />
     <ClInclude Include="ztl_shm.h" />
     <ClInclude Include="ztl_simple_event.h" />
+    <ClInclude Include="ztl_table.h" />
     <ClInclude Include="ztl_tcp_server.h" />
     <ClInclude Include="ztl_threadpool.h" />
     <ClInclude Include="ztl_threads.h" />
@@ -336,6 +341,7 @@
     <ClCompile Include="ztl_config.c" />
     <ClCompile Include="ztl_dict.c" />
     <ClCompile Include="ztl_dlist.c" />
+    <ClCompile Include="ztl_dstr.c" />
     <ClCompile Include="ztl_dyso.c" />
     <ClCompile Include="lockfreequeue.c" />
     <ClCompile Include="ztl_event_dispatcher.c" />
@@ -347,9 +353,11 @@
     <ClCompile Include="ztl_evtimer.c" />
     <ClCompile Include="ztl_fixapi.c" />
     <ClCompile Include="ztl_hash.c" />
+    <ClCompile Include="ztl_heap.c" />
     <ClCompile Include="ztl_linklist.c" />
     <ClCompile Include="ztl_malloc.c" />
     <ClCompile Include="ztl_md5.c" />
+    <ClCompile Include="ztl_mem.c" />
     <ClCompile Include="ztl_memcpy.c" />
     <ClCompile Include="ztl_mempool.c" />
     <ClCompile Include="ztl_logger.c" />
@@ -358,9 +366,11 @@
     <ClCompile Include="ztl_network.c" />
     <ClCompile Include="ztl_palloc.c" />
     <ClCompile Include="ztl_producer_consumer.c" />
+    <ClCompile Include="ztl_ring.c" />
     <ClCompile Include="ztl_sha1.c" />
     <ClCompile Include="ztl_shm.c" />
     <ClCompile Include="ztl_simple_event.c" />
+    <ClCompile Include="ztl_table.c" />
     <ClCompile Include="ztl_tcp_server.c" />
     <ClCompile Include="ztl_threadpool.c" />
     <ClCompile Include="ztl_threads.c" />

@@ -153,6 +153,9 @@ int ztl_int_to_pdate(ztl_tm_date_t* pd, int32_t date_int);
 int ztl_intdt_to_tm(ztl_tm_dt_t* pdt, int32_t date_int, int32_t time_int, int have_millisec);
 int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt);
 
+// calc day distance
+int ztl_diffday(int startday, int endday);
+int ztl_diffnow(int endday);
 
 #ifdef __cplusplus
 }

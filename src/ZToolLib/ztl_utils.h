@@ -6,6 +6,7 @@
 #ifndef _ZTL_UTILS_H_
 #define _ZTL_UTILS_H_
 
+#include <ctype.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -28,9 +29,14 @@ extern "C" {
 
 #ifdef _MSC_VER
 #define ZTL_I64_FMT     "%lld"
-#else
+#define ztl_stricmp     _stricmp
+
+#else /* linux platfrom */
+
 #define ZTL_I64_FMT     "%ld"
 // static void DebugBreak() {}
+#define ztl_stricmp     strcasecmp
+
 #endif//_MSC_VER
 
 #if defined(_DEBUG) || defined(DEBUG)
@@ -60,6 +66,8 @@ typedef union {
 int64_t query_tick_count();
 int32_t tick_to_us(int64_t tick_beg, int64_t tick_end);
 
+/// int len
+uint32_t digits10(uint64_t v);
 
 /// convert a long long value to string, return length
 int ll2string(char* dst, uint32_t dstlen, int64_t value);
@@ -166,6 +174,24 @@ union zudi {
         }                                                           \
     } while (0);
 
+
+#define STR2LOWER(str) \
+	do { \
+		char *p = str; \
+		while (*p) { \
+			*p = tolower(*p); \
+			++p; \
+		} \
+	} while (0);
+
+#define STR2UPPER(str) \
+	do { \
+		char *p = str; \
+		while (*p) { \
+			*p = toupper(*p); \
+			++p; \
+		} \
+	} while (0);
 
 #ifdef __cplusplus
 }

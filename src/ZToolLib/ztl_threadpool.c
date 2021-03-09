@@ -24,9 +24,11 @@
 #define ZTL_DEFAULT_CACHE_NUM   256
 struct ztl_task_st {
     struct ztl_task_st* next;
-    void*               param;
+    void*               arg1;
+    void*               arg2;
     ztl_dispatch_fn     func;
-    ztl_free_fn         afree;
+    ztl_free_fn         afree1;
+    ztl_free_fn         afree2;
 };
 typedef struct ztl_task_st ztl_task_t;
 
@@ -45,7 +47,11 @@ struct ztl_thrpool_st {
 };
 
 
-/* append a task to list tail */
+static void _empty_dispatch_fn(ztl_thrpool_t* tp, void* arg1, void* arg2)
+{
+    // 
+}
+
 static void _append_task(ztl_thrpool_t* tp, ztl_task_t* task)
 {
     if (NULL == tp->head) {
@@ -57,7 +63,6 @@ static void _append_task(ztl_thrpool_t* tp, ztl_task_t* task)
     tp->tail = task;
 }
 
-/* get a task from list head */
 static ztl_task_t* _get_head_task(ztl_thrpool_t* tp)
 {
     ztl_task_t* task = NULL;
@@ -72,7 +77,6 @@ static ztl_task_t* _get_head_task(ztl_thrpool_t* tp)
     return task;
 }
 
-// get a task from thread pool's task list
 static ztl_task_t* _get_task(ztl_thrpool_t* tp, int timeout)
 {
     (void)timeout;
@@ -96,16 +100,16 @@ GET_TASK_END:
     return task;
 }
 
-/* release the task object after finished */
 static void _release_task(ztl_thrpool_t* tp, ztl_task_t* task)
 {
-    if (task->afree)
-        task->afree(tp, task->param);
+    if (task->afree1)
+        task->afree1(tp, task->arg1);
+    if (task->afree2)
+        task->afree2(tp, task->arg2);
 
     ztl_mp_free(tp->task_pool, task);
 }
 
-/// thread pool's worker thread
 static ztl_thread_result_t ZTL_THREAD_CALL _thrpool_worker_thread(void* arg)
 {
     ztl_thrpool_t* tp = (ztl_thrpool_t*)arg;
@@ -119,7 +123,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _thrpool_worker_thread(void* arg)
 
         // execute actual task
         if (task->func)
-            task->func(tp, task->param);
+            task->func(tp, task->arg1, task->arg2);
 
         _release_task(tp, task);
         task = NULL;
@@ -182,35 +186,38 @@ ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size)
 }
 
 /// dispatch a runnable task to the thread pool with argument "arg"
-int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* param, ztl_free_fn afree)
+int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* arg1, void* arg2,
+    ztl_free_fn afree1, ztl_free_fn afree2)
 {
     if (thpool->taskn >= thpool->maxsize) {
         return -1;
     }
 
-    uint32_t    lOldTaskN;
+    uint32_t    old_taskn;
     ztl_task_t* task;
 
     task = (ztl_task_t*)ztl_mp_alloc(thpool->task_pool);
     task->next  = NULL;
-    task->param = param;
+    task->arg1  = arg1;
+    task->arg2  = arg2;
     task->func  = func;
-    task->afree = afree;
+    task->afree1= afree1;
+    task->afree2= afree2;
 
     // apend the task at the tail of task list, and try wakeup worker
     ztl_thread_mutex_lock(&thpool->lock);
     _append_task(thpool, task);
-    lOldTaskN = ztl_atomic_add(&thpool->taskn, 1);
+    old_taskn = ztl_atomic_add(&thpool->taskn, 1);
     ztl_thread_mutex_unlock(&thpool->lock);
 
-    if (lOldTaskN == 0) {
+    if (old_taskn == 0) {
         ztl_thread_cond_signal(&thpool->workcond);
     }
 
     return 0;
 }
 
-int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_compare_fn cmp_func, void* param)
+int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func)
 {
     if (NULL == thpool) {
         return -1;
@@ -226,29 +233,11 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_compare_fn cmp_func, void* par
         goto REMOVE_END;
     }
 
-    // if the first task
-    if ((NULL == cmp_func && task->param == param) ||
-        (NULL != cmp_func && cmp_func(task->param, param)))
-    {
-        ztl_atomic_dec(&thpool->taskn, 1);
-
-        if (task->next  == NULL) {
-            thpool->head = NULL;
-            thpool->tail = NULL;
-        }
-        else {
-            thpool->head = thpool->head->next;
-        }
-
-        goto REMOVE_END;
-    }
-
     // traverse the task list
     nexttask = task->next;
     while (nexttask)
     {
-        if ((NULL == cmp_func && nexttask->param == param) ||
-            (NULL != cmp_func && cmp_func(nexttask->param, param)))
+        if (func == nexttask->func)
         {
             ztl_atomic_dec(&thpool->taskn, 1);
 
@@ -316,7 +305,7 @@ int ztl_thrpool_stop(ztl_thrpool_t* thpool)
     ztl_atomic_set(&thpool->stop, 1);
     for (uint32_t n = 0; n < thpool->thrnum; ++n)
     {
-        ztl_thrpool_dispatch(thpool, NULL, NULL, NULL);
+        ztl_thrpool_dispatch(thpool, _empty_dispatch_fn, NULL, NULL, NULL, NULL);
         ztl_thread_cond_signal(&thpool->workcond);
     }
     ztl_thread_cond_broadcast(&thpool->workcond);
@@ -338,8 +327,10 @@ int ztl_thrpool_release(ztl_thrpool_t* thpool)
     ztl_thread_mutex_lock(&thpool->lock);
     while ((task = _get_head_task(thpool)) != NULL)
     {
-        if (task->afree)
-            task->afree(thpool, task->param);
+        if (task->afree1)
+            task->afree1(thpool, task->arg1);
+        if (task->afree2)
+            task->afree2(thpool, task->arg2);
 
         ztl_mp_free(thpool->task_pool, task);
     }

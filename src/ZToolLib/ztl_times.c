@@ -364,3 +364,46 @@ int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt)
     ud.dt.time = pdt->time;
     return ud.i64;
 }
+
+int ztl_diffday(int startday, int endday)
+{
+    time_t t = time(NULL);
+    struct tm ls, le;
+    int res, rem;
+
+#if defined (_POSIX_THREAD_SAFE_FUNCTIONS)
+    localtime_r(&t, &ls);
+    localtime_r(&t, &le);
+#else
+    ls = *localtime(&t);
+    le = *localtime(&t);
+#endif
+
+    ls.tm_mday = startday % 100;
+    ls.tm_mon  = startday / 100 % 100 - 1;
+    ls.tm_year = startday / 10000 - 1900;
+    le.tm_mday = endday % 100;
+    le.tm_mon  = endday / 100 % 100 - 1;
+    le.tm_year = endday / 10000 - 1900;
+    res = (int)difftime(mktime(&le), mktime(&ls)) / (24 * 60 * 60);
+    return res / 7 * 5 + ((rem = res % 7) == 6 ? 5 : rem);
+}
+
+int ztl_diffnow(int endday)
+{
+    time_t t = time(NULL);
+    struct tm le;
+    int res, rem;
+
+#if defined (_POSIX_THREAD_SAFE_FUNCTIONS)
+    localtime_r(&t, &le);
+#else
+    le = *localtime(&t);
+#endif
+
+    le.tm_mday = endday % 100;
+    le.tm_mon  = endday / 100 % 100 - 1;
+    le.tm_year = endday / 10000 - 1900;
+    res = (int)difftime(mktime(&le), t) / (24 * 60 * 60);
+    return res / 7 * 5 + ((rem = res % 7) == 6 ? 5 : rem);
+}

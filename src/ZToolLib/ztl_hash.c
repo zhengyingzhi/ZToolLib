@@ -1,7 +1,7 @@
 #include "ztl_hash.h"
 
 
-unsigned int ztl_murmur_hash2(unsigned char* data, unsigned int len)
+uint32_t ztl_murmur_hash2(unsigned char* data, uint32_t len)
 {
     unsigned int h, k;
 
@@ -83,4 +83,32 @@ inline uint64_t ztl_murmur_hash2_64(const void* key, uint32_t len, uint64_t seed
     h ^= h >> r;
 
     return h;
+}
+
+
+uint32_t ztl_hashpjw(const void* key)
+{
+    const char* ptr = key;
+    uint32_t val = 0, tmp;
+
+    while (*ptr != '\0')
+    {
+        val = (val << 4) + *ptr++;
+        if ((tmp = val & (unsigned int)0xf0000000) != 0)
+            val = (val ^ (tmp >> 24)) ^ tmp;
+    }
+    return val;
+}
+
+
+uint32_t ztl_hashdjb2(const void* key)
+{
+    const char *ptr = key;
+    int c;
+    unsigned hash = 5381;
+
+    while ((c = *ptr++))
+        /* hash * 33 + c */
+        hash = ((hash << 5) + hash) + c;
+    return hash;
 }

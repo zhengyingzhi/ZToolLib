@@ -19,7 +19,7 @@ extern "C" {
 typedef struct ztl_thrpool_st ztl_thrpool_t;
 
 /// "dispatch_fn" declares a typed function pointer.
-typedef void (*ztl_dispatch_fn)(ztl_thrpool_t* , void* );
+typedef void (*ztl_dispatch_fn)(ztl_thrpool_t* tp, void* arg1, void* arg2);
 
 /// "free_fn" declares a typed of cleanup function pointer
 typedef void (*ztl_free_fn)(ztl_thrpool_t* , void* );
@@ -34,15 +34,21 @@ typedef bool (*ztl_compare_fn)(void*, void* );
  */
 ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size);
 
-/* @brief   dispatch a new task to the thread pool with argument 'param'
- * @param   afree: to free the param after task finished
+/* @brief   dispatch a new task to the thread pool with argument 'arg'
+ * @param   func: the work func to be scheduled in pool
+ * @param   arg1: the first arg for func
+ * @param   arg2: the second arg for func
+ * @param   afree1: to free the arg1 after task finished
+ * @param   afree2: to free the arg2 after task finished
  * @return  0 success, -1 the task queue is full
  */
-int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* param, ztl_free_fn afree);
+int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* arg1, void* arg2,
+    ztl_free_fn afree1, ztl_free_fn afree2);
 
-/* @brief   remove the queued task from thread pool by passed compare func and argument "param"
+/* @brief   remove the queued task from thread pool by passed dispatch func
+ * @return  0 success, -1 no compared
  */
-int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_compare_fn cmp_func, void* param);
+int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn cmp_func);
 
 /* @brief   set or get user data related this thrpool
  */
