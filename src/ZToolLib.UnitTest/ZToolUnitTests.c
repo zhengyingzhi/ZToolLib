@@ -45,6 +45,8 @@ extern void Test_ztl_base64(ZuTest* zt);
 extern void Test_ztl_encrypt(ZuTest* zt);
 extern void Test_ztl_dict(ZuTest* zt);
 
+extern void Test_ztl_dstr(ZuTest* zt);
+
 
 void RunAllTests(void)
 {
@@ -92,6 +94,8 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_base64);
     SUITE_ADD_TEST(suite, Test_ztl_encrypt);
     SUITE_ADD_TEST(suite, Test_ztl_dict);
+
+    SUITE_ADD_TEST(suite, Test_ztl_dstr);
 
     ZuSuiteRun(suite);
     ZuSuiteDetails(suite, output);

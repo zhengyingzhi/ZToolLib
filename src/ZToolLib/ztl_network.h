@@ -137,9 +137,10 @@ int tcp_msg_peek(sockhandle_t sockfd, char* buf, int len);
 
 /// accept a new socket descriptor
 sockhandle_t tcp_accept(sockhandle_t listenfd, struct sockaddr_in* fromaddr);
+sockhandle_t tcp_accept2(sockhandle_t listenfd, char ip[], int sz, uint16_t* port);
 
 /// try detect events, the event fds will put front at sockfds array, and return count
-int poll_read(sockhandle_t sockfds[], int nfds, int timeoutMS);
+int poll_read(sockhandle_t sockfds[], int nfds, int timeout_ms);
 
 /// send iovec, return send count
 int send_iov(sockhandle_t sockfd, EIOVEC* iovec, int iovec_cnt);

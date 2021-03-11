@@ -6,17 +6,20 @@
 #ifndef _ZTL_TCP_SERVER_H_
 #define _ZTL_TCP_SERVER_H_
 
-#include "ztl_protocol.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif//__cplusplus
+
+#include "ztl_protocol.h"
+#include "ztl_threads.h"
+#include "ztl_evloop.h"
 
 
 /* tcp server object declare */
 typedef struct ztl_tcp_server_st ztl_tcp_server_t;
 
 /* tcp server event handler */
+typedef int(*ztl_tcp_server_ns_ptr)(ztl_tcp_server_t* tcpsvr, sockhandle_t fd);
 typedef int(*ztl_tcp_server_event_ptr)(ztl_tcp_server_t* tcpsvr, uint32_t type, void* msg, uint32_t length);
 
 /* protocol type for tcp server */
@@ -40,10 +43,25 @@ typedef struct
 
     uint32_t        poll_timeout;           /* poll timeout ms */
 
+    ztl_tcp_server_ns_ptr       newconn_handler;
+    ztl_tcp_server_event_ptr    event_handler;
+
     ztl_proto_type  proto;                  /* the protocol type */
     uint32_t        head_size;              /* the protocol header size */
     uint32_t        size_var_off_in_head;   /* the header's body size variable offset the header address */
 }ztl_tcp_server_config_t;
+
+
+struct ztl_tcp_server_st
+{
+    ztl_evloop_t*           evloop;
+    ztl_tcp_server_config_t svrconf;
+    ztl_thread_t            thd;
+
+    sockhandle_t            listenfd;
+    int32_t                 inited;
+    uint32_t                running;
+};
 
 
 /* create a tcp server object

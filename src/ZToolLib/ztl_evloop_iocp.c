@@ -24,7 +24,7 @@
 #define _ZTL_IODATA_BUFF_SIZE       16
 #define _ZTL_DEF_IOCP_DATA_COUNT    256
 
-#define ZTL_THE_CTX(evloop)         ((iocp_ctx_t*)evloop->ctx)
+#define ZTL_THE_CTX(evloop)         ((iocp_ctx_t*)evloop->evops_ctx)
 
 /* the addr of overlapped for post event and get queued iocp */
 typedef struct per_io_data
@@ -65,9 +65,9 @@ static unsigned __stdcall iocp_accept_entry(void* arg);
 
 static int iocp_init(ztl_evloop_t* evloop);
 static int iocp_start(ztl_evloop_t* evloop);
-static int iocp_add(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS reqevents);
-static int iocp_del(ztl_evloop_t* evloop, ztl_connection_t* conn);
-static int iocp_poll(ztl_evloop_t* evloop, int timeoutMS);
+static int iocp_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents, int flags);
+static int iocp_del(ztl_evloop_t* evloop, sockhandle_t fd, int delevents, int flags);
+static int iocp_poll(ztl_evloop_t* evloop, int ms);
 static int iocp_stop(ztl_evloop_t* evloop);
 static int iocp_destroy(ztl_evloop_t* evloop);
 
@@ -108,7 +108,7 @@ static int _iocp_recv(ztl_connection_t* conn)
 static int _iocp_send(ztl_connection_t* conn)
 {
     int rv;
-    rv = send(conn->sockfd, conn->wbuf + conn->bytes_sent, conn->wsize - conn->bytes_sent, 0);
+    rv = send(conn->fd, conn->wbuf + conn->bytes_sent, conn->wsize - conn->bytes_sent, 0);
     return rv;
 }
 
@@ -161,10 +161,11 @@ static int iocp_extend_function(iocp_ctx_t* pctx, sockhandle_t listenfd)
 static ztl_connection_t* _iocp_newconn(ztl_evloop_t* evloop, per_io_data_t* apIOData)
 {
     ztl_connection_t* newconn;
-    newconn = (ztl_connection_t*)ztl_mp_alloc(evloop->conn_mp);
+    // newconn = (ztl_connection_t*)ztl_mp_alloc(evloop->conn_mp);
+	newconn = (ztl_connection_t*)malloc(sizeof(ztl_connection_t));
     memset(newconn, 0, sizeof(ztl_connection_t));
 
-    newconn->sockfd     = apIOData->sockfd;
+    newconn->fd         = apIOData->sockfd;
     newconn->userdata   = NULL;
 
     newconn->recv       = _iocp_recv;
@@ -176,33 +177,6 @@ static ztl_connection_t* _iocp_newconn(ztl_evloop_t* evloop, per_io_data_t* apIO
     //logdebug("connection: new %d -> %p\n", newconn->sockfd, newconn);
 #endif
     return newconn;
-}
-
-static void _iocp_freeconn(ztl_evloop_t* evloop, ztl_connection_t* conn)
-{
-#ifdef _DEBUG
-    //logdebug("PER_IO_DATA: free %d -> %p\n", apConn->sockfd, apConn->internal);
-    //logdebug("connection: free %d -> %p\n", apConn->sockfd, apConn);
-#endif
-
-    if (conn->added == 1) {
-        iocp_del(evloop, conn);
-    }
-
-    if (INVALID_SOCKET != conn->sockfd) {
-        close_socket(conn->sockfd);
-        conn->closed = 1;
-    }
-    conn->sockfd = INVALID_SOCKET;
-
-    //if (apConn->timerid != INVAL_TIMER_ID) {
-    //  event_timer_del(evloop->timers, apConn->timerid);
-    //}
-
-    iocp_ctx_t* lpctx = ZTL_THE_CTX(evloop);
-    ztl_mp_free(lpctx->iodata_mp, _get_iodata(conn));
-
-    ztl_mp_free(evloop->conn_mp, conn);
 }
 
 static int iocp_post_acceptex(ztl_evloop_t* evloop, iocp_ctx_t* pctx)
@@ -233,7 +207,7 @@ static int iocp_post_acceptex(ztl_evloop_t* evloop, iocp_ctx_t* pctx)
     set_tcp_keepalive(lpIOData->sockfd, true);
 
     // post AcceptEx request
-    if (FALSE == pctx->pfnAcceptEx(evloop->listen_conn.sockfd, lpIOData->sockfd, 
+    if (FALSE == pctx->pfnAcceptEx(evloop->listen_fd, lpIOData->sockfd, 
         lpIOData->wsaBuf.buf, lpIOData->wsaBuf.len - ((sizeof(SOCKADDR_IN) + 16) * 2),
         sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &lTransBytes, &lpIOData->ovlp))
     {
@@ -267,7 +241,7 @@ static int iocp_do_accept(ztl_evloop_t* evloop, ztl_connection_t* apConn, per_io
         conn->port = ntohs(lpClientAddr->sin_port);
         conn->addr = lpClientAddr->sin_addr.s_addr;
 
-        evloop->handler(evloop, conn, ZEV_NEWCONN);
+        // evloop->handler(evloop, conn, ZEV_NEWCONN);
     }
     else
     {
@@ -275,7 +249,7 @@ static int iocp_do_accept(ztl_evloop_t* evloop, ztl_connection_t* apConn, per_io
     }
 
     // post next AcceptEx
-    if (-1 == iocp_add(evloop, apConn, ZEV_POLLIN)) {
+    if (-1 == iocp_add(evloop, evloop->listen_fd, ZEV_POLLIN, 0)) {
         return -1;
     }
     return 0;
@@ -293,7 +267,7 @@ static int iocp_init(ztl_evloop_t* evloop)
     }
 
     memset(lpctx, 0, sizeof(iocp_ctx_t));
-    evloop->ctx = lpctx;
+    evloop->evops_ctx = lpctx;
 
     // create iocp object
     lpctx->hIocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
@@ -306,18 +280,21 @@ static int iocp_init(ztl_evloop_t* evloop)
 
 static int iocp_start(ztl_evloop_t* evloop)
 {
-    iocp_ctx_t* lpctx = ZTL_THE_CTX(evloop);
+	iocp_ctx_t* lpctx;
+	lpctx = ZTL_THE_CTX(evloop);
 
+#if 0
     if (evloop->thrnum <= 0) {
         evloop->thrnum = get_cpu_number();
     }
+#endif
 
-    if (iocp_extend_function(lpctx, evloop->listen_conn.sockfd) == 0)
+    if (iocp_extend_function(lpctx, evloop->listen_fd) == 0)
     {
         // post n AcceptEx I/O requests
         for (int i = 0; i < _ZTL_MAX_POST_ACCEPT; i++) {
 
-            if (-1 == iocp_add(evloop, &evloop->listen_conn, ZEV_POLLIN)) {
+            if (-1 == iocp_add(evloop, evloop->listen_fd, ZEV_POLLIN, 0)) {
                 break;
             }
         }
@@ -327,62 +304,63 @@ static int iocp_start(ztl_evloop_t* evloop)
         _beginthreadex(NULL, 0, iocp_accept_entry, evloop, 0, NULL);
     }
 
-    // start work threads
-    for (int i = 0; i < evloop->thrnum; ++i)
-    {
-        _beginthreadex(NULL, 0, iocp_loop_entry, evloop, 0, NULL);
-    }
     return 0;
 }
 
-static int iocp_add(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS reqevents)
+static int iocp_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents, int flags)
 {
-    iocp_ctx_t* lpctx = ZTL_THE_CTX(evloop);
+    iocp_ctx_t* lpctx;
+    lpctx = ZTL_THE_CTX(evloop);
+
+#if 0
     if (conn->added == 0)
     {
         conn->added = 1;
         CreateIoCompletionPort((HANDLE)conn->sockfd, lpctx->hIocp, (ULONG_PTR)conn, 0);
     }
+#endif//0
 
     DWORD lTransBytes = 0, lFlag = 0;
     per_io_data_t* lpIOData = NULL;
 
-    if (conn == &evloop->listen_conn) {
+    if (fd == evloop->listen_fd) {
         return iocp_post_acceptex(evloop, lpctx);
     }
 
     // post async recv or send, it will returned by iocp if io complete
-    lpIOData = _get_iodata(conn);
+    // lpIOData = _get_iodata(conn);
+    lpIOData = NULL;
     if (reqevents & ZEV_POLLIN)
     {
-        lpIOData->wsaBuf.buf = conn->rbuf + conn->bytes_recved;
-        lpIOData->wsaBuf.len = conn->rsize - conn->bytes_recved;
+        // lpIOData->wsaBuf.buf = conn->rbuf + conn->bytes_recved;
+        // lpIOData->wsaBuf.len = conn->rsize - conn->bytes_recved;
         lpIOData->optType = IO_OPT_READ;
 
-        WSARecv(conn->sockfd, &lpIOData->wsaBuf, 1, &lTransBytes, &lFlag, &lpIOData->ovlp, NULL);
+        WSARecv(fd, &lpIOData->wsaBuf, 1, &lTransBytes, &lFlag, &lpIOData->ovlp, NULL);
     }
 
     if (reqevents & ZEV_POLLOUT)
     {
+#if 0
         if (conn->wsize > 0)
         {
             lpIOData->optType = IO_OPT_WRITE;
             lpIOData->wsaBuf.buf = conn->wbuf;
             lpIOData->wsaBuf.len = conn->wsize;
-            WSASend(conn->sockfd, &lpIOData->wsaBuf, 1, &lTransBytes, lFlag, &lpIOData->ovlp, NULL);
+            WSASend(fd, &lpIOData->wsaBuf, 1, &lTransBytes, lFlag, &lpIOData->ovlp, NULL);
         }
+#endif//0
     }
     return 0;
 }
 
-static int iocp_del(ztl_evloop_t* evloop, ztl_connection_t* conn)
+static int iocp_del(ztl_evloop_t* evloop, sockhandle_t fd, int delevents, int flags)
 {
     (void)evloop;
-    conn->added = 0;
     return 0;
 }
 
-static int iocp_poll(ztl_evloop_t* evloop, int timeoutMS)
+static int iocp_poll(ztl_evloop_t* evloop, int ms)
 {
     DWORD       dwTrans;
     DWORD       dwFlag;
@@ -399,11 +377,7 @@ static int iocp_poll(ztl_evloop_t* evloop, int timeoutMS)
 
     // wait io completion
     BOOL bOK = GetQueuedCompletionStatus(lpctx->hIocp, &dwTrans, (PULONG_PTR)&lpConn, 
-        (LPOVERLAPPED*)&lpPerIO, timeoutMS);
-
-    // expire timers...
-    //update_time(lpev->timers);
-    //ztl_event_timer_expire(lpev->timers);
+        (LPOVERLAPPED*)&lpPerIO, ms);
 
     if (!bOK && WAIT_TIMEOUT == get_errno()) {
         return 0;
@@ -421,9 +395,7 @@ static int iocp_poll(ztl_evloop_t* evloop, int timeoutMS)
     if (!bOK || (0 == dwTrans && (IO_OPT_READ == lpPerIO->optType || IO_OPT_WRITE == lpPerIO->optType)))
     {
         lpConn->disconncted = 1;
-        lpConn->handler(evloop, lpConn, ZEV_POLLIN);
-
-        _iocp_freeconn(evloop, lpConn);
+        // lpConn->handler(evloop, lpConn, ZEV_POLLIN);
         return 0;
     }
 
@@ -432,13 +404,13 @@ static int iocp_poll(ztl_evloop_t* evloop, int timeoutMS)
         lpPerIO->nRecvedBytes = dwTrans;
         lpConn->rsize += dwTrans;
 
-        lpConn->handler(evloop, lpConn, ZEV_POLLIN);
+        lpConn->read_handler(evloop, lpConn, ZEV_POLLIN);
     }
     else if (lpPerIO->optType == IO_OPT_WRITE) {
-        lpConn->handler(evloop, lpConn, ZEV_POLLOUT);
+        lpConn->write_handler(evloop, lpConn, ZEV_POLLOUT);
     }
     else if (lpPerIO->optType == IO_OPT_ACCEPT) {
-        iocp_do_accept(evloop, lpConn, lpPerIO);
+        iocp_do_accept(evloop, 0, lpPerIO);
     }
     else {
         //logdebug("#ERROR unkonwn operation type %d\n", lpPerIO->optType);
@@ -454,19 +426,13 @@ static int iocp_stop(ztl_evloop_t* evloop)
 
     if (lpctx->hIocp)
     {
+#if 0
         for (int i = 0; i < evloop->thrnum; ++i) {
             PostQueuedCompletionStatus(lpctx->hIocp, 0, 0, NULL);
         }
+#endif//0
     }
 
-    if (INVALID_SOCKET != evloop->listen_conn.sockfd) {
-        close_socket(evloop->listen_conn.sockfd);
-        evloop->listen_conn.sockfd = INVALID_SOCKET;
-    }
-
-    while (ztl_atomic_add(&evloop->nexited, 0) != (uint32_t)evloop->thrnum) {
-        Sleep(1);
-    }
     return 0;
 }
 
@@ -489,32 +455,6 @@ EV_DESTROY_FINISH:
     return 0;
 }
 
-
-/// work thread entry
-static unsigned __stdcall iocp_loop_entry(void* arg)
-{
-    //logdebug("%u entry...\n", get_thread_id());
-    ztl_evloop_t* evloop = (ztl_evloop_t*)arg;
-
-    bool looponce = ztl_atomic_add(&evloop->looponce, 1) == 0 ? true : false;
-
-    while (evloop->running)
-    {
-        // FIXME: only one threads expire timers
-        ztl_evloop_update_polltime(evloop);
-        ztl_evloop_expire(evloop);
-
-        iocp_poll(evloop, evloop->timeoutMS);
-
-        if (looponce)
-            evloop->handler(evloop, NULL, ZEV_LOOPONCE);
-    }
-
-    //logdebug("%u exit.\n", get_thread_id());
-    ztl_atomic_add(&evloop->nexited, 1);
-    return 0;
-}
-
 static unsigned __stdcall iocp_accept_entry(void* arg)
 {
     //logdebug("accept thread running...\n");
@@ -528,7 +468,7 @@ static unsigned __stdcall iocp_accept_entry(void* arg)
     while (evloop->running)
     {
         // accept new socket (todo: try waiting)
-        rv = poll_read(&evloop->listen_conn.sockfd, 1, evloop->timeoutMS);
+        rv = poll_read(&evloop->listen_fd, 1, evloop->timeout_ms);
         if (rv == 0) {
             continue;
         }
@@ -543,7 +483,8 @@ static unsigned __stdcall iocp_accept_entry(void* arg)
 
         struct sockaddr_in clientAddr;
         int addrLen = sizeof(clientAddr);
-        SOCKET ns = accept(evloop->listen_conn.sockfd, (struct sockaddr*)&clientAddr, &addrLen);
+        /// SOCKET ns = accept(evloop->listen_fd, (struct sockaddr*)&clientAddr, &addrLen);
+		SOCKET ns = 0;
 
         // TCP_NODELAY, RCV_BUFSIZE could be set in cbconn function
         set_tcp_nodelay(ns, true);
@@ -563,7 +504,7 @@ static unsigned __stdcall iocp_accept_entry(void* arg)
 #endif
 
         // notify new connection
-        evloop->handler(evloop, lpNewConn, ZEV_NEWCONN);
+        // evloop->handler(evloop, lpNewConn, ZEV_NEWCONN);
     }
     return 0;
 }

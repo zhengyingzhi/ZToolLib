@@ -63,6 +63,9 @@
     <ClCompile Include="test_ztl_vector.c">
       <Filter>TestCases</Filter>
     </ClCompile>
+    <ClCompile Include="test_ztl_dstr.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ZToolUnitTest.h">

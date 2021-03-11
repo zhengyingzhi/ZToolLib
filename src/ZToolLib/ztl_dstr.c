@@ -3,13 +3,14 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "ztl_utils.h"
 #include "ztl_mem.h"
 #include "ztl_dstr.h"
 
 
 typedef struct dstr_head_st {
-    size_t  len;
-    size_t  avail;
+    size_t  capicity;
+    size_t  used;
     char    buf[0];
 }dstr_head_t;
 
@@ -57,13 +58,13 @@ dstr dstr_new_len(const char* str, size_t length)
     dstr_head_t* dh;
     size_t nbytes;
 
-    nbytes = sizeof(dstr_head_t) + length + 1;
+    nbytes = ztl_align(sizeof(dstr_head_t) + length + 1, 8);
     dh = str ? ALLOC(nbytes) : CALLOC(1, nbytes);
     if (!dh) {
         return NULL;
     }
-    dh->len = length;
-    dh->avail = 0;
+    dh->capicity = length + 1;
+    dh->used = str ? length : 0;
     if (str && length) {
         memcpy(dh->buf, str, length);
     }
@@ -87,13 +88,24 @@ void dstr_free(dstr ds)
     }
 }
 
+size_t dstr_capicity(const dstr ds)
+{
+    dstr_head_t* dh;
+    if (ds)
+    {
+        dh = DSTR_HEAD(ds);
+        return dh->capicity;
+    }
+    return 0;
+}
+
 size_t dstr_length(const dstr ds)
 {
     dstr_head_t* dh;
     if (ds)
     {
         dh = DSTR_HEAD(ds);
-        return dh->len;
+        return dh->used;
     }
     return 0;
 }
@@ -107,32 +119,33 @@ size_t dstr_avail(const dstr ds)
     }
 
     dh = DSTR_HEAD(ds);
-    return dh->avail;
+    return dh->capicity - dh->used - 1;
 }
 
-dstr dstr_make_room(dstr ds, size_t length)
+dstr dstr_reserve(dstr ds, size_t length)
 {
     dstr_head_t* dh;
-    size_t newlen;
+    size_t newlen, nbytes;
 
     if (!ds) {
         return NULL;
     }
 
     dh = DSTR_HEAD(ds);
-    if (dh->avail >= length)
+    if (dh->capicity - dh->used - 1 >= length)
         return ds;
 
-    newlen = dh->len + length;
+    newlen = dh->capicity + length;
     if (newlen < DSTR_MAX_PER_ALLOC)
         newlen *= 2;
     else
         newlen += DSTR_MAX_PER_ALLOC;
+    nbytes = ztl_align(sizeof(*dh) + newlen, 8);
 
-    if (RESIZE(dh, sizeof(*dh) + newlen + 1) == NULL)
+    if (RESIZE(dh, nbytes) == NULL)
         return NULL;
 
-    dh->avail = newlen - dh->len;
+    dh->capicity = newlen;
     return dh->buf;
 }
 
@@ -145,11 +158,10 @@ void dstr_incr_len(dstr ds, int incr)
     }
 
     dh = DSTR_HEAD(ds);
-    if (dh->avail >= incr)
+    if (dh->capicity - dh->used -1 >= incr)
     {
-        dh->len += incr;
-        dh->avail -= incr;
-        ds[dh->len] = '\0';
+        dh->used += incr;
+        ds[dh->used] = '\0';
     }
 }
 
@@ -162,13 +174,13 @@ dstr dstr_remove_avail(dstr ds)
     }
 
     dh = DSTR_HEAD(ds);
-    if (RESIZE(dh, sizeof(*dh) + dh->len + 1) == NULL)
+    if (RESIZE(dh, sizeof(*dh) + dh->used + 1) == NULL)
         return NULL;
-    dh->avail = 0;
+    dh->capicity = dh->used + 1;
     return dh->buf;
 }
 
-size_t dstr_alloc_size(dstr ds)
+size_t dstr_alloced_size(dstr ds)
 {
     dstr_head_t* dh;
 
@@ -177,22 +189,21 @@ size_t dstr_alloc_size(dstr ds)
     }
 
     dh = DSTR_HEAD(ds);
-    return sizeof(*dh) + dh->len + dh->avail + 1;
+    return sizeof(*dh) + dh->capicity + 1;
 }
 
 dstr dstr_cat_len(dstr ds, const char* str, size_t length)
 {
     dstr_head_t* dh;
-    size_t len = dstr_length(ds);
+    size_t used = dstr_length(ds);
 
-    if ((ds = dstr_make_room(ds, length)) == NULL)
+    if ((ds = dstr_reserve(ds, length)) == NULL)
         return NULL;
-    memcpy(ds + len, str, length);
-    ds[len + length] = '\0';
+    memcpy(ds + used, str, length);
+    ds[used + length] = '\0';
 
     dh = DSTR_HEAD(ds);
-    dh->len = len + length;
-    dh->avail -= length;
+    dh->used = used + length;
     return ds;
 }
 
@@ -208,7 +219,7 @@ dstr dstr_cat(dstr ds, const char* str)
 dstr dstr_cat_vprintf(dstr ds, const char* fmt, va_list ap)
 {
     char *buf, *tmp;
-    size_t len = 16;
+    size_t len = 32;
     va_list cpy;
 
     for (;;)
@@ -226,6 +237,7 @@ dstr dstr_cat_vprintf(dstr ds, const char* fmt, va_list ap)
         }
         break;
     }
+
     tmp = dstr_cat(ds, buf);
     FREE(buf);
     return tmp;
@@ -263,8 +275,7 @@ dstr dstr_trim(dstr ds, const char* cset)
     if (dh->buf != sp)
         memmove(dh->buf, sp, len);
     dh->buf[len] = '\0';
-    dh->avail += dh->len - len;
-    dh->len = len;
+    dh->used = len;
     return ds;
 }
 
@@ -278,18 +289,18 @@ dstr dstr_range(dstr ds, size_t start, size_t end)
     }
 
     dh = DSTR_HEAD(ds);
-    if (dh->len == 0)
+    if (dh->used == 0)
         return NULL;
 
     if (start < 0)
     {
-        start += dh->len;
+        start += dh->used;
         if (start < 0)
             start = 0;
     }
     if (end < 0)
     {
-        end += dh->len;
+        end += dh->used;
         if (end < 0)
             end = 0;
     }
@@ -297,13 +308,13 @@ dstr dstr_range(dstr ds, size_t start, size_t end)
     newlen = start > end ? 0 : end - start + 1;
     if (newlen)
     {
-        if (start >= (signed)dh->len)
+        if (start >= (signed)dh->used)
         {
             newlen = 0;
         }
-        else if (end >= (signed)dh->len)
+        else if (end >= (signed)dh->used)
         {
-            end = dh->len - 1;
+            end = dh->used - 1;
             newlen = start > end ? 0 : end - start + 1;
         }
     }
@@ -316,8 +327,7 @@ dstr dstr_range(dstr ds, size_t start, size_t end)
         memmove(ds, ds + start, newlen);
 
     ds[newlen] = '\0';
-    dh->avail += dh->len - newlen;
-    dh->len = newlen;
+    dh->used = newlen;
     return ds;
 }
 
@@ -330,8 +340,7 @@ void dstr_clear(dstr ds)
     }
 
     dh = DSTR_HEAD(ds);
-    dh->avail += dh->len;
-    dh->len = 0;
+    dh->used = 0;
     dh->buf[0] = '\0';
 }
 

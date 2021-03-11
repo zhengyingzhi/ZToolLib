@@ -28,15 +28,14 @@ struct epoll_ctx_st
 };
 typedef struct epoll_ctx_st epoll_ctx_t;
 
-#define ZTL_THE_CTX(ev)     ((epoll_ctx_t*)ev->ctx)
 
-static int epoll_init(ztl_evloop_t* ev);
-static int epoll_destroy(ztl_evloop_t* ev);
-static int epoll_start(ztl_evloop_t* ev);
-static int epoll_poll(ztl_evloop_t* evloop, int timeoutMS);
-static int epoll_stop(ztl_evloop_t* ev);
-static int epoll_add(ztl_evloop_t* ev, ztl_connection_t* conn, ZTL_EV_EVENTS reqevents);
-static int epoll_del(ztl_evloop_t* ev, ztl_connection_t* conn);
+static int epoll_init(void** evops_ctx);
+static int epoll_destroy(void* evops_ctx);
+static int epoll_start(void* evops_ctx);
+static int epoll_add(void* evops_ctx, sockhandle_t fd, int reqevents, int flags);
+static int epoll_del(void* evops_ctx, sockhandle_t fd, int delevents, int flags);
+static int epoll_poll(void* evops_ctx, ztl_fired_event_t* fired_events, int ms);
+static int epoll_stop(void* evops_ctx);
 
 struct ztl_event_ops epollops = {
     epoll_init,
@@ -50,31 +49,7 @@ struct ztl_event_ops epollops = {
 };
 
 
-static void* _epoll_loop_entry(void* arg)
-{
-    //logdebug("thread [%u] running...\n", get_thread_id());
-    ztl_evloop_t* evloop = (ztl_evloop_t*)arg;
-
-    bool looponce = ztl_atomic_add(&evloop->looponce, 0) == 0 ? true : false;
-
-    while (evloop->running)
-    {
-        ztl_evloop_update_polltime(evloop);
-        ztl_evloop_expire(evloop);
-
-        epoll_poll(evloop, evloop->timeoutMS);
-
-        if (looponce)
-            evloop->handler(evloop, NULL, ZEV_LOOPONCE);
-    }
-
-    ztl_atomic_add(&evloop->nexited, 1);
-
-    //logdebug("thread [%u] exit.\n", get_thread_id());
-    return NULL;
-}
-
-static int epoll_init(ztl_evloop_t* evloop)
+static int epoll_init(void** evops_ctx)
 {
     epoll_ctx_t* lpctx;
     lpctx = (epoll_ctx_t*)malloc(sizeof(epoll_ctx_t));
@@ -84,125 +59,99 @@ static int epoll_init(ztl_evloop_t* evloop)
     }
 
     memset(lpctx, 0, sizeof(epoll_ctx_t));
-    evloop->ctx = lpctx;
-
-    // create epoll fd
     lpctx->epfd = epoll_create(1024);
     if (lpctx->epfd < 0)
     {
         return -1;
     }
 
-    // create connection objects pool
-    evloop->conn_mp = ztl_mp_create(sizeof(ztl_connection_t), 256, 1);
-
-    // event timer
-    ztl_event_timer_init(&evloop->timers);
-
+    *evops_ctx = lpctx;
     return 0;
 }
 
-static int epoll_destroy(ztl_evloop_t* evloop)
+static int epoll_destroy(void* evops_ctx)
 {
-    epoll_ctx_t* lpctx = ZTL_THE_CTX(evloop);
-    if (lpctx) {
+    epoll_ctx_t* lpctx;
+    lpctx = (epoll_ctx_t*)evops_ctx;
+    if (lpctx)
+    {
         close(lpctx->epfd);
         free(lpctx);
-        evloop->ctx = NULL;
-    }
-
-    if (evloop->conn_mp) {
-        ztl_mp_release(evloop->conn_mp);
-        evloop->conn_mp = NULL;
     }
 
     return 0;
 }
 
-static int epoll_start(ztl_evloop_t* evloop)
+static int epoll_start(void* evops_ctx)
 {
-    if (evloop->thrnum <= 0) {
-        evloop->thrnum = get_cpu_number();
-    }
-
-    // start work threads
-    pthread_t thrid;
-    int i = 0;
-    for (i = 0; i < evloop->thrnum; ++i) {
-        pthread_create(&thrid, NULL, _epoll_loop_entry, evloop);
-    }
-
     return 0;
 }
 
-static int epoll_stop(ztl_evloop_t* evloop)
+static int epoll_stop(void* evops_ctx)
 {
-    ztl_atomic_set(&evloop->running, 0);
-
-    // TODO: use 'post_pipe_job' funcion
-    char sbuf[256] = "stop";
-    evloop->pipeconn[0].wbuf = sbuf;
-    evloop->pipeconn[0].wsize = strlen(sbuf);
-    evloop->pipeconn[0].send(&evloop->pipeconn[0]);
-
-    if (INVALID_SOCKET != evloop->listen_conn.sockfd) {
-        close_socket(evloop->listen_conn.sockfd);
-        evloop->listen_conn.sockfd = INVALID_SOCKET;
-    }
-
-    while (ztl_atomic_add(&evloop->nexited, 0) != (uint32_t)evloop->thrnum) {
-        sleepms(1);
-    }
-
     return 0;
 }
 
-static int epoll_add(ztl_evloop_t* evloop, ztl_connection_t* conn, ZTL_EV_EVENTS reqevents)
+static int epoll_add(void* evops_ctx, sockhandle_t fd, int reqevents, int flags)
 {
-    struct epoll_event reqev;
-    reqev.events = EPOLLONESHOT | EPOLLET;
-    reqev.data.u64 = 0; /* avoid valgrind warning */
-    reqev.data.ptr = conn;
+    epoll_ctx_t* lpctx;
+    struct epoll_event ee;
+    int op;
 
-    if (reqevents & ZEV_POLLIN) {
-        reqev.events |= EPOLLIN;
-    }
-    if (reqevents & ZEV_POLLOUT) {
-        reqev.events |= EPOLLOUT;
-    }
-    conn->reqevents = reqev.events;
+    lpctx = (epoll_ctx_t*)evops_ctx;
+    op = flags == ZEV_NONE ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
 
-    epoll_ctx_t* lpctx = ZTL_THE_CTX(evloop);
-    if (conn->added == 0) {
-        conn->added = 1;
-        return epoll_ctl(lpctx->epfd, EPOLL_CTL_ADD, conn->sockfd, &reqev);
-    }
-    else {
-        return epoll_ctl(lpctx->epfd, EPOLL_CTL_MOD, conn->sockfd, &reqev);
-    }
+    ee.events = 0;
+
+    // merged old events
+    reqevents |= flags;
+    if (reqevents & ZEV_POLLIN)
+        ee.events |= EPOLLIN;
+    if (reqevents & ZEV_POLLOUT)
+        ee.events |= EPOLLOUT;
+
+    // ee.events = EPOLLONESHOT | EPOLLET;
+    ee.data.u64 = 0; /* avoid valgrind warning */
+    // ee.data.ptr = conn;
+    ee.fd = fd;
+
+    return epoll_ctl(lpctx->epfd, op, fd, &ee);
 }
 
-static int epoll_del(ztl_evloop_t* evloop, ztl_connection_t* conn)
+static int epoll_del(void* evops_ctx, sockhandle_t fd, int delevents, int flags)
 {
-    struct epoll_event reqev;
-    reqev.events = EPOLLIN | EPOLLOUT;
-    reqev.data.u64 = 0; /* avoid valgrind warning */
-    reqev.data.ptr = conn;
+    epoll_ctx_t* lpctx;
+    struct epoll_event ee;
+    int op;
 
-    epoll_ctx_t* lpctx = ZTL_THE_CTX(evloop);
-    conn->added = 0;
-    int rv = epoll_ctl(lpctx->epfd, EPOLL_CTL_DEL, conn->sockfd, &reqev);
-    return rv;
+    lpctx = (epoll_ctx_t*)evops_ctx;
+    flags = flags & ~delevents;
+
+    ee.events = 0;
+    if (flags & ZEV_POLLIN)
+        ee.events |= EPOLLIN;
+    if (flags & ZEV_POLLOUT)
+        ee.events |= EPOLLOUT;
+
+    // ee.events = EPOLLIN | EPOLLOUT;
+    ee.data.u64 = 0; /* avoid valgrind warning */
+    // ee.data.ptr = conn;
+    ee.data.fd = fd;
+
+    op = flags == ZEV_NONE ? EPOLL_CTL_DEL else EPOLL_CTL_MOD;
+    return epoll_ctl(lpctx->epfd, op, fd, &ee);
 }
 
-static int epoll_poll(ztl_evloop_t* evloop, int timeoutMS)
+static int epoll_poll(void* evops_ctx, ztl_fired_event_t* fired_events, int ms)
 {
-    int numev;
+    int numev, events;
     const int max_nevent = 64;
     struct epoll_event epevents[max_nevent];
-    epoll_ctx_t* lpctx = ZTL_THE_CTX(evloop);
+    struct epoll_event* lpee;
+    epoll_ctx_t* lpctx;
+    lpctx = (epoll_ctx_t*)evops_ctx;
 
-    numev = epoll_wait(lpctx->epfd, epevents, max_nevent, timeoutMS);
+    numev = epoll_wait(lpctx->epfd, epevents, max_nevent, ms);
     if (numev < 0)
     {
         if (errno == EINTR) {
@@ -222,32 +171,18 @@ static int epoll_poll(ztl_evloop_t* evloop, int timeoutMS)
 
     for (int i = 0; i < numev; ++i)
     {
-        struct epoll_event* lpee = epevents + i;
-        ztl_connection_t* conn = (ztl_connection_t*)lpee->data.ptr;
-
-        // process in event
-        if (lpee->events & (EPOLLIN | EPOLLERR | EPOLLHUP))
-        {
-            conn->handler(evloop, conn, ZEV_POLLIN);
-        }
-
-        // if the connection is closed...
-        if (conn->disconncted)
-        {
-            //logdebug("[%u] the connection is broken for %d\n", get_thread_id(), conn->sockfd);
-            ztl_free_connection(evloop, conn);
-            continue;
-        }
-
-        // process out event
+        events = 0;
+        lpee = epevents + i;
+        if (lpee->events & (EPOLLIN | EPOLLERR))
+            events |= ZEV_POLLIN;
         if (lpee->events & (EPOLLOUT | EPOLLERR | EPOLLHUP))
-        {
-            conn->handler(evloop, conn, ZEV_POLLOUT);
-        }
+            events |= ZEV_POLLOUT;
+
+        fired_events[i].fd = lpee->data.fd;
+        fired_events[i].events = lpee->data.events;
     }
 
     return numev;
 }
-
 
 #endif//__linux__
