@@ -82,8 +82,7 @@ static int _accept_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int eve
             return -1;
         }
 
-        inetaddr_to_string(from_ip, sizeof(from_ip) - 1, from_addr.sin_addr.s_addr);
-        from_port = ntohs(from_addr.sin_port);
+        get_ipport(from_ip, sizeof(from_ip) - 1, &from_port, &from_addr);
         fprintf(stderr, "_accept ns=%d, from=%s:%d\n", (int)ns, from_ip, from_port);
 
         // TCP_NODELAY, RCV_BUFSIZE could be set in cbconn function

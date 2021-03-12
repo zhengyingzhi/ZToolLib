@@ -5,24 +5,24 @@
 void ztl_evtimer_init(ztl_evtimer_t* et)
 {
     ztl_rbtree_init(&et->event_timers, &et->event_timer_sentinel, 
-        ztl_rbtree_insert_timer_value);
+                    ztl_rbtree_insert_timer_value);
 }
 
 int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer, 
-    uint32_t aTimeoutMS, int aTimerSet)
+    uint32_t timeout_ms, int timerset)
 {
     ztl_msec_t      key;
     ztl_msec_int_t  diff;
 
-    if (aTimeoutMS == 0) {
+    if (timeout_ms == 0) {
         return -1;
     }
 
     /* Currently no lock, since event timer is only working at IO thread */
 
-    key = et->last_time + aTimeoutMS;
+    key = et->last_time + timeout_ms;
 
-    if (aTimerSet) {
+    if (timerset) {
 
         /*
         * Use a previous timer value if difference between it and a new

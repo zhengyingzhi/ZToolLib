@@ -28,7 +28,10 @@ static ztl_inline void _ztl_insert_item(ztl_fixapi_t* fixapi, fixkey_t id, int64
     ztl_rbtree_node_t* pnode;
     pnode = (ztl_rbtree_node_t*)ztl_palloc(fixapi->pool, sizeof(ztl_rbtree_node_t));
     pnode->key = id;
-    pnode->udata = value;
+
+    union_dtype_t d;
+    d.i64 = value;
+    pnode->udata = d.ptr;
     ztl_map_add_ex(fixapi->fixmap, id, pnode);
 }
 #endif//0
@@ -37,7 +40,12 @@ static ztl_inline int64_t _ztl_find_data(ztl_fixapi_t* fixapi, fixkey_t id)
 {
     ztl_rbtree_node_t* pnode;
     pnode = ztl_map_find_ex(fixapi->fixmap, id);
-    return pnode ? pnode->udata : ZTL_MAP_INVALID_VALUE;
+    if (pnode) {
+        union_dtype_t d;
+        d.ptr = pnode->udata;
+        return d.i64;
+    }
+    return ZTL_MAP_INVALID_VALUE;
 }
 
 ztl_fixapi_t* ztl_fixapi_create()

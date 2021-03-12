@@ -38,7 +38,7 @@ void ztl_evtimer_init(ztl_evtimer_t* et);
  * @timerset the 'timer' whether added already
  */
 int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer,
-    uint32_t timeoutMS, int timerset);
+    uint32_t timeout_ms, int timerset);
 
 /* delete the timer from container */
 int ztl_evtimer_del(ztl_evtimer_t* et, ztl_rbtree_node_t* timer);

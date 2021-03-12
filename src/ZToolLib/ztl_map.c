@@ -3,10 +3,9 @@
 #include <string.h>
 
 #include "ztl_mempool.h"
-
 #include "ztl_rbtree.h"
-
 #include "ztl_map.h"
+#include "ztl_utils.h"
 
 
 struct ztl_map_st
@@ -113,7 +112,10 @@ int ztl_map_add(ztl_map_t* pmap, uint64_t key, int64_t value)
 
     rbnode = (ztl_rbtree_node_t*)ztl_mp_alloc(pmap->mp);
     memset(rbnode, 0, sizeof(ztl_rbtree_node_t));
-    rbnode->udata = value;
+
+    union_dtype_t d;
+    d.i64 = value;
+    rbnode->udata = d.ptr;
 
     return ztl_map_add_ex(pmap, key, rbnode);
 }
@@ -126,7 +128,9 @@ int64_t ztl_map_del(ztl_map_t* pmap, uint64_t key)
     rbnode = ztl_map_del_ex(pmap, key);
     if (rbnode)
     {
-        value = rbnode->udata;
+        union_dtype_t d;
+        d.ptr = rbnode->udata;
+        value = d.i64;
         ztl_mp_free(pmap->mp, rbnode);
     }
 
@@ -149,7 +153,9 @@ int64_t ztl_map_find(ztl_map_t* pmap, uint64_t key)
     ztl_rbtree_node_t* rbnode;
     rbnode = _ztl_rbtree_find(&pmap->rbtree, key);
     if (rbnode) {
-        return rbnode->udata;
+        union_dtype_t d;
+        d.ptr = rbnode->udata;
+        return d.i64;
     }
 
     return pmap->invalid_value;
@@ -160,8 +166,11 @@ static void _ztl_rbtree_traverse(ztl_map_t* pmap, ztl_rbtree_t *tree, ztl_rbtree
 {
     if (cur && cur != tree->sentinel)
     {
-        if (func)
-            func(pmap, context1, context2, cur->key, cur->udata);
+        if (func) {
+            union_dtype_t d;
+            d.ptr = cur->udata;
+            func(pmap, context1, context2, cur->key, d.i64);
+        }
 
         if (cur->left)
             _ztl_rbtree_traverse(pmap, tree, cur->left, func, context1, context2);

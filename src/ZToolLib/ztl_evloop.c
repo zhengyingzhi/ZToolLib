@@ -72,6 +72,7 @@ int ztl_evloop_create(ztl_evloop_t** pevloop, int size)
     memset(evloop, 0, sizeof(ztl_evloop_t));
     evloop->running     = 0;
     evloop->looponce    = 0;
+    evloop->timer_id    = 1;
     evloop->pipe_fd[0]  = INVALID_SOCKET;
     evloop->pipe_fd[1]  = INVALID_SOCKET;
 
@@ -82,6 +83,7 @@ int ztl_evloop_create(ztl_evloop_t** pevloop, int size)
     evloop->connections = ALLOC(ZTL_DEFAULT_CONNECT_SIZE * sizeof(ztl_connection_t*));
     memset(evloop->connections, 0, ZTL_DEFAULT_CONNECT_SIZE * sizeof(ztl_connection_t*));
 
+    ztl_thread_mutex_init(&evloop->lock, NULL);
     ztl_evtimer_init(&evloop->timers);
 
     evloop->evops = evops;
@@ -141,6 +143,7 @@ int ztl_evloop_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents,
 
     if (fd > evloop->event_size)
     {
+        fprintf(stderr, "evloop_add fd:%d>size:%d\n", (int)fd, evloop->event_size);
         errno = ERANGE;
         return -1;
     }
@@ -181,7 +184,6 @@ int ztl_evloop_del(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents)
     return rv;
 }
 
-
 int ztl_evloop_loop(ztl_evloop_t* evloop, int ms)
 {
     int i, nevents;
@@ -189,8 +191,11 @@ int ztl_evloop_loop(ztl_evloop_t* evloop, int ms)
     ztl_fired_event_t*  fired_ev;
     ztl_connection_t*   conn;
 
+    evloop->io_thread_id = ztl_thread_self();
+
     while (evloop->running)
     {
+        ztl_evloop_update_polltime(evloop);
         ztl_evloop_expire(evloop);
 
         nevents = evloop->evops->poll(evloop->evops_ctx, evloop->fired_events, 64, ms);
@@ -216,7 +221,6 @@ int ztl_evloop_loop(ztl_evloop_t* evloop, int ms)
 
     return 0;
 }
-
 
 int ztl_evloop_release(ztl_evloop_t* evloop)
 {
@@ -247,6 +251,8 @@ int ztl_evloop_release(ztl_evloop_t* evloop)
         }
     }
 
+    ztl_thread_mutex_destroy(&evloop->lock);
+    ztl_timer_node_free_all(evloop);
     free(evloop);
 
     return rv;
@@ -301,7 +307,8 @@ ztl_connection_t* ztl_connection_remove(ztl_evloop_t* evloop, sockhandle_t fd)
     return conn;
 }
 
-ztl_connection_t* ztl_connection_new(ztl_evloop_t* evloop, sockhandle_t ns, uint32_t fd_addr, uint16_t fd_port)
+ztl_connection_t* ztl_connection_new(ztl_evloop_t* evloop, sockhandle_t ns,
+    uint32_t fd_addr, uint16_t fd_port)
 {
     ztl_connection_t* conn;
     conn = (ztl_connection_t*)ALLOC(sizeof(ztl_connection_t));
@@ -330,21 +337,86 @@ ztl_connection_t* ztl_connection_get(ztl_evloop_t* evloop, sockhandle_t fd)
 
 
 //////////////////////////////////////////////////////////////////////////
-int ztl_evloop_addtimer(ztl_evloop_t* evloop, ztl_rbtree_node_t* timer, uint32_t ms)
+static void _timer_event_handler(void* ctx, ztl_rbtree_node_t* node)
 {
-    ztl_evtimer_add(&evloop->timers, timer, ms, 0);
-    return 0;
+    ztl_evloop_t*       evloop;
+    ztl_timer_event_t*  timer;
+
+    evloop = (ztl_evloop_t*)ctx;
+    timer = (ztl_timer_event_t*)node;
+    if (timer->handler)
+        timer->handler(evloop, timer->timer_id, timer->udata);
+    if (timer->finalizer)
+        timer->finalizer(evloop, timer->timer_id, timer->udata);
+    ztl_timer_node_free(evloop, timer);
 }
 
-int ztl_evloop_deltimer(ztl_evloop_t* evloop, ztl_rbtree_node_t* timer)
+int ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
+    ztl_timer_handler_t handler,
+    ztl_timer_finalizer_t finalizer, void* udata)
 {
-    ztl_evtimer_del(&evloop->timers, timer);
-    return 0;
+    int safe, rv;
+    ztl_timer_event_t* timer;
+
+    safe = 1;
+    if (evloop->io_thread_id != ztl_thread_self()) {
+        safe = 0;
+        ztl_thread_mutex_lock(&evloop->lock);
+    }
+
+    timer = ztl_timer_node_new(evloop);
+    timer->handler      = handler;
+    timer->finalizer    = finalizer;
+    timer->udata        = udata;
+    timer->timer_id     = ztl_atomic_add64(&evloop->timer_id, 1);
+    timer->timeout_ms   = timeout_ms;
+    ztl_timer_node_save(evloop, timer);
+
+    rv = ztl_evtimer_add(&evloop->timers, &timer->node, timeout_ms, 0);
+
+    if (!safe)
+        ztl_thread_mutex_unlock(&evloop->lock);
+    return rv;
+}
+
+int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id)
+{
+    int safe, rv;
+    ztl_timer_event_t* timer;
+    timer = ztl_timer_node_get(evloop, timer_id);
+    if (!timer) {
+        return -1;
+    }
+
+    safe = 1;
+    if (evloop->io_thread_id != ztl_thread_self()) {
+        safe = 0;
+        ztl_thread_mutex_lock(&evloop->lock);
+    }
+
+    rv = ztl_evtimer_del(&evloop->timers, &timer->node);
+    if (timer->finalizer)
+        timer->finalizer(evloop, timer_id, timer->udata);
+    ztl_timer_node_free(evloop, timer);
+
+    if (!safe)
+        ztl_thread_mutex_unlock(&evloop->lock);
+    return rv;
 }
 
 int ztl_evloop_expire(ztl_evloop_t* evloop)
 {
-    // TODO:
-    // ztl_evtimer_expire(&evloop->timers, evloop->timepoint, evloop->timer_handler, evloop);
+    int safe;
+    safe = 1;
+    if (evloop->io_thread_id != ztl_thread_self()) {
+        safe = 0;
+        ztl_thread_mutex_lock(&evloop->lock);
+    }
+
+    ztl_evtimer_expire(&evloop->timers, evloop->timepoint,
+                       _timer_event_handler, evloop);
+
+    if (!safe)
+        ztl_thread_mutex_unlock(&evloop->lock);
     return 0;
 }

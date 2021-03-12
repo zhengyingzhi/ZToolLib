@@ -20,13 +20,14 @@ typedef int64_t   ztl_msec_int_t;
 typedef struct ztl_rbtree_node_s ztl_rbtree_node_t;
 
 struct ztl_rbtree_node_s {
-    ztl_rbtree_key_t      key;
-    ztl_rbtree_node_t*    left;
-    ztl_rbtree_node_t*    right;
-    ztl_rbtree_node_t*    parent;
-    int64_t               udata;
-    uint8_t               color;
-    uint8_t               data;
+    ztl_rbtree_key_t    key;
+    ztl_rbtree_node_t*  left;
+    ztl_rbtree_node_t*  right;
+    ztl_rbtree_node_t*  parent;
+    void*               udata;
+    uint8_t             color;
+    uint8_t             padding;
+    uint16_t            data;
 };
 
 

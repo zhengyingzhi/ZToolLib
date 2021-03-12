@@ -67,7 +67,7 @@ static int iocp_init(ztl_evloop_t* evloop);
 static int iocp_start(ztl_evloop_t* evloop);
 static int iocp_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents, int flags);
 static int iocp_del(ztl_evloop_t* evloop, sockhandle_t fd, int delevents, int flags);
-static int iocp_poll(ztl_evloop_t* evloop, int ms);
+static int iocp_poll(ztl_evloop_t* evloop, ztl_fired_event_t* fires, int size, int ms);
 static int iocp_stop(ztl_evloop_t* evloop);
 static int iocp_destroy(ztl_evloop_t* evloop);
 
@@ -360,7 +360,7 @@ static int iocp_del(ztl_evloop_t* evloop, sockhandle_t fd, int delevents, int fl
     return 0;
 }
 
-static int iocp_poll(ztl_evloop_t* evloop, int ms)
+static int iocp_poll(ztl_evloop_t* evloop, ztl_fired_event_t* fires, int size, int ms)
 {
     DWORD       dwTrans;
     DWORD       dwFlag;
@@ -483,8 +483,7 @@ static unsigned __stdcall iocp_accept_entry(void* arg)
 
         struct sockaddr_in clientAddr;
         int addrLen = sizeof(clientAddr);
-        /// SOCKET ns = accept(evloop->listen_fd, (struct sockaddr*)&clientAddr, &addrLen);
-		SOCKET ns = 0;
+        SOCKET ns = accept(evloop->listen_fd, (struct sockaddr*)&clientAddr, &addrLen);
 
         // TCP_NODELAY, RCV_BUFSIZE could be set in cbconn function
         set_tcp_nodelay(ns, true);

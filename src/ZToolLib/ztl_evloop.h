@@ -41,7 +41,10 @@ typedef enum
 
 typedef int(*ztl_recv_t)(ztl_connection_t* conn);
 typedef int(*ztl_send_t)(ztl_connection_t* conn);
+
 typedef int(*ztl_ev_handler_t)(ztl_evloop_t* evloop, ztl_connection_t* conn, int events);
+typedef int(*ztl_timer_handler_t)(ztl_evloop_t* evloop, uint64_t timer_id, void* udata);
+typedef int(*ztl_timer_finalizer_t)(ztl_evloop_t* evloop, uint64_t timer_id, void* udata);
 
 
 /* describe one client connection */
@@ -118,17 +121,20 @@ void  ztl_evloop_set_usedata(ztl_evloop_t* evloop, void* userdata);
 void* ztl_evloop_get_usedata(ztl_evloop_t* evloop);
 
 /* some evloop helpers */
-ztl_connection_t* ztl_connection_new(ztl_evloop_t* evloop, sockhandle_t fd, uint32_t fd_addr, uint16_t fd_port);
+ztl_connection_t* ztl_connection_new(ztl_evloop_t* evloop, sockhandle_t fd,
+    uint32_t fd_addr, uint16_t fd_port);
 ztl_connection_t* ztl_connection_get(ztl_evloop_t* evloop, sockhandle_t fd);
 ztl_connection_t* ztl_connection_remove(ztl_evloop_t* evloop, sockhandle_t fd);
 int ztl_connection_save(ztl_evloop_t* evloop, ztl_connection_t* conn);
 
 
 /* add a timer event */
-int ztl_evloop_addtimer(ztl_evloop_t* evloop, ztl_rbtree_node_t* timer, uint32_t timeout_ms);
+int ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
+    ztl_timer_handler_t handler,
+    ztl_timer_finalizer_t finalizer, void* udata);
 
 /* remove the timer, return 0 if success */
-int ztl_evloop_deltimer(ztl_evloop_t* evloop, ztl_rbtree_node_t* timer);
+int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id);
 
 /* expire all the timed out timers */
 int ztl_evloop_expire(ztl_evloop_t* evloop);

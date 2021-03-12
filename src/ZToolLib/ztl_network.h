@@ -66,6 +66,7 @@ void net_init();
 void net_cleanup();
 
 /// errno relative
+const char* get_strerror(int no);
 int  get_errno();
 bool is_wouldblock(int nErrno);
 bool is_einterrupt(int nErrno);
@@ -109,8 +110,8 @@ int set_rcv_buffsize(sockhandle_t sockfd, int bufsize);
 int set_snd_buffsize(sockhandle_t sockfd, int bufsize);
 
 /// set sock timeout with milli-second
-int set_rcv_timeout(sockhandle_t sockfd, int timeout);
-int set_snd_timeout(sockhandle_t sockfd, int timeout);
+int set_rcv_timeout(sockhandle_t sockfd, int timeout_ms);
+int set_snd_timeout(sockhandle_t sockfd, int timeout_ms);
 
 /// get local or peer socket's address
 int get_localaddr(sockhandle_t sockfd, struct sockaddr_in* localaddr);
@@ -137,7 +138,7 @@ int tcp_msg_peek(sockhandle_t sockfd, char* buf, int len);
 
 /// accept a new socket descriptor
 sockhandle_t tcp_accept(sockhandle_t listenfd, struct sockaddr_in* fromaddr);
-sockhandle_t tcp_accept2(sockhandle_t listenfd, char ip[], int sz, uint16_t* port);
+sockhandle_t tcp_accept2(sockhandle_t listenfd, char fromip[], int sz, uint16_t* port);
 
 /// try detect events, the event fds will put front at sockfds array, and return count
 int poll_read(sockhandle_t sockfds[], int nfds, int timeout_ms);

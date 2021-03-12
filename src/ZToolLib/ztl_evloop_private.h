@@ -11,16 +11,29 @@
 #include "ztl_network.h"
 #include "ztl_evloop.h"
 #include "ztl_mempool.h"
+#include "ztl_threads.h"
 
 #define ZTL_DEF_POLL_TIMEOUT_MS     200
 #define ZTL_DEF_CONN_INIT_COUNT     256
 
 typedef struct ztl_event_ops ztl_event_ops_t;
+typedef struct ztl_timer_event_st ztl_timer_event_t;
 
 typedef struct ztl_fired_event_st {
     sockhandle_t    fd;
     int             events;
 }ztl_fired_event_t;
+
+struct ztl_timer_event_st {
+    ztl_rbtree_node_t           node;
+    struct ztl_timer_event_st*  prev;
+    struct ztl_timer_event_st*  next;
+    ztl_timer_handler_t         handler;
+    ztl_timer_finalizer_t       finalizer;
+    void*                       udata;
+    uint64_t                    timer_id;
+    int32_t                     timeout_ms;
+};
 
 struct ztl_evloop_st
 {
@@ -28,6 +41,7 @@ struct ztl_evloop_st
     int                 timeout_ms;
     int                 running;
     uint32_t            looponce;
+    uint64_t            timer_id;
     void*               userdata;
     sockhandle_t        listen_fd;  // will be removed
 
@@ -36,7 +50,11 @@ struct ztl_evloop_st
 
     int                 event_size;
     ztl_fired_event_t*  fired_events;
-    ztl_connection_t**  connections;
+    ztl_connection_t**  connections;  // FIXME: use a hash table?
+    ztl_timer_event_t*  idle_timers;
+    ztl_timer_event_t*  work_timers;
+    ztl_thread_mutex_t  lock;
+    int                 io_thread_id;
 
     void*               evops_ctx;
     ztl_event_ops_t*    evops;
@@ -65,6 +83,13 @@ int ztl_do_send(ztl_connection_t* conn);
 
 ztl_connection_t* ztl_do_accept(ztl_evloop_t* evloop, sockhandle_t listenfd);
 
+ztl_timer_event_t* ztl_timer_node_new(ztl_evloop_t* evloop);
+ztl_timer_event_t* ztl_timer_node_get(ztl_evloop_t* evloop, uint64_t timer_id);
+int ztl_timer_node_save(ztl_evloop_t* evloop, ztl_timer_event_t* node);
+int ztl_timer_node_free(ztl_evloop_t* evloop, ztl_timer_event_t* node);
+int ztl_timer_node_free_all(ztl_evloop_t* evloop);
+
 void ztl_evloop_update_polltime(ztl_evloop_t* evloop);
+
 
 #endif//_ZTL_EVENT_LOOP_PRIVATE_H_

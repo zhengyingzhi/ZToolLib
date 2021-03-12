@@ -198,6 +198,9 @@
     <ClInclude Include="ztl_heap.h">
       <Filter>Containers</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_win32_getopt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -357,6 +360,9 @@
       <Filter>Containers</Filter>
     </ClCompile>
     <ClCompile Include="ztl_times.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_win32_getopt.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
