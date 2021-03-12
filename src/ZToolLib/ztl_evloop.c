@@ -184,41 +184,46 @@ int ztl_evloop_del(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents)
     return rv;
 }
 
-int ztl_evloop_loop(ztl_evloop_t* evloop, int ms)
+int ztl_evloop_looponce(ztl_evloop_t* evloop, int timeout_ms)
 {
     int i, nevents;
     int rfired;
     ztl_fired_event_t*  fired_ev;
     ztl_connection_t*   conn;
 
-    evloop->io_thread_id = ztl_thread_self();
+    ztl_evloop_update_polltime(evloop);
+    ztl_evloop_expire(evloop);
 
-    while (evloop->running)
+    nevents = evloop->evops->poll(evloop->evops_ctx, evloop->fired_events, 64, timeout_ms);
+    for (i = 0; i < nevents; ++i)
     {
-        ztl_evloop_update_polltime(evloop);
-        ztl_evloop_expire(evloop);
+        rfired = 0;
+        fired_ev = evloop->fired_events + i;
+        conn = ztl_connection_get(evloop, fired_ev->fd);
 
-        nevents = evloop->evops->poll(evloop->evops_ctx, evloop->fired_events, 64, ms);
-        for (i = 0; i < nevents; ++i)
+        if (conn->events & fired_ev->events & ZEV_POLLIN)
         {
-            rfired = 0;
-            fired_ev = evloop->fired_events + i;
-            conn = ztl_connection_get(evloop, fired_ev->fd);
+            rfired = 1;
+            conn->read_handler(evloop, conn, fired_ev->events);
+        }
 
-            if (conn->events & fired_ev->events & ZEV_POLLIN)
-            {
-                rfired = 1;
-                conn->read_handler(evloop, conn, fired_ev->events);
-            }
-
-            if (conn->events & fired_ev->events & ZEV_POLLOUT)
-            {
-                if (!rfired || conn->read_handler != conn->write_handler)
-                    conn->write_handler(evloop, conn, fired_ev->events);
-            }
+        if (conn->events & fired_ev->events & ZEV_POLLOUT)
+        {
+            if (!rfired || conn->read_handler != conn->write_handler)
+                conn->write_handler(evloop, conn, fired_ev->events);
         }
     }
 
+    return 0;
+}
+
+int ztl_evloop_loop(ztl_evloop_t* evloop, int ms)
+{
+    evloop->io_thread_id = ztl_thread_self();
+
+    while (evloop->running) {
+        ztl_evloop_looponce(evloop, ms);
+    }
     return 0;
 }
 
@@ -335,6 +340,15 @@ ztl_connection_t* ztl_connection_get(ztl_evloop_t* evloop, sockhandle_t fd)
     return conn;
 }
 
+void ztl_evloop_lock(ztl_evloop_t* evloop)
+{
+    ztl_thread_mutex_lock(&evloop->lock);
+}
+
+void ztl_evloop_unlock(ztl_evloop_t* evloop)
+{
+    ztl_thread_mutex_unlock(&evloop->lock);
+}
 
 //////////////////////////////////////////////////////////////////////////
 static void _timer_event_handler(void* ctx, ztl_rbtree_node_t* node)

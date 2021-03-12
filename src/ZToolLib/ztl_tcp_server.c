@@ -160,15 +160,12 @@ int ztl_tcp_server_init(ztl_tcp_server_t* tcpsvr, ztl_tcp_server_config_t* confi
 
     if (config->listen_fd == 0 || config->listen_fd == INVALID_SOCKET)
     {
-        listenfd = create_socket(SOCK_STREAM);
-        set_nonblock(listenfd, 1);
-        set_tcp_nodelay(listenfd, 1);
-        rv = tcp_listen(listenfd, config->listen_ip, config->listen_port, config->reuse_addr, 512);
-        if (rv != 0)
+        listenfd = tcp_listen_ex(config->listen_ip, config->listen_port,
+            config->reuse_addr, config->tcp_nodelay);
+        if (listenfd < 0)
         {
             fprintf(stderr, "ztl_tcp_server_init listen failed at %s:%d\n",
                     config->listen_ip, config->listen_port);
-            close_socket(listenfd);
             return rv;
         }
         tcpsvr->listenfd = listenfd;
@@ -181,7 +178,6 @@ int ztl_tcp_server_init(ztl_tcp_server_t* tcpsvr, ztl_tcp_server_config_t* confi
 
     rv = ztl_evloop_init(evloop);
 
-    tcpsvr->listenfd = listenfd;
     tcpsvr->evloop = evloop;
     return rv;
 }
@@ -202,6 +198,26 @@ int ztl_tcp_server_start(ztl_tcp_server_t* tcpsvr)
     ztl_evloop_start(tcpsvr->evloop);
 
     ztl_thread_create(&tcpsvr->thd, NULL, _tcp_server_thread_func, tcpsvr);
+
+    return 0;
+}
+
+int ztl_tcp_server_start_no_thread(ztl_tcp_server_t* tcpsvr)
+{
+    if (tcpsvr->running) {
+        return 1;
+    }
+    tcpsvr->running = 1;
+
+    if (!tcpsvr->evloop)
+    {
+        return -1;
+    }
+
+    ztl_evloop_add(tcpsvr->evloop, tcpsvr->listenfd, ZEV_POLLIN, _accept_handler, tcpsvr);
+    ztl_evloop_start(tcpsvr->evloop);
+
+    tcpsvr->thd = 0;
 
     return 0;
 }

@@ -156,6 +156,8 @@ int net_connect_nonb(sockhandle_t connfd, const char* ip, uint16_t port, int tim
 /// pass a tcp socket desc and make listening, return 0 if listen success
 int tcp_listen(sockhandle_t listenfd, const char* ip, uint16_t port, bool reuse, int backlog/* = SOMAXCONN*/);
 
+sockhandle_t tcp_listen_ex(const char* bindip, uint16_t port, bool nonblock, bool nodelay);
+
 /// read count bytes from socket
 int tcp_readn(sockhandle_t sockfd, char* buf, int count);
 

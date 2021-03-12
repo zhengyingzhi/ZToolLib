@@ -111,6 +111,7 @@ int ztl_evloop_del(ztl_evloop_t* evloop, sockhandle_t fd, int delevents);
 
 /* do once event loop
  */
+int ztl_evloop_looponce(ztl_evloop_t* evloop, int timeout_ms);
 int ztl_evloop_loop(ztl_evloop_t* evloop, int timeout_ms);
 
 /* release the event loop */
@@ -127,6 +128,9 @@ ztl_connection_t* ztl_connection_get(ztl_evloop_t* evloop, sockhandle_t fd);
 ztl_connection_t* ztl_connection_remove(ztl_evloop_t* evloop, sockhandle_t fd);
 int ztl_connection_save(ztl_evloop_t* evloop, ztl_connection_t* conn);
 
+/* thread lock if needed */
+void ztl_evloop_lock(ztl_evloop_t* evloop);
+void ztl_evloop_unlock(ztl_evloop_t* evloop);
 
 /* add a timer event */
 int ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,

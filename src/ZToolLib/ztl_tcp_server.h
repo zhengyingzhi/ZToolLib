@@ -79,6 +79,7 @@ int ztl_tcp_server_init(ztl_tcp_server_t* tcpsvr, ztl_tcp_server_config_t* confi
 /* start the tcp server
  */
 int ztl_tcp_server_start(ztl_tcp_server_t* tcpsvr);
+int ztl_tcp_server_start_no_thread(ztl_tcp_server_t* tcpsvr);
 
 /* stop the tcp server
  */

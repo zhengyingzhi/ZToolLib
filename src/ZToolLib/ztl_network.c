@@ -542,6 +542,25 @@ int tcp_listen(sockhandle_t listenfd, const char* ip, uint16_t port,
     return rv;
 }
 
+sockhandle_t tcp_listen_ex(const char* bindip, uint16_t port, bool nonblock, bool nodelay)
+{
+    int rv;
+    sockhandle_t fd;
+    fd = create_socket(SOCK_STREAM);
+
+    set_nonblock(fd, 1);
+    if (nodelay)
+        set_tcp_nodelay(fd, 1);
+
+    rv = tcp_listen(fd, bindip, port, true, 512);
+    if (rv < 0) {
+        close_socket(fd);
+        return rv;
+    }
+
+    return fd;
+}
+
 int tcp_readn(sockhandle_t sockfd, char* buf, int count)
 {
     int len = 0, nread;
