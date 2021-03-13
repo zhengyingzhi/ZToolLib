@@ -70,6 +70,7 @@ typedef struct {
 #define MBASE_OFFSET    1024
 
 #define INVALID_SEQ     0xffffffffffffffffU
+#define INVALID_SEQ_32  0xffffffffU
 #define CHECK_SUM_1     0x07
 #define CHECK_SUM_2     0x0F
 
@@ -302,7 +303,7 @@ int ztl_memdb_open(ztl_memdb_t* memdb)
     {
         lpHI->Length = 0;
         lpHI->PreLength = 0;
-        lpHI->Sequence = INVALID_SEQ;
+        lpHI->Sequence = INVALID_SEQ_32;
         lpHI->Flag = MF_ALLOCED;
         lpHI->CheckSum = 0;
     }
@@ -777,7 +778,7 @@ void ztl_memdb_initialize(ztl_memdb_t* memdb, uint8_t* apAddr, uint64_t aSize)
                 ztl_array_push(&memdb->SeqVec);
             }
 
-            uint32_t lPos = (uint32_t)(lpHI->Sequence - lStartIndex);
+            // uint32_t lPos = (uint32_t)(lpHI->Sequence - lStartIndex);
             void** lpTail = (void**)ztl_array_tail(&memdb->SeqVec);
             *lpTail = lpCurAddr + MHEAD_SIZE;
             memdb->TotalBytes += lpHI->Length;

@@ -143,34 +143,34 @@ union zudi {
 #define ztlncpy(dst,src,size)                                       \
     do {                                                            \
         switch (size) {                                             \
-        case 1: *(uint8_t*) dst = *(uint8_t*)src;   break;          \
-        case 2: *(uint16_t*)dst = *(uint16_t*)src;  break;          \
-        case 4: *(uint32_t*)dst = *(uint32_t*)src;  break;          \
-        case 8: *(uint64_t*)dst = *(uint64_t*)src;  break;          \
+        case 1: *((uint8_t*) (dst)) = *((uint8_t*)(src));   break;  \
+        case 2: *((uint16_t*)(dst)) = *((uint16_t*)(src));  break;  \
+        case 4: *((uint32_t*)(dst)) = *((uint32_t*)(src));  break;  \
+        case 8: *((uint64_t*)(dst)) = *((uint64_t*)(src));  break;  \
         case 6: {                                                   \
-            *(uint32_t*)dst     = *(uint32_t*)src;                  \
-            *(uint16_t*)((char*)dst+4) = *(uint16_t*)((char*)src+4); } \
+            *((uint32_t*)(dst))     = *((uint32_t*)(src));          \
+            *((uint16_t*)((char*)(dst)+4)) = *((uint16_t*)((char*)src+4)); }    \
             break;                                                  \
         case 12: {                                                  \
-            *(uint64_t*)dst     = *(uint64_t*)src;                  \
-            *(uint32_t*)((char*)dst+8) = *(uint32_t*)((char*)src+8); } \
+            *((uint64_t*)(dst))     = *((uint64_t*)(src));          \
+            *((uint32_t*)((char*)(dst)+8)) = *((uint32_t*)((char*)(src)+8)); }  \
             break;                                                  \
         case 16: {                                                  \
-            *(uint64_t*)dst     = *(uint64_t*)src;                  \
-            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8); } \
+            *((uint64_t*)(dst))     = *(uint64_t*)(src);            \
+            *((uint64_t*)((char*)(dst)+8)) = *((uint64_t*)((char*)(src)+8)); }  \
             break;                                                  \
         case 20: {                                                  \
-            *(uint64_t*)dst     = *(uint64_t*)src;                  \
-            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
-            *(uint32_t*)((char*)dst+16) = *(uint32_t*)((char*)src+16); } \
+            *((uint64_t*)(dst))     = *(uint64_t*)(src);            \
+            *((uint64_t*)((char*)(dst)+8)) = *((uint64_t*)((char*)(src)+8));    \
+            *((uint32_t*)((char*)(dst)+16)) = *((uint32_t*)((char*)(src)+16)); }\
             break;                                                  \
         case 24: {                                                  \
-            *(uint64_t*)dst     = *(uint64_t*)src;                  \
-            *(uint64_t*)((char*)dst+8) = *(uint64_t*)((char*)src+8);\
-            *(uint64_t*)((char*)dst+16) = *(uint64_t*)((char*)src+16); } \
+            *((uint64_t*)(dst))     = *((uint64_t*)(src));          \
+            *((uint64_t*)((char*)(dst)+8)) = *((uint64_t*)((char*)(src)+8));    \
+            *((uint64_t*)((char*)(dst)+16)) = *((uint64_t*)((char*)(src)+16)); }\
             break;                                                  \
         default:                                                    \
-            memcpy(dst,src,size);                                   \
+            memcpy(dst,src,size);  break;                           \
         }                                                           \
     } while (0);
 

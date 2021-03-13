@@ -5,6 +5,7 @@
 #include <WinSock2.h>
 #define HAVE_PTHREAD    0
 #else
+#include <pthread.h>
 #define HAVE_PTHREAD    1
 #endif//_MSC_VER
 
@@ -47,7 +48,7 @@ static inline void* heap_get(heap_t heap, unsigned long i)
 static void heap_set(heap_t heap, unsigned long i, void* elem)
 {
     heap->h[i - 1] = elem;
-    if (heap->offset >= 0)
+    if ((int)heap->offset >= 0)
     {
         uint32_t* ip = (uint32_t*)elem + heap->offset;
         *ip = i;
@@ -58,7 +59,7 @@ static uint32_t get_index(heap_t heap, void* elem)
 {
      uint32_t* ip;
 
-    if (heap->offset < 0)
+    if ((int)heap->offset < 0)
         return 0;
     ip = (uint32_t*)elem + heap->offset;
     return *ip;

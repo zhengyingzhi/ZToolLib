@@ -373,7 +373,7 @@ int ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
     ztl_timer_event_t* timer;
 
     safe = 1;
-    if (evloop->io_thread_id != ztl_thread_self()) {
+    if (evloop->io_thread_id != (int)ztl_thread_self()) {
         safe = 0;
         ztl_thread_mutex_lock(&evloop->lock);
     }
@@ -403,7 +403,7 @@ int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id)
     }
 
     safe = 1;
-    if (evloop->io_thread_id != ztl_thread_self()) {
+    if (evloop->io_thread_id != (int)ztl_thread_self()) {
         safe = 0;
         ztl_thread_mutex_lock(&evloop->lock);
     }
@@ -422,7 +422,7 @@ int ztl_evloop_expire(ztl_evloop_t* evloop)
 {
     int safe;
     safe = 1;
-    if (evloop->io_thread_id != ztl_thread_self()) {
+    if (evloop->io_thread_id != (int)ztl_thread_self()) {
         safe = 0;
         ztl_thread_mutex_lock(&evloop->lock);
     }

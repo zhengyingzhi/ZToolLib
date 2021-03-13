@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #if _MSC_VER
 #include <WinSock2.h>
 #define HAVE_PTHREAD    0
 #else
+#include <pthread.h>
 #define HAVE_PTHREAD    1
 #endif//_MSC_VER
 
@@ -278,7 +280,7 @@ void table_iter_free(table_iter_t *tip)
 {
     if (tip == NULL || *tip == NULL)
         return;
-    if ((*tip)->safe && !((*tip)->i == 0 && (*tip)->index == -1))
+    if ((*tip)->safe && !((*tip)->i == 0 && (int)(*tip)->index == -1))
         --(*tip)->table->iterators;
     FREE(*tip);
 }
@@ -582,7 +584,7 @@ void table_rwlock_wrlock(table_t table)
     if (table == NULL)
         return;
 #if HAVE_PTHREAD
-    pthread_rwlock_wrlock(&table->rwlock)
+    pthread_rwlock_wrlock(&table->rwlock);
 #else
     EnterCriticalSection(&table->lock);
 #endif

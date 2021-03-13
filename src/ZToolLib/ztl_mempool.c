@@ -76,7 +76,7 @@ ztl_mempool_t* ztl_mp_create(int nEntitySize, int nInitCount, int aAutoExpand)
 {
     ztl_mempool_t* mp;
 
-    if (nEntitySize < sizeof(int) || nInitCount < 1) {
+    if (nEntitySize < (int)sizeof(int) || nInitCount < 1) {
         return NULL;
     }
 

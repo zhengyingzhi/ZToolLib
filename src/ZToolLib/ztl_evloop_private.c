@@ -36,11 +36,9 @@ int ztl_do_send(ztl_connection_t* conn)
 
 ztl_connection_t* ztl_do_accept(ztl_evloop_t* evloop, sockhandle_t listenfd)
 {
-    ztl_connection_t* newconn;
-
-    sockhandle_t ns;
-    struct sockaddr_in addr;
-    socklen_t addrlen = sizeof(addr);
+    ztl_connection_t*   newconn;
+    sockhandle_t        ns;
+    struct sockaddr_in  addr;
 
     newconn = NULL;
 

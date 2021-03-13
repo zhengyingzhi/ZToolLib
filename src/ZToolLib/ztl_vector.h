@@ -21,7 +21,7 @@ struct ztl_vector_s {
     uint32_t    nelts;
     uint32_t    nalloc;
     uint32_t    eltsize;
-    void (*reserve)(ztl_vector_t* vec, uint32_t reserve_num);
+    int  (*reserve)(ztl_vector_t* vec, uint32_t reserve_num);
     void (*clear)(ztl_vector_t* vec);
     void (*push_char)(ztl_vector_t* vec, int8_t val);
     void (*push_short)(ztl_vector_t* vec, int16_t val);

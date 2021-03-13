@@ -7,7 +7,7 @@
 #define _ZTL_COMMON_H_INCLUDED_
 
 /* ztl version */
-#define ZTL_Version     "1.0.0"
+#define ZTL_Version     "1.0.1"
 
 /* avoid unused param build warning */
 #define ZTL_NOTUSED(V)  ((void)V)

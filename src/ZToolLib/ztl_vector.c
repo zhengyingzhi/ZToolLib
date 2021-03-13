@@ -8,7 +8,7 @@
 
 
 void ztl_vector_clear(ztl_vector_t* vec);
-bool ztl_vector_reserve(ztl_vector_t* vec, uint32_t reserve_num);
+int  ztl_vector_reserve(ztl_vector_t* vec, uint32_t reserve_num);
 
 void ztl_push_char(ztl_vector_t* vec, int8_t val);
 void ztl_push_short(ztl_vector_t* vec, int16_t val);
@@ -80,27 +80,26 @@ void ztl_vector_clear(ztl_vector_t* vec)
     vec->nelts = 0;
 }
 
-bool ztl_vector_reserve(ztl_vector_t* vec, uint32_t reserve_num)
+int ztl_vector_reserve(ztl_vector_t* vec, uint32_t reserve_num)
 {
-    void*       enew;
-    size_t      size;
-
+    void* enew;
     reserve_num = ztl_align(reserve_num, 4);
+    if (vec->nalloc >= reserve_num) {
+        return 1;
+    }
 
     if (reserve_num > vec->nalloc)
     {
-        size = vec->eltsize * vec->nalloc;
-
         enew = realloc(vec->elts, reserve_num * vec->eltsize);
         if (enew == NULL) {
-            return false;
+            return -1;
         }
 
         vec->elts = (char*)enew;
         vec->nalloc = reserve_num;
     }
 
-    return true;
+    return 0;
 }
 
 

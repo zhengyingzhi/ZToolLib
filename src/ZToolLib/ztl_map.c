@@ -200,7 +200,7 @@ static void _ztl_map_array_push(ztl_map_t* pmap, void* context1, int context2, u
 void ztl_map_to_array(ztl_map_t* pmap, ztl_map_pair_t* kv_array, int arr_size)
 {
     pmap->access_index = 0;
-    ztl_rbtree_node_t* cur = pmap->rbtree.root;
+    // ztl_rbtree_node_t* cur = pmap->rbtree.root;
     ztl_map_traverse(pmap, _ztl_map_array_push, kv_array, arr_size);
 }
 

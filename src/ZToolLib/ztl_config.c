@@ -263,7 +263,7 @@ static int ztl_read_file_content(ztl_config_t* zconf)
     while (!feof(fp))
     {
         memset(buffer, 0, sizeof(buffer));
-        fgets(buffer, sizeof(buffer) - 1, fp);
+        (void)fgets(buffer, sizeof(buffer) - 1, fp);
 
         lefttrim(buffer);
         if (buffer[0] == zconf->comment) {

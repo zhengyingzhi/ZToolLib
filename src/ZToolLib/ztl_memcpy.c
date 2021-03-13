@@ -109,7 +109,7 @@ void random_bench(int maxsize, int times)
 	}
 	sleepms(100);
 	t1 = gettime();
-	for (p1 = 0, p2 = 0, i = 0; i < times; i++) {
+    for (p1 = 0, p2 = 0, i = 0; i < (uint32_t)times; i++) {
 		int offset1 = random_offsets[(p1++) & 0xffff];
 		int offset2 = random_offsets[(p1++) & 0xffff];
 		int size = random_sizes[(p2++) & 0x7fff];
@@ -118,7 +118,7 @@ void random_bench(int maxsize, int times)
 	t1 = gettime() - t1;
 	sleepms(100);
 	t2 = gettime();
-	for (p1 = 0, p2 = 0, i = 0; i < times; i++) {
+    for (p1 = 0, p2 = 0, i = 0; i < (uint32_t)times; i++) {
 		int offset1 = random_offsets[(p1++) & 0xffff];
 		int offset2 = random_offsets[(p1++) & 0xffff];
 		int size = random_sizes[(p2++) & 0x7fff];

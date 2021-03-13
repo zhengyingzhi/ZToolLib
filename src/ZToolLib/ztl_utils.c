@@ -445,7 +445,7 @@ int read_number_from_file(const char* filename)
     FILE* fp;
     fp = fopen(filename, "r");
     if (fp) {
-        fscanf(fp, "%d", &lValue);
+        (void)fscanf(fp, "%d", &lValue);
         fclose(fp);
     }
     return lValue;

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ztl_common.h"
 #include "ztl_evloop.h"
 #include "ztl_network.h"
 #include "ztl_tcp_server.h"
@@ -9,12 +10,14 @@
 
 static int _read_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int events)
 {
+    ZTL_NOTUSED(events);
+
     int     rv, size;
     char    buf[1000];
-    ztl_tcp_server_t* tcpsvr;
+    // ztl_tcp_server_t* tcpsvr;
     fprintf(stderr, "_read_handler\n");
 
-    tcpsvr = (ztl_tcp_server_t*)ztl_evloop_get_usedata(evloop);
+    // tcpsvr = (ztl_tcp_server_t*)ztl_evloop_get_usedata(evloop);
 
     for (;;)
     {
@@ -51,6 +54,7 @@ static int _read_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int event
             conn->wbuf = conn->rbuf;
             conn->wsize = size;
             rv = conn->send(conn);
+            fprintf(stderr, "read_handler echo rv:%d\n", rv);
         }
         break;
     }
@@ -60,13 +64,19 @@ static int _read_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int event
 
 static int _write_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int events)
 {
+    ZTL_NOTUSED(events);
     fprintf(stderr, "_write_handler\n");
     ztl_evloop_del(evloop, conn->fd, ZEV_POLLOUT);
     ztl_evloop_add(evloop, conn->fd, ZEV_POLLIN, _read_handler, conn->userdata);
+
+    return 0;
 }
 
 static int _accept_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int events)
 {
+    ZTL_NOTUSED(conn);
+    ZTL_NOTUSED(events);
+
     sockhandle_t        ns;
     ztl_tcp_server_t*    tcpsvr;
     struct sockaddr_in  from_addr;

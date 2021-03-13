@@ -34,6 +34,7 @@ build_pass:CONFIG(debug, debug|release) {
 
 # QMAKE_CFLAGS += -std=c99
 # QMAKE_CFLAGS += -std=gnu99
+# QMAKE_CFLAGS += -std=gnu11
 
 
 # Input

@@ -9,10 +9,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "ztl_threadpool.h"
+#include "ztl_common.h"
 #include "ztl_mempool.h"
 #include "ztl_atomic.h"
 #include "ztl_threads.h"
+#include "ztl_threadpool.h"
 
 #ifdef _WIN32
 #include <process.h>
@@ -49,17 +50,17 @@ struct ztl_thrpool_st {
 
 static void _empty_dispatch_fn(ztl_thrpool_t* tp, void* arg1, void* arg2)
 {
-    // 
+    ZTL_NOTUSED(tp);
+    ZTL_NOTUSED(arg1);
+    ZTL_NOTUSED(arg2);
 }
 
 static void _append_task(ztl_thrpool_t* tp, ztl_task_t* task)
 {
-    if (NULL == tp->head) {
+    if (!tp->head)
         tp->head = task;
-    }
-    else {
+    else
         tp->tail->next = task;
-    }
     tp->tail = task;
 }
 

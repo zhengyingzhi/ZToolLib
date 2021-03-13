@@ -28,7 +28,7 @@ size_t dstr_capicity(const dstr ds);
 size_t dstr_length(const dstr ds);
 size_t dstr_avail(const dstr ds);
 dstr   dstr_reserve(dstr ds, size_t length);
-void   dstr_incr_len(dstr ds, int incr);
+void   dstr_incr_len(dstr ds, size_t incr);
 dstr   dstr_remove_avail(dstr ds);
 size_t dstr_alloced_size(dstr ds);
 dstr   dstr_cat_len(dstr ds, const char* str, size_t length);

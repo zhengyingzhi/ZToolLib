@@ -34,7 +34,7 @@ static int epoll_destroy(void* evops_ctx);
 static int epoll_start(void* evops_ctx);
 static int epoll_add(void* evops_ctx, sockhandle_t fd, int reqevents, int flags);
 static int epoll_del(void* evops_ctx, sockhandle_t fd, int delevents, int flags);
-static int epoll_poll(void* evops_ctx, ztl_fired_event_t* fired_events, int ms);
+static int epoll_poll(void* evops_ctx, ztl_fired_event_t* fired_events, int size, int ms);
 static int epoll_stop(void* evops_ctx);
 
 struct ztl_event_ops epollops = {
@@ -84,11 +84,13 @@ static int epoll_destroy(void* evops_ctx)
 
 static int epoll_start(void* evops_ctx)
 {
+    (void)evops_ctx;
     return 0;
 }
 
 static int epoll_stop(void* evops_ctx)
 {
+    (void)evops_ctx;
     return 0;
 }
 
@@ -113,7 +115,7 @@ static int epoll_add(void* evops_ctx, sockhandle_t fd, int reqevents, int flags)
     // ee.events = EPOLLONESHOT | EPOLLET;
     ee.data.u64 = 0; /* avoid valgrind warning */
     // ee.data.ptr = conn;
-    ee.fd = fd;
+    ee.data.fd = fd;
 
     return epoll_ctl(lpctx->epfd, op, fd, &ee);
 }
@@ -138,20 +140,21 @@ static int epoll_del(void* evops_ctx, sockhandle_t fd, int delevents, int flags)
     // ee.data.ptr = conn;
     ee.data.fd = fd;
 
-    op = flags == ZEV_NONE ? EPOLL_CTL_DEL else EPOLL_CTL_MOD;
+    op = flags == ZEV_NONE ? EPOLL_CTL_DEL : EPOLL_CTL_MOD;
     return epoll_ctl(lpctx->epfd, op, fd, &ee);
 }
 
-static int epoll_poll(void* evops_ctx, ztl_fired_event_t* fired_events, int ms)
+static int epoll_poll(void* evops_ctx, ztl_fired_event_t* fired_events, int size, int ms)
 {
     int numev, events;
-    const int max_nevent = 64;
+    const int max_nevent = 64;  // FIXME
     struct epoll_event epevents[max_nevent];
     struct epoll_event* lpee;
     epoll_ctx_t* lpctx;
     lpctx = (epoll_ctx_t*)evops_ctx;
 
-    numev = epoll_wait(lpctx->epfd, epevents, max_nevent, ms);
+    size = size > max_nevent ? max_nevent : size;
+    numev = epoll_wait(lpctx->epfd, epevents, size, ms);
     if (numev < 0)
     {
         if (errno == EINTR) {
@@ -179,7 +182,7 @@ static int epoll_poll(void* evops_ctx, ztl_fired_event_t* fired_events, int ms)
             events |= ZEV_POLLOUT;
 
         fired_events[i].fd = lpee->data.fd;
-        fired_events[i].events = lpee->data.events;
+        fired_events[i].events = events;
     }
 
     return numev;

@@ -414,7 +414,7 @@ int poll_read(sockhandle_t sockfds[], int nfds, int timeout_ms)
 #ifdef _MSC_VER
     n = WSAPoll(fds, nfds, timeout_ms);
 #else
-    lRet = poll(fds, nfds, timeout_ms);
+    n = poll(fds, nfds, timeout_ms);
 #endif//_MSC_VER
 
     if (n > 0)
@@ -548,7 +548,8 @@ sockhandle_t tcp_listen_ex(const char* bindip, uint16_t port, bool nonblock, boo
     sockhandle_t fd;
     fd = create_socket(SOCK_STREAM);
 
-    set_nonblock(fd, 1);
+    if (nonblock)
+        set_nonblock(fd, 1);
     if (nodelay)
         set_tcp_nodelay(fd, 1);
 

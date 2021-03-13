@@ -149,7 +149,7 @@ dstr dstr_reserve(dstr ds, size_t length)
     return dh->buf;
 }
 
-void dstr_incr_len(dstr ds, int incr)
+void dstr_incr_len(dstr ds, size_t incr)
 {
     dstr_head_t* dh;
 
@@ -292,27 +292,27 @@ dstr dstr_range(dstr ds, size_t start, size_t end)
     if (dh->used == 0)
         return NULL;
 
-    if (start < 0)
+    if ((int)start < 0)
     {
         start += dh->used;
-        if (start < 0)
+        if ((int)start < 0)
             start = 0;
     }
-    if (end < 0)
+    if ((int)end < 0)
     {
         end += dh->used;
-        if (end < 0)
+        if ((int)end < 0)
             end = 0;
     }
 
     newlen = start > end ? 0 : end - start + 1;
     if (newlen)
     {
-        if (start >= (signed)dh->used)
+        if (start >= dh->used)
         {
             newlen = 0;
         }
-        else if (end >= (signed)dh->used)
+        else if (end >= dh->used)
         {
             end = dh->used - 1;
             newlen = start > end ? 0 : end - start + 1;
@@ -347,12 +347,12 @@ void dstr_clear(dstr ds)
 dstr* dstr_split_len(const char* str, size_t length, const char* sep, size_t seplength, int* count)
 {
     size_t i, start = 0;
-    int slots = 5, nelems = 0;
+    size_t slots = 5, nelems = 0;
     dstr* tokens;
 
     if (str == NULL || sep == NULL)
         return NULL;
-    if (length < 0 || seplength < 1)
+    if ((int)length < 0 || (int)seplength < 1)
         return NULL;
     if ((tokens = ALLOC(slots * sizeof(*tokens))) == NULL)
         return NULL;
