@@ -33,7 +33,6 @@ struct table_st {
     pthread_rwlock_t    rwlock;
 #else
     CRITICAL_SECTION    lock;
-    CRITICAL_SECTION    rwlock;
 #endif//HAVE_PTHREAD
 };
 
@@ -136,12 +135,11 @@ table_t table_new(cmp_ptr cmp, hash_ptr hash, free_ptr kfree, free_ptr vfree)
     pthread_rwlockattr_destroy(&rwattr);
 #else
     InitializeCriticalSection(&table->lock);
-    InitializeCriticalSection(&table->rwlock);
 #endif//HAVE_PTHREAD
     return table;
 }
 
-void table_free(table_t *tp)
+void table_free(table_t* tp)
 {
     if (tp == NULL || *tp == NULL)
         return;
@@ -151,7 +149,6 @@ void table_free(table_t *tp)
     pthread_rwlock_destroy(&(*tp)->rwlock);
 #else
     DeleteCriticalSection(&(*tp)->lock);
-    DeleteCriticalSection(&(*tp)->rwlock);
 #endif//HAVE_PTHREAD
     table_clear(*tp);
     FREE(*tp);

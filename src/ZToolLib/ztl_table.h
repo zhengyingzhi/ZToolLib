@@ -17,7 +17,7 @@ extern "C" {
 #define ZTL_TABLE_INIT_SIZE     64
 
 /* exported types */
-typedef struct table_st    *    table_t;
+typedef struct table_st*        table_t;
 typedef struct table_node_st*   table_node_t;
 typedef struct table_iter_st*   table_iter_t;
 

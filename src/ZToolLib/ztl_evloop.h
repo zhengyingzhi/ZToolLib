@@ -124,7 +124,7 @@ void* ztl_evloop_get_usedata(ztl_evloop_t* evloop);
 /* some evloop helpers */
 ztl_connection_t* ztl_connection_new(ztl_evloop_t* evloop, sockhandle_t fd,
     uint32_t fd_addr, uint16_t fd_port);
-ztl_connection_t* ztl_connection_get(ztl_evloop_t* evloop, sockhandle_t fd);
+ztl_connection_t* ztl_connection_find(ztl_evloop_t* evloop, sockhandle_t fd);
 ztl_connection_t* ztl_connection_remove(ztl_evloop_t* evloop, sockhandle_t fd);
 int ztl_connection_save(ztl_evloop_t* evloop, ztl_connection_t* conn);
 
@@ -144,7 +144,7 @@ int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id);
  * @return the nearest time ms, -1 means none
  * not thread safe!
  */
-int ztl_evloop_expire(ztl_evloop_t* evloop);
+int ztl_evloop_expire(ztl_evloop_t* evloop, uint64_t currtime);
 
 
 #ifdef __cplusplus

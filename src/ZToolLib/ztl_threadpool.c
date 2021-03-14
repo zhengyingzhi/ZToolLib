@@ -170,10 +170,16 @@ ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size)
     ztl_thread_cond_init(&tp->waitcond, NULL);
     ztl_thread_mutex_init(&tp->lock, NULL);
 
+    return tp;
+}
+
+
+int ztl_thrpool_start(ztl_thrpool_t* thpool)
+{
     int n;
-    for (n = 0; n < threads_num; ++n)
+    for (n = 0; n < thpool->thrnum; ++n)
     {
-        if (0 != _create_worker_thread(tp)) {
+        if (0 != _create_worker_thread(thpool)) {
             break;
         }
     }
@@ -183,10 +189,9 @@ ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size)
     //    sleepms(1);
     //}
 
-    return tp;
+    return 0;
 }
 
-/// dispatch a runnable task to the thread pool with argument "arg"
 int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* arg1, void* arg2,
     ztl_free_fn afree1, ztl_free_fn afree2)
 {

@@ -56,7 +56,7 @@ void ztl_md5_update(ztl_md5_t *ctx, const void *data, size_t size)
 }
 
 
-void ztl_md5_final(uint8_t result[16], ztl_md5_t *ctx)
+void ztl_md5_final(unsigned char result[16], ztl_md5_t *ctx)
 {
     size_t  used, free;
 

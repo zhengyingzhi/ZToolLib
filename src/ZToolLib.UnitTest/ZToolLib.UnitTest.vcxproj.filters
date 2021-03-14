@@ -66,6 +66,24 @@
     <ClCompile Include="test_ztl_dstr.c">
       <Filter>TestCases</Filter>
     </ClCompile>
+    <ClCompile Include="test_ztl_heap.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
+    <ClCompile Include="test_ztl_ring.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
+    <ClCompile Include="test_ztl_table.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
+    <ClCompile Include="test_ztl_hash.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
+    <ClCompile Include="test_ztl_evtimer.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
+    <ClCompile Include="test_ztl_threads.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ZToolUnitTest.h">

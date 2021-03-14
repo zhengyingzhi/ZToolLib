@@ -33,6 +33,8 @@ struct ztl_evtimer_s
  */
 void ztl_evtimer_init(ztl_evtimer_t* et);
 
+void ztl_evtimer_update_time(ztl_evtimer_t* et, uint64_t currtime);
+
 /* add a timer into the container
  * @timeout_ms is the timedout millisec from now, not the absolute time
  * @timerset the 'timer' flag whether added already

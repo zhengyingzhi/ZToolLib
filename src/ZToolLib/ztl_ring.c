@@ -10,14 +10,14 @@
 struct ring_st {
     int length;
     struct node {
-        struct node	*prev, *next;
+        struct node *prev, *next;
         void        *value;
     }*head;
 };
 
-ring_t ring_new(void)
+ring_t* ring_new(void)
 {
-    ring_t ring;
+    ring_t* ring;
 
     if (NEW(ring) == NULL)
         return NULL;
@@ -26,9 +26,9 @@ ring_t ring_new(void)
     return ring;
 }
 
-ring_t ring_ring(void* x, ...)
+ring_t* ring_ring(void* x, ...)
 {
-    ring_t ring;
+    ring_t* ring;
     va_list ap;
 
     if ((ring = ring_new()) == NULL)
@@ -44,21 +44,20 @@ void ring_free(ring_t* rp)
 {
     struct node *p, *q;
 
-    /* assert(rp && *rp); */
-    if (rp == NULL || *rp == NULL)
+    if (rp == NULL)
         return;
-    if ((p = (*rp)->head) != NULL) {
-        int n = (*rp)->length;
+    if ((p = rp->head) != NULL) {
+        int n = rp->length;
 
         for (; n-- > 0; p = q) {
             q = p->next;
             FREE(p);
         }
     }
-    FREE(*rp);
+    FREE(rp);
 }
 
-size_t ring_length(ring_t ring)
+size_t ring_length(ring_t* ring)
 {
     /* assert(ring); */
     if (ring == NULL)
@@ -66,7 +65,7 @@ size_t ring_length(ring_t ring)
     return ring->length;
 }
 
-void* ring_put(ring_t ring, int i, void* x)
+void* ring_put(ring_t* ring, int i, void* x)
 {
     struct node *q;
     void* prev;
@@ -99,7 +98,7 @@ void* ring_put(ring_t ring, int i, void* x)
     return prev;
 }
 
-void* ring_get(ring_t ring, int i)
+void* ring_get(ring_t* ring, int i)
 {
     struct node *q;
 
@@ -123,7 +122,7 @@ void* ring_get(ring_t ring, int i)
     return q->value;
 }
 
-void* ring_add(ring_t ring, int pos, void* x)
+void* ring_add(ring_t* ring, int pos, void* x)
 {
     /* assert(ring);                                            */
     /* assert(pos >= -ring->length && pos <= ring->length + 1); */
@@ -164,7 +163,7 @@ void* ring_add(ring_t ring, int pos, void* x)
     }
 }
 
-void* ring_addlo(ring_t ring, void* x)
+void* ring_addlo(ring_t* ring, void* x)
 {
     /* assert(ring); */
     if (ring == NULL)
@@ -174,7 +173,7 @@ void* ring_addlo(ring_t ring, void* x)
     return x;
 }
 
-void* ring_addhi(ring_t ring, void* x)
+void* ring_addhi(ring_t* ring, void* x)
 {
     struct node *p, *q;
 
@@ -198,7 +197,7 @@ void* ring_addhi(ring_t ring, void* x)
     return p->value = x;
 }
 
-void* ring_remove(ring_t ring, int i)
+void* ring_remove(ring_t* ring, int i)
 {
     struct node *q;
     void* x;
@@ -232,7 +231,7 @@ void* ring_remove(ring_t ring, int i)
     return x;
 }
 
-void* ring_remlo(ring_t ring)
+void* ring_remlo(ring_t* ring)
 {
     /* assert(ring);             */
     /* assert(ring->length > 0); */
@@ -242,7 +241,7 @@ void* ring_remlo(ring_t ring)
     return ring_remhi(ring);
 }
 
-void* ring_remhi(ring_t ring)
+void* ring_remhi(ring_t* ring)
 {
     struct node *q;
     void* x;
@@ -261,7 +260,7 @@ void* ring_remhi(ring_t ring)
     return x;
 }
 
-void ring_rotate(ring_t ring, int n)
+void ring_rotate(ring_t* ring, int n)
 {
     int i;
     struct node *q;

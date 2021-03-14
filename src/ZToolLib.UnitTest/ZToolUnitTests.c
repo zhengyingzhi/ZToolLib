@@ -46,6 +46,15 @@ extern void Test_ztl_encrypt(ZuTest* zt);
 extern void Test_ztl_dict(ZuTest* zt);
 
 extern void Test_ztl_dstr(ZuTest* zt);
+extern void Test_ztl_heap(ZuTest* zt);
+extern void Test_ztl_ring(ZuTest* zt);
+extern void Test_ztl_table(ZuTest* zt);
+extern void Test_ztl_hash(ZuTest* zt);
+extern void Test_ztl_md5(ZuTest* zt);
+extern void Test_ztl_evtimer(ZuTest* zt);
+extern void Test_ztl_evtimer2(ZuTest* zt);
+extern void Test_ztl_thread(ZuTest* zt);
+extern void Test_ztl_threadpool(ZuTest* zt);
 
 
 void RunAllTests(void)
@@ -96,6 +105,15 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_dict);
 
     SUITE_ADD_TEST(suite, Test_ztl_dstr);
+    SUITE_ADD_TEST(suite, Test_ztl_heap);
+    SUITE_ADD_TEST(suite, Test_ztl_ring);
+    SUITE_ADD_TEST(suite, Test_ztl_table);
+    SUITE_ADD_TEST(suite, Test_ztl_hash);
+    SUITE_ADD_TEST(suite, Test_ztl_md5);
+    SUITE_ADD_TEST(suite, Test_ztl_evtimer);
+    SUITE_ADD_TEST(suite, Test_ztl_evtimer2);
+    SUITE_ADD_TEST(suite, Test_ztl_thread);
+    SUITE_ADD_TEST(suite, Test_ztl_threadpool);
 
     ZuSuiteRun(suite);
     ZuSuiteDetails(suite, output);

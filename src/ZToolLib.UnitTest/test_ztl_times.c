@@ -25,57 +25,57 @@ void Test_ztl_times(ZuTest* zt)
     char buf[64] = "";
 
     len = ztl_ymd(buf, 0);
-    ZuAssertTrue(zt, 0 == strcmp(buf, expect_date1));
-    ZuAssertTrue(zt, len == 10);
+    ZuAssertStrEquals(zt, expect_date1, buf);
+    ZuAssertIntEquals(zt, 10, len);
 
     len = ztl_ymd0(buf, 0);
     ZuAssertTrue(zt, 0 == strcmp(buf, expect_date2));
-    ZuAssertTrue(zt, len == 8);
+    ZuAssertIntEquals(zt, 8, len);
 
     len = ztl_hms(buf, 0);
     //ZuAssertTrue(zt, 0 == strcmp(buf, "09:01:48"));
-    ZuAssertTrue(zt, len == 8);
+    ZuAssertIntEquals(zt, 8, len);
 
     len = ztl_hmsu(buf);
     //ZuAssertTrue(zt, 0 == strncmp(buf, "09:01:48.", 9));
-    ZuAssertTrue(zt, len == 15);
+    ZuAssertIntEquals(zt, 15, len);
 
     len = ztl_ymdhms(buf, 0);
     //ZuAssertTrue(zt, 0 == strcmp(buf, "2018-07-27 09:01:48"));
-    ZuAssertTrue(zt, len == 19);
+    ZuAssertIntEquals(zt, 19, len);
 
     len = ztl_ymdhmsf(buf);
     //ZuAssertTrue(zt, 0 == strncmp(buf, "2018-07-27 09:01:48.", 20));
-    ZuAssertTrue(zt, len == 23);
+    ZuAssertIntEquals(zt, 23, len);
 
     len = ztl_ymdhmsu(buf);
     //ZuAssertTrue(zt, 0 == strncmp(buf, "2018-07-27 09:01:48.", 20));
-    ZuAssertTrue(zt, len == 26);
+    ZuAssertIntEquals(zt, 26, len);
 
 
     // hmsf 20:13:46 -->> 201346
     dt = ztl_hms2inttime("20:13:46");
-    ZuAssertTrue(zt, dt == 201346);
+    ZuAssertIntEquals(zt, 201346, dt);
 
     // 20:13:46.500 -->> 201346500
     dt = ztl_hmsf2inttime("20:13:46.500");
-    ZuAssertTrue(zt, dt == 201346500);
+    ZuAssertIntEquals(zt, 201346500, dt);
 
     // 201346 -->> 20:13:46
     len = ztl_inttime2hms(buf, sizeof(buf), 201346);
     ZuAssertTrue(zt, 0 == strncmp(buf, "20:13:46", 8));
-    ZuAssertTrue(zt, len == 8);
+    ZuAssertIntEquals(zt, 8, len);
 
     // 201346500 -->> 20:13:46.500
     len = ztl_inttime2hmsf(buf, sizeof(buf), 201346500);
     ZuAssertTrue(zt, 0 == strncmp(buf, "20:13:46.500", 12));
-    ZuAssertTrue(zt, len == 12);
+    ZuAssertIntEquals(zt, 12, len);
 
     dt = ztl_tointdate(lTime);
-    ZuAssertTrue(zt, dt == expect_date_int);
+    ZuAssertIntEquals(zt, expect_date_int, dt);
 
     dt = ztl_tointtime(lTime);
-    ZuAssertTrue(zt, dt == expect_time_int);
+    ZuAssertIntEquals(zt, expect_time_int, dt);
 
     // got 201346500
     dt = ztl_tointtimef(lTime);
@@ -89,4 +89,7 @@ void Test_ztl_times(ZuTest* zt)
     // got 20180102201346500 within millisecond
     dt2 = ztl_intdatetimef();
     ZuAssertTrue(zt, dt2 > 10000000000000000ULL);
+
+    ZuAssertIntEquals(zt, 4, ztl_diffday(20210311, 20210315));
+    // ztl_diffnow(int endday);
 }

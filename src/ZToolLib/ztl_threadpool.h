@@ -34,6 +34,10 @@ typedef bool (*ztl_compare_fn)(void*, void* );
  */
 ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size);
 
+/* start the thread pool
+ */
+int ztl_thrpool_start(ztl_thrpool_t* thpool);
+
 /* @brief   dispatch a new task to the thread pool with argument 'arg'
  * @param   func: the work func to be scheduled in pool
  * @param   arg1: the first arg for func

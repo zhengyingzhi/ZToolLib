@@ -8,6 +8,11 @@ void ztl_evtimer_init(ztl_evtimer_t* et)
                     ztl_rbtree_insert_timer_value);
 }
 
+void ztl_evtimer_update_time(ztl_evtimer_t* et, uint64_t currtime)
+{
+    et->last_time = currtime;
+}
+
 int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer, 
     uint32_t timeout_ms, int timerset)
 {

@@ -87,6 +87,7 @@ int ztl_evloop_create(ztl_evloop_t** pevloop, int size)
 
     ztl_thread_mutex_init(&evloop->lock, NULL);
     ztl_evtimer_init(&evloop->timers);
+    evloop->timepoint = 0;
 
     evloop->evops = evops;
     *pevloop = evloop;
@@ -150,7 +151,7 @@ int ztl_evloop_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents,
         return -1;
     }
 
-    conn = ztl_connection_get(evloop, fd);
+    conn = ztl_connection_find(evloop, fd);
     if (!conn)
     {
         conn = ztl_connection_new(evloop, fd, 0, 0);
@@ -179,7 +180,7 @@ int ztl_evloop_del(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents)
     int rv;
     int flags;
     ztl_connection_t* conn;
-    conn = ztl_connection_get(evloop, fd);
+    conn = ztl_connection_find(evloop, fd);
     flags = conn ? conn->events : ZEV_NONE;
 
     rv = evloop->evops->del(evloop->evops_ctx, fd, reqevents, flags);
@@ -198,7 +199,7 @@ int ztl_evloop_looponce(ztl_evloop_t* evloop, int timeout_ms)
     {
         rfired = 0;
         fired_ev = evloop->fired_events + i;
-        conn = ztl_connection_get(evloop, fired_ev->fd);
+        conn = ztl_connection_find(evloop, fired_ev->fd);
 
         if (conn->events & fired_ev->events & ZEV_POLLIN)
         {
@@ -224,7 +225,7 @@ int ztl_evloop_loop(ztl_evloop_t* evloop, int ms)
     while (evloop->running)
     {
         evloop->timepoint = get_timestamp();
-        ms_left = ztl_evloop_expire(evloop);
+        ms_left = ztl_evloop_expire(evloop, evloop->timepoint);
         ztl_evloop_looponce(evloop, ms < ms_left ? ms : ms_left);
     }
     return 0;
@@ -336,7 +337,7 @@ ztl_connection_t* ztl_connection_new(ztl_evloop_t* evloop, sockhandle_t ns,
     return conn;
 }
 
-ztl_connection_t* ztl_connection_get(ztl_evloop_t* evloop, sockhandle_t fd)
+ztl_connection_t* ztl_connection_find(ztl_evloop_t* evloop, sockhandle_t fd)
 {
     ztl_connection_t* conn;
     conn = evloop->connections[fd];
@@ -381,6 +382,9 @@ int ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
         ztl_thread_mutex_lock(&evloop->lock);
     }
 
+    if (evloop->timepoint == 0)
+        evloop->timepoint = get_timestamp();
+
     timer = ztl_timer_node_new(evloop);
     timer->handler      = handler;
     timer->finalizer    = finalizer;
@@ -421,7 +425,7 @@ int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id)
     return rv;
 }
 
-int ztl_evloop_expire(ztl_evloop_t* evloop)
+int ztl_evloop_expire(ztl_evloop_t* evloop, uint64_t currtime)
 {
     int safe, ms_left;
     safe = 1;
@@ -433,7 +437,7 @@ int ztl_evloop_expire(ztl_evloop_t* evloop)
     }
 #endif//0
 
-    ms_left = ztl_evtimer_expire(&evloop->timers, evloop->timepoint,
+    ms_left = ztl_evtimer_expire(&evloop->timers, currtime,
                                  _timer_event_handler, evloop);
 
     if (!safe)
