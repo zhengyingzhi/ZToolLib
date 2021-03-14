@@ -35,6 +35,7 @@ build_pass:CONFIG(debug, debug|release) {
 
 # QMAKE_CFLAGS += -std=c99
 # QMAKE_CFLAGS += -std=gnu99
+# QMAKE_CFLAGS += -std=gnu11
 
 INCLUDEPATH += ../
 
@@ -50,6 +51,7 @@ SOURCES += ZToolUnitTests.c \
     test_ztl_buffer.c \
     test_ztl_crypt.c \
     test_ztl_dict.c \
+    test_ztl_dstr.c \
     test_ztl_linklist.c \
     test_ztl_map.c \
     test_ztl_mempool.c \

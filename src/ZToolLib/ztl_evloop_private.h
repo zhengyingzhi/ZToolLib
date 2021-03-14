@@ -89,7 +89,5 @@ int ztl_timer_node_save(ztl_evloop_t* evloop, ztl_timer_event_t* node);
 int ztl_timer_node_free(ztl_evloop_t* evloop, ztl_timer_event_t* node);
 int ztl_timer_node_free_all(ztl_evloop_t* evloop);
 
-void ztl_evloop_update_polltime(ztl_evloop_t* evloop);
-
 
 #endif//_ZTL_EVENT_LOOP_PRIVATE_H_

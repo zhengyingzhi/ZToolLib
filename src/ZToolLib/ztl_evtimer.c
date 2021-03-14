@@ -56,7 +56,7 @@ int ztl_evtimer_del(ztl_evtimer_t* et, ztl_rbtree_node_t* timer)
     return 0;
 }
 
-void ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime, 
+int ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime,
     ztl_evt_handler_pt handler, void* ctx)
 {
     ztl_rbtree_node_t  *node, *root, *sentinel;
@@ -69,14 +69,14 @@ void ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime,
 
         root = et->event_timers.root;
         if (root == sentinel) {
-            return;
+            return -1;
         }
 
         node = ztl_rbtree_min(root, sentinel);
 
-        /* node->key > ngx_current_time */
+        /* node->key > current_time means not reached */
         if ((ztl_msec_int_t)(node->key - et->last_time) > 0) {
-            break;
+            return (int)(node->key - et->last_time);
         }
 
         //fprintf(stderr, "ztl_expire_event_timer {}", node->udata);
@@ -86,4 +86,7 @@ void ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime,
         if (handler)
             handler(ctx, node);
     }
+
+    // cannot run here!!
+    return -1;
 }

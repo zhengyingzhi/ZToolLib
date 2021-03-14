@@ -34,8 +34,8 @@ struct ztl_evtimer_s
 void ztl_evtimer_init(ztl_evtimer_t* et);
 
 /* add a timer into the container
- * @timeoutMS is the timedout millisec from now, not the absolute time
- * @timerset the 'timer' whether added already
+ * @timeout_ms is the timedout millisec from now, not the absolute time
+ * @timerset the 'timer' flag whether added already
  */
 int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer,
     uint32_t timeout_ms, int timerset);
@@ -43,8 +43,10 @@ int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer,
 /* delete the timer from container */
 int ztl_evtimer_del(ztl_evtimer_t* et, ztl_rbtree_node_t* timer);
 
-/* expire timedout timers */
-void ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime,
+/* expire timedout timers,
+ * @return the nearest time ms left, -1 is none
+ */
+int ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime,
     ztl_evt_handler_pt handler, void* ctx);
 
 #ifdef __cplusplus

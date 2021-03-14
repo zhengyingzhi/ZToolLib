@@ -140,8 +140,12 @@ int ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
 /* remove the timer, return 0 if success */
 int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id);
 
-/* expire all the timed out timers */
+/* expire all the timed out timers
+ * @return the nearest time ms, -1 means none
+ * not thread safe!
+ */
 int ztl_evloop_expire(ztl_evloop_t* evloop);
+
 
 #ifdef __cplusplus
 }

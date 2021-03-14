@@ -38,7 +38,7 @@ build_pass:CONFIG(debug, debug|release) {
 
 INCLUDEPATH += ../
 
-LIBS += -L$${DESTDIR} -lztoollib$${BuildSuff}
+LIBS += -L$${DESTDIR} -lztoollib$${BuildSuff} -lpthread -lm -lrt -ldl
 
 
 # Input

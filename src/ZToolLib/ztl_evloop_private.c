@@ -6,7 +6,6 @@
 #include "ztl_evloop_private.h"
 #include "ztl_network.h"
 #include "ztl_mem.h"
-#include "ztl_times.h"
 #include "ztl_utils.h"
 
 
@@ -164,9 +163,4 @@ int ztl_timer_node_free_all(ztl_evloop_t* evloop)
         ++n;
     }
     return n;
-}
-
-void ztl_evloop_update_polltime(ztl_evloop_t* evloop)
-{
-    evloop->timepoint = get_timestamp();
 }

@@ -7,8 +7,8 @@
 #include "ztl_evloop_private.h"
 #include "ztl_network.h"
 #include "ztl_mem.h"
+#include "ztl_times.h"
 
-ztl_event_ops_t* evops;
 
 #if defined(_WIN32)
 extern struct ztl_event_ops iocpops;
@@ -16,10 +16,12 @@ extern struct ztl_event_ops selectops;
 #elif defined(__linux__)
 extern struct ztl_event_ops epollops;
 #else
-#endif
+extern struct ztl_event_ops selectops;
+#endif//_WIN32
 
 
 #define ZTL_DEFAULT_CONNECT_SIZE    16384
+
 
 static ztl_event_ops_t* _event_ops_provider(ZTL_EV_POLL_METHOD method)
 {
@@ -191,9 +193,6 @@ int ztl_evloop_looponce(ztl_evloop_t* evloop, int timeout_ms)
     ztl_fired_event_t*  fired_ev;
     ztl_connection_t*   conn;
 
-    ztl_evloop_update_polltime(evloop);
-    ztl_evloop_expire(evloop);
-
     nevents = evloop->evops->poll(evloop->evops_ctx, evloop->fired_events, 64, timeout_ms);
     for (i = 0; i < nevents; ++i)
     {
@@ -219,10 +218,14 @@ int ztl_evloop_looponce(ztl_evloop_t* evloop, int timeout_ms)
 
 int ztl_evloop_loop(ztl_evloop_t* evloop, int ms)
 {
-    evloop->io_thread_id = ztl_thread_self();
+    evloop->io_thread_id = (int)ztl_thread_self();
+    int ms_left;
 
-    while (evloop->running) {
-        ztl_evloop_looponce(evloop, ms);
+    while (evloop->running)
+    {
+        evloop->timepoint = get_timestamp();
+        ms_left = ztl_evloop_expire(evloop);
+        ztl_evloop_looponce(evloop, ms < ms_left ? ms : ms_left);
     }
     return 0;
 }
@@ -420,17 +423,20 @@ int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id)
 
 int ztl_evloop_expire(ztl_evloop_t* evloop)
 {
-    int safe;
+    int safe, ms_left;
     safe = 1;
+
+#if 0
     if (evloop->io_thread_id != (int)ztl_thread_self()) {
         safe = 0;
         ztl_thread_mutex_lock(&evloop->lock);
     }
+#endif//0
 
-    ztl_evtimer_expire(&evloop->timers, evloop->timepoint,
-                       _timer_event_handler, evloop);
+    ms_left = ztl_evtimer_expire(&evloop->timers, evloop->timepoint,
+                                 _timer_event_handler, evloop);
 
     if (!safe)
         ztl_thread_mutex_unlock(&evloop->lock);
-    return 0;
+    return ms_left;
 }
