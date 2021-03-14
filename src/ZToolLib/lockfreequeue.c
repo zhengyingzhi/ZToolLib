@@ -163,39 +163,6 @@ int lfqueue_push(lfqueue_t* que, const void* pdata)
 
     // save the data pointer since the current write index is reserved for us
     dstaddr = que->arrdata + que->eltsize * curWriteIndex;
-    ztlncpy(dstaddr, &pdata, que->eltsize);
-
-    // update the maximum read index after saving the data.
-    // It wouldn't fail if there is only one producer thread intserting data into the queue.
-    // It will failed once more than 1 producer threads because
-    // the maxReadIndex_ should be done automic as the previous CAS
-    while (!ztl_atomic_cas(que->maxreadindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size)))
-    {
-        ztl_sched_yield();
-    }
-    return 0;
-}
-
-
-int lfqueue_push_value(lfqueue_t* que, const void* pdata)
-{
-    char*    dstaddr;
-    uint32_t curWriteIndex;
-    uint32_t curReadIndex;
-
-    // find the index to be inserted to
-    do
-    {
-        curWriteIndex = *que->wtindex;
-        curReadIndex = *que->rdindex;
-
-        // if queue is full
-        if (TO_INDEX(curWriteIndex + 1, que->size) == curReadIndex)
-            return -1;
-    } while (!ztl_atomic_cas(que->wtindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size)));
-
-    // save the data since the current write index is reserved for us
-    dstaddr = que->arrdata + que->eltsize * curWriteIndex;
     ztlncpy(dstaddr, pdata, que->eltsize);
 
     // update the maximum read index after saving the data.
@@ -208,6 +175,7 @@ int lfqueue_push_value(lfqueue_t* que, const void* pdata)
     }
     return 0;
 }
+
 
 int lfqueue_pop(lfqueue_t* que, void** ppdata)
 {
@@ -231,6 +199,7 @@ int lfqueue_pop(lfqueue_t* que, void** ppdata)
 
         // retrieve the data pointer from the queue
         srcaddr = que->arrdata + que->eltsize * curReadIndex;
+        // memcpy(ppdata, srcaddr, que->eltsize);
         ztlncpy(ppdata, srcaddr, que->eltsize);
 
         // we automic increase the readIndex_ using CAS operation
@@ -246,42 +215,6 @@ int lfqueue_pop(lfqueue_t* que, void** ppdata)
     return -1;
 }
 
-int lfqueue_pop_value(lfqueue_t* que, void* pdata)
-{
-    uint32_t curMaxReadIndex;
-    uint32_t curReadIndex;
-    char*    srcaddr;
-
-    // find the valid index to be read
-    do
-    {
-        // to ensure thread-safety when there is more than 1 producer threads
-        // a second index is defined: maxReadIndex_
-        curReadIndex = *que->rdindex;
-        curMaxReadIndex = *que->maxreadindex;
-
-        // if the queue is empty or
-        // a producer thread has occupied space in the queue,
-        // but is waiting to commit the data into it
-        if (curReadIndex == curMaxReadIndex)
-            return -1;
-
-        // retrieve the data from the queue
-        srcaddr = que->arrdata + que->eltsize * curReadIndex;
-        ztlncpy(pdata, srcaddr, que->eltsize);
-
-        // we automic increase the readIndex_ using CAS operation
-        if (ztl_atomic_cas(que->rdindex, curReadIndex, TO_INDEX(curReadIndex + 1, que->size)))
-            return 0;
-
-        // here, if failed retrieving the element off the queue
-        // someone else is reading the element at curReadIndex before we perform CAS operation
-        ztl_sched_yield();
-    } while (true); // keep looping to try again
-
-                    // to avoid compile warning
-    return -1;
-}
 
 int lfqueue_head(lfqueue_t* que, void** ppdata)
 {
@@ -299,18 +232,9 @@ int lfqueue_head(lfqueue_t* que, void** ppdata)
 
     // retrieve the data pointer from the queue
     srcaddr = que->arrdata + que->eltsize * curReadIndex;
+    // memcpy(ppdata, srcaddr, que->eltsize);
     ztlncpy(ppdata, srcaddr, que->eltsize);
     return 0;
-}
-
-int lfqueue_head_value(lfqueue_t* que, void* pdata)
-{
-    void* lpdata;
-    if (lfqueue_head(que, &lpdata) == 0) {
-        ztlncpy(pdata, lpdata, que->eltsize);
-        return 0;
-    }
-    return -1;
 }
 
 

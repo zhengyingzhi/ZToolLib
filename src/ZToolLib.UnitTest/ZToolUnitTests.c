@@ -34,10 +34,11 @@ extern void Test_ztl_shm_readwrite(ZuTest* zt);
 extern void Test_ztl_map(ZuTest* zt);
 extern void Test_ztl_map_ex(ZuTest* zt);
 
-extern void Test_lfqueue0(ZuTest* zt);
-extern void Test_lfqueue(ZuTest* zt);
-extern void Test_lfqueue2(ZuTest* zt);
-extern void Test_lfqueue3(ZuTest* zt);
+extern void Test_lfqueu_int(ZuTest* zt);
+extern void Test_lfqueu_int64(ZuTest* zt);
+extern void Test_lfqueue_ptr(ZuTest* zt);
+extern void Test_lfqueue_mem0(ZuTest* zt);
+extern void Test_lfqueue_mem1(ZuTest* zt);
 extern void Test_ztl_producer_consumer(ZuTest* zt);
 
 extern void Test_ztl_times(ZuTest* zt);
@@ -93,10 +94,11 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_map);
     SUITE_ADD_TEST(suite, Test_ztl_map_ex);
 
-    SUITE_ADD_TEST(suite, Test_lfqueue0);
-    SUITE_ADD_TEST(suite, Test_lfqueue);
-    SUITE_ADD_TEST(suite, Test_lfqueue2);
-    SUITE_ADD_TEST(suite, Test_lfqueue3);
+    SUITE_ADD_TEST(suite, Test_lfqueu_int);
+    SUITE_ADD_TEST(suite, Test_lfqueu_int64);
+    SUITE_ADD_TEST(suite, Test_lfqueue_ptr);
+    SUITE_ADD_TEST(suite, Test_lfqueue_mem0);
+    SUITE_ADD_TEST(suite, Test_lfqueue_mem1);
     SUITE_ADD_TEST(suite, Test_ztl_producer_consumer);
 
     SUITE_ADD_TEST(suite, Test_ztl_times);

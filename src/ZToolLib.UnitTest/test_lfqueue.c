@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ZToolLib/ztl_unit_test.h>
 
+#include <ZToolLib/ztl_malloc.h>
 #include <ZToolLib/lockfreequeue.h>
 
 
@@ -14,78 +15,80 @@ typedef union {
 #endif
 }lfque_union_type_t;
 
-void Test_lfqueue0(ZuTest* zt)
+
+void Test_lfqueu_int(ZuTest* zt)
 {
-    lfqueue_t*  que;
+    lfqueue_t* que32;
+    int i1, i2;
+    int o1, o2;
 
-    que = lfqueue_create(4, sizeof(void*));
-    ZuAssertTrue(zt, lfqueue_empty(que));
+    que32 = lfqueue_create(4, sizeof(int32_t));
+    ZuAssertTrue(zt, lfqueue_empty(que32));
 
-    // push and pop an integer pointer
-    lfque_union_type_t ud;
-    ud.iv = 1;
-    void* p1 = ud.ptr;
-    lfqueue_push(que, p1);
+    // once
+    i1 = 1;
+    lfqueue_push(que32, &i1);
+    ZuAssertIntEquals(zt, 1, lfqueue_size(que32));
+    lfqueue_pop(que32, (void**)&o1);
+    ZuAssertIntEquals(zt, 1, o1);
 
-    void* p2 = NULL;
-    lfqueue_pop(que, &p2);
-    ZuAssertTrue(zt, p1 == p2);
+    // again
+    i1 = 2;
+    lfqueue_push(que32, &i1);
+    ZuAssertIntEquals(zt, 1, lfqueue_size(que32));
+    i2 = 3;
+    lfqueue_push(que32, &i2);
+    ZuAssertIntEquals(zt, 2, lfqueue_size(que32));
 
-    int* p3 = malloc(sizeof(int));
-    *p3 = 3;
-    lfqueue_push(que, p3);
-    lfqueue_pop(que, &p2);
-    ZuAssertTrue(zt, p2 == p3);
+    lfqueue_pop(que32, (void**)&o1);
+    lfqueue_pop(que32, (void**)&o2);
+    ZuAssertIntEquals(zt, 2, o1);
+    ZuAssertIntEquals(zt, 3, o2);
 
-    lfqueue_release(que);
+    lfqueue_release(que32);
+    que32 = NULL;
 }
 
-void Test_lfqueue(ZuTest* zt)
+void Test_lfqueu_int64(ZuTest* zt)
 {
-#define TEST_QUEUE_SIZE_A 4
-    lfqueue_t*  que;
-    int32_t     rv;
+    lfqueue_t* que64;
+    int64_t i1, i2;
+    int64_t o1, o2;
 
-    que = lfqueue_create(TEST_QUEUE_SIZE_A, sizeof(void*));
+    que64 = lfqueue_create(4, sizeof(int64_t));
+    ZuAssertTrue(zt, lfqueue_empty(que64));
 
-    ZuAssertTrue(zt, lfqueue_empty(que));
+    // once
+    i1 = 1;
+    lfqueue_push(que64, &i1);
+    ZuAssertIntEquals(zt, 1, lfqueue_size(que64));
+    lfqueue_pop(que64, (void**)&o1);
+    ZuAssertIntEquals(zt, 1, (int)o1);
 
-    int data[] = { 1, 2, 3, 4, 5 };
-    for (int i = 0; i < TEST_QUEUE_SIZE_A - 1; ++i)
-    {
-        lfque_union_type_t ud;
-        ud.iv = data[i];
-        ZuAssertTrue(zt, 0 == lfqueue_push(que, ud.ptr));
-    }
+    // again
+    i1 = 2;
+    lfqueue_push(que64, &i1);
+    ZuAssertIntEquals(zt, 1, lfqueue_size(que64));
+    i2 = 3;
+    lfqueue_push(que64, &i2);
+    ZuAssertIntEquals(zt, 2, lfqueue_size(que64));
 
-    ZuAssertTrue(zt, 3 == lfqueue_size(que));
+    lfqueue_pop(que64, (void**)&o1);
+    lfqueue_pop(que64, (void**)&o2);
+    ZuAssertIntEquals(zt, 2, (int)o1);
+    ZuAssertIntEquals(zt, 3, (int)o2);
 
-    int64_t outdata = 0;
-    rv = lfqueue_pop(que, (void**)&outdata);
-    ZuAssertTrue(zt, rv == 0);
-    ZuAssertTrue(zt, outdata == 1);
-
-    lfqueue_pop(que, (void**)&outdata);
-    ZuAssertTrue(zt, rv == 0);
-    ZuAssertTrue(zt, outdata == 2);
-
-    lfqueue_pop(que, (void**)&outdata);
-    ZuAssertTrue(zt, rv == 0);
-    ZuAssertTrue(zt, outdata == 3);
-
-    rv = lfqueue_pop(que, (void**)&outdata);
-    ZuAssertTrue(zt, rv != 0);
-
-    lfqueue_release(que);
+    lfqueue_release(que64);
 }
 
-void Test_lfqueue2(ZuTest* zt)
+void Test_lfqueue_ptr(ZuTest* zt)
 {
 #define TEST_QUEUE_SIZE_B 4
     lfqueue_t*  que;
     void*       addr;
     int64_t     memsize;
     int32_t     eltsize = sizeof(void*);
+    char*       lpout;
 
     memsize = lfqueue_memory_size(TEST_QUEUE_SIZE_B, eltsize);
     addr = calloc(1, (size_t)memsize);
@@ -95,50 +98,48 @@ void Test_lfqueue2(ZuTest* zt)
 
     ZuAssertTrue(zt, lfqueue_empty(que));
 
-    void* lp1 = (void*)0x01;
-    void* lp2 = (void*)0x02;
-    void* lp3 = (void*)0x03;
+    char* lp1 = ztl_strdup("hello");
+    char* lp2 = ztl_strdup("world");
+    char* lp3 = ztl_strdup("ztoollib");
 
     // push elements into queue (we must pass reference address of each element)
-    ZuAssertTrue(zt, 0 == lfqueue_push(que, lp1));
-    ZuAssertTrue(zt, 1 == lfqueue_size(que));
+    ZuAssertIntEquals(zt, 0, lfqueue_push(que, &lp1));
+    ZuAssertIntEquals(zt, 1, lfqueue_size(que));
 
-    void* lpout;
-    ZuAssertTrue(zt, 0 == lfqueue_pop(que, &lpout));
+    ZuAssertTrue(zt, 0 == lfqueue_pop(que, (void**)&lpout));
     ZuAssertPtrEquals(zt, lp1, lpout);
 
+    ZuAssertIntEquals(zt, 0, lfqueue_push(que, &lp2));
+    ZuAssertIntEquals(zt, 0, lfqueue_push(que, &lp3));
+    ZuAssertIntEquals(zt, 2, lfqueue_size(que));
 
-    ZuAssertTrue(zt, 0 == lfqueue_push(que, lp2));
-    ZuAssertTrue(zt, 0 == lfqueue_push(que, lp3));
-    ZuAssertTrue(zt, 2 == lfqueue_size(que));
-
-    ZuAssertTrue(zt, 0 == lfqueue_pop(que, &lpout));
+    ZuAssertIntEquals(zt, 0, lfqueue_pop(que, (void**)&lpout));
     ZuAssertPtrEquals(zt, lp2, lpout);
 
-    ZuAssertTrue(zt, 0 == lfqueue_pop(que, &lpout));
+    ZuAssertIntEquals(zt, 0, lfqueue_pop(que, (void**)&lpout));
     ZuAssertPtrEquals(zt, lp3, lpout);
 
-    ZuAssertTrue(zt, 0 != lfqueue_pop(que, &lpout));
+    ZuAssertTrue(zt, 0 != lfqueue_pop(que, (void**)&lpout));
 
     lfqueue_release(que);
 
     free(addr);
 }
 
-
-void Test_lfqueue3(ZuTest* zt)
+void Test_lfqueue_mem0(ZuTest* zt)
 {
 #define TEST_QUEUE_SIZE_C 4
     typedef struct 
     {
-        void* handler;
-        void* param;
+        void* pdata;
+        int64_t idata;
     }test_lfpush_data_t;
 
     lfqueue_t*  que;
     void*       addr;
     int64_t     memsize;
-    int32_t     eltsize = sizeof(test_lfpush_data_t);
+    int32_t     eltsize = sizeof(void*);
+    test_lfpush_data_t *lpdata, *lpdata2;
 
     memsize = lfqueue_memory_size(TEST_QUEUE_SIZE_C, eltsize);
     addr = calloc(1, (size_t)memsize);
@@ -150,46 +151,88 @@ void Test_lfqueue3(ZuTest* zt)
 
     for (uint32_t i = 1; i <= 3; ++i)
     {
-        lfque_union_type_t ud;
-        ud.iv = i;
-        test_lfpush_data_t ldata = { ud.ptr, ud.ptr };
+        lpdata = (test_lfpush_data_t*)malloc(sizeof(test_lfpush_data_t));
+        lpdata->pdata = (void*)i;
+        lpdata->idata = i * 10;
 
-        // push element into queue, queue internally would do a copy of ldata
-        ZuAssertTrue(zt, 0 == lfqueue_push_value(que, &ldata));
-        ZuAssertTrue(zt, i == lfqueue_size(que));
+        ZuAssertIntEquals(zt, 0, lfqueue_push(que, &lpdata));
+        ZuAssertIntEquals(zt, i, lfqueue_size(que));
     }
 
     for (int i = 1; i <= 3; ++i)
     {
-        test_lfpush_data_t ldata;
-        lfque_union_type_t ud;
-        ud.iv = i;
-
-        // pop element from queue,
-        // !attention, the sizeof of ldata must be >= eltsize (which used to create the queue)
-        ZuAssertTrue(zt, 0 == lfqueue_pop_value(que, &ldata));
-        ZuAssertPtrEquals(zt, ud.ptr, ldata.handler);
-        ZuAssertPtrEquals(zt, ud.ptr, ldata.param);
+        lpdata = NULL;
+        ZuAssertIntEquals(zt, 0, lfqueue_pop(que, (void**)&lpdata));
+        ZuAssertPtrEquals(zt, (void*)i, lpdata->pdata);
+        ZuAssertIntEquals(zt, i*10, (int)lpdata->idata);
+        free(lpdata);
     }
 
-    test_lfpush_data_t ldata;
-    ZuAssertTrue(zt, 0 != lfqueue_pop_value(que, &ldata));
+    ZuAssertTrue(zt, 0 != lfqueue_pop(que, (void**)&lpdata));
     ZuAssertTrue(zt, lfqueue_empty(que));
 
     // push & pop again
-    lfque_union_type_t ud0, ud1;
-    ud0.iv = 10;
-    ldata.handler = ud0.ptr;
-    ud1.iv = 11;
-    ldata.param = ud1.ptr;
-    ZuAssertTrue(zt, 0 == lfqueue_push_value(que, &ldata));
-    ldata.handler = 0;
-    ldata.param = 0;
-    ZuAssertTrue(zt, 0 == lfqueue_pop_value(que, &ldata));
-    ZuAssertPtrEquals(zt, ud0.ptr, ldata.handler);
-    ZuAssertPtrEquals(zt, ud1.ptr, ldata.param);
+    lpdata = (test_lfpush_data_t*)malloc(sizeof(test_lfpush_data_t));
+    lpdata->pdata = (void*)0xFFAA;
+    lpdata->idata = 1234;
+    ZuAssertIntEquals(zt, 0, lfqueue_push(que, &lpdata));
+    ZuAssertIntEquals(zt, 1, lfqueue_size(que));
+
+    lfqueue_pop(que, (void**)&lpdata2);
+    ZuAssertPtrEquals(zt, lpdata, lpdata2);
+    free(lpdata2);
 
     lfqueue_release(que);
 
     free(addr);
+}
+
+void Test_lfqueue_mem1(ZuTest* zt)
+{
+#define TEST_QUEUE_SIZE_C 4
+    typedef struct
+    {
+        void* pdata;
+        int64_t idata;
+    }test_lfpush_data_t;
+
+    lfqueue_t*  que;
+    int32_t     eltsize = sizeof(test_lfpush_data_t);
+    test_lfpush_data_t ldata, ldata2;
+
+    que = lfqueue_create(TEST_QUEUE_SIZE_C, eltsize);
+
+    ZuAssertTrue(zt, lfqueue_empty(que));
+
+    for (uint32_t i = 1; i <= 3; ++i)
+    {
+        ldata.pdata = (void*)i;
+        ldata.idata = i * 10;
+
+        // push element into queue, queue internally would do a copy of ldata
+        ZuAssertIntEquals(zt, 0, lfqueue_push(que, &ldata));
+        ZuAssertIntEquals(zt, i, lfqueue_size(que));
+    }
+
+    for (int i = 1; i <= 3; ++i)
+    {
+        ZuAssertIntEquals(zt, 0, lfqueue_pop(que, (void**)&ldata));
+        ZuAssertPtrEquals(zt, (void*)i, ldata.pdata);
+        ZuAssertIntEquals(zt, i * 10, (int)ldata.idata);
+    }
+
+    ZuAssertTrue(zt, 0 != lfqueue_pop(que, (void**)&ldata2));
+    ZuAssertTrue(zt, lfqueue_empty(que));
+
+    // push & pop again
+    ldata.pdata = (void*)0xFFAA;
+    ldata.idata = 1234;
+    ZuAssertIntEquals(zt, 0, lfqueue_push(que, &ldata));
+    ZuAssertIntEquals(zt, 1, lfqueue_size(que));
+
+    lfqueue_pop(que, (void**)&ldata2);
+    ZuAssertPtrEquals(zt, ldata.pdata, ldata2.pdata);
+    ZuAssertIntEquals(zt, (int)ldata.idata, (int)ldata2.idata);
+
+    lfqueue_release(que);
 }
