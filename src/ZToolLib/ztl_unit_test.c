@@ -192,11 +192,21 @@ void ZuAssertStrEquals_LineMsg(ZuTest* tc, const char* file, int line, const cha
 }
 
 void ZuAssertIntEquals_LineMsg(ZuTest* tc, const char* file, int line, const char* message,
-    int expected, int actual)
+    const int expected, const int actual)
 {
     char buf[STRING_MAX];
     if (expected == actual) return;
     sprintf(buf, "expected <%d> but was <%d>", expected, actual);
+    ZuFail_Line(tc, file, line, message, buf);
+}
+
+void ZuAssertInt64Equals_LineMsg(ZuTest* tc,
+    const char* file, int line, const char* message,
+    const int64_t expected, const int64_t actual)
+{
+    char buf[STRING_MAX];
+    if (expected == actual) return;
+    sprintf(buf, "expected <%ld> but was <%ld>", (long)expected, (long)actual);
     ZuFail_Line(tc, file, line, message, buf);
 }
 

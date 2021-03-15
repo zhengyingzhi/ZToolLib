@@ -80,6 +80,7 @@ ztl_timer_event_t* ztl_timer_node_new(ztl_evloop_t* evloop)
     if (evloop->idle_timers) {
         node = evloop->idle_timers;
         evloop->idle_timers = node->next;
+        node->prev = NULL;
         node->next = NULL;
     }
     else {
@@ -124,15 +125,17 @@ int ztl_timer_node_save(ztl_evloop_t* evloop, ztl_timer_event_t* new_node)
 
 int ztl_timer_node_free(ztl_evloop_t* evloop, ztl_timer_event_t* node)
 {
-    if (!evloop->work_timers) {
-        return -1;
-    }
-
     if (node->next) {
         node->next->prev = node->prev;
     }
     if (node->prev) {
         node->prev->next = node->next;
+    }
+    if (evloop->work_timers == node) {
+        if (node->prev)
+            evloop->work_timers = node->prev;
+        else
+            evloop->work_timers = node->next;
     }
 
     node->prev = NULL;
@@ -159,8 +162,15 @@ int ztl_timer_node_free_all(ztl_evloop_t* evloop)
     {
         node = evloop->work_timers;
         evloop->work_timers = node->next;
+        if (node->handler)
+            node->handler(evloop, node->timer_id, node->udata);
+        if (node->finalizer)
+            node->finalizer(evloop, node->timer_id, node->udata);
         FREE(node);
         ++n;
     }
+
+    evloop->idle_timers = NULL;
+    evloop->work_timers = NULL;
     return n;
 }

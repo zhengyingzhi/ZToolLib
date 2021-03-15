@@ -1,6 +1,7 @@
 #ifndef _ZTL_UNIT_TEST_H_
 #define _ZTL_UNIT_TEST_H_
 
+#include <stdint.h>
 #include <setjmp.h>
 #include <stdarg.h>
 
@@ -59,7 +60,10 @@ void ZuAssertStrEquals_LineMsg(ZuTest* tc,
 	const char* expected, const char* actual);
 void ZuAssertIntEquals_LineMsg(ZuTest* tc, 
 	const char* file, int line, const char* message, 
-	int expected, int actual);
+    const int expected, const int actual);
+void ZuAssertInt64Equals_LineMsg(ZuTest* tc,
+    const char* file, int line, const char* message,
+    const int64_t expected, const int64_t actual);
 void ZuAssertDblEquals_LineMsg(ZuTest* tc, 
 	const char* file, int line, const char* message, 
 	double expected, double actual, double delta);
@@ -77,6 +81,8 @@ void ZuAssertPtrEquals_LineMsg(ZuTest* tc,
 #define ZuAssertStrEquals_Msg(tc,ms,ex,ac)    ZuAssertStrEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac))
 #define ZuAssertIntEquals(tc,ex,ac)           ZuAssertIntEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac))
 #define ZuAssertIntEquals_Msg(tc,ms,ex,ac)    ZuAssertIntEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac))
+#define ZuAssertInt64Equals(tc,ex,ac)         ZuAssertInt64Equals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac))
+#define ZuAssertInt64Equals_Msg(tc,ms,ex,ac)  ZuAssertInt64Equals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac))
 #define ZuAssertDblEquals(tc,ex,ac,dl)        ZuAssertDblEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac),(dl))
 #define ZuAssertDblEquals_Msg(tc,ms,ex,ac,dl) ZuAssertDblEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac),(dl))
 #define ZuAssertPtrEquals(tc,ex,ac)           ZuAssertPtrEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac))

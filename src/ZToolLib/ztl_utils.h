@@ -140,58 +140,59 @@ union zudi {
 
 /* a fixed size fast memory copy, carefully use!
  */
-#define ztlncpy(dst,src,size)                                       \
-    do {                                                            \
-        switch (size) {                                             \
-        case 1: *((uint8_t*) (dst)) = *((uint8_t*)(src));   break;  \
-        case 2: *((uint16_t*)(dst)) = *((uint16_t*)(src));  break;  \
-        case 4: *((uint32_t*)(dst)) = *((uint32_t*)(src));  break;  \
-        case 8: *((uint64_t*)(dst)) = *((uint64_t*)(src));  break;  \
-        case 6: {                                                   \
-            *((uint32_t*)(dst))     = *((uint32_t*)(src));          \
-            *((uint16_t*)((char*)(dst)+4)) = *((uint16_t*)((char*)src+4)); }    \
-            break;                                                  \
-        case 12: {                                                  \
-            *((uint64_t*)(dst))     = *((uint64_t*)(src));          \
-            *((uint32_t*)((char*)(dst)+8)) = *((uint32_t*)((char*)(src)+8)); }  \
-            break;                                                  \
-        case 16: {                                                  \
-            *((uint64_t*)(dst))     = *(uint64_t*)(src);            \
-            *((uint64_t*)((char*)(dst)+8)) = *((uint64_t*)((char*)(src)+8)); }  \
-            break;                                                  \
-        case 20: {                                                  \
-            *((uint64_t*)(dst))     = *(uint64_t*)(src);            \
-            *((uint64_t*)((char*)(dst)+8)) = *((uint64_t*)((char*)(src)+8));    \
-            *((uint32_t*)((char*)(dst)+16)) = *((uint32_t*)((char*)(src)+16)); }\
-            break;                                                  \
-        case 24: {                                                  \
-            *((uint64_t*)(dst))     = *((uint64_t*)(src));          \
-            *((uint64_t*)((char*)(dst)+8)) = *((uint64_t*)((char*)(src)+8));    \
-            *((uint64_t*)((char*)(dst)+16)) = *((uint64_t*)((char*)(src)+16)); }\
-            break;                                                  \
-        default:                                                    \
-            memcpy(dst,src,size);  break;                           \
-        }                                                           \
-    } while (0);
+#define _UNIT_COPY(type,dst,src)    *((type*)(dst)) = *((type*)(src))
+#define ztlncpy(dst,src,size)                                           \
+    {                                                                   \
+        switch (size) {                                                 \
+        case 1: _UNIT_COPY(uint8_t,  dst, src);     break;              \
+        case 2: _UNIT_COPY(uint16_t, dst, src);     break;              \
+        case 4: _UNIT_COPY(uint32_t, dst, src);     break;              \
+        case 8: _UNIT_COPY(uint64_t, dst, src);     break;              \
+        case 6: {                                                       \
+            _UNIT_COPY(uint32_t, dst, src);                             \
+            _UNIT_COPY(uint16_t, ((char*)dst+4), ((char*)src+4)); }     \
+            break;                                                      \
+        case 12: {                                                      \
+            _UNIT_COPY(uint64_t, dst, src);                             \
+            _UNIT_COPY(uint32_t, ((char*)dst+8), ((char*)src+8)); }     \
+            break;                                                      \
+        case 16: {                                                      \
+            _UNIT_COPY(uint64_t, dst, src);                             \
+            _UNIT_COPY(uint64_t, ((char*)dst+8), ((char*)src+8)); }     \
+            break;                                                      \
+        case 20: {                                                      \
+            _UNIT_COPY(uint64_t, dst, src);                             \
+            _UNIT_COPY(uint64_t, ((char*)dst+8), ((char*)src+8));       \
+            _UNIT_COPY(uint32_t, ((char*)dst+16), ((char*)src+16));}    \
+            break;                                                      \
+        case 24: {                                                      \
+            _UNIT_COPY(uint64_t, dst, src);                             \
+            _UNIT_COPY(uint64_t, ((char*)dst+8), ((char*)src+8));       \
+            _UNIT_COPY(uint64_t, ((char*)dst+16), ((char*)src+16));}    \
+            break;                                                      \
+        default:                                                        \
+            memcpy(dst,src,size);  break;                               \
+        }                                                               \
+    }
 
 
 #define STR2LOWER(str) \
-	do { \
-		char *p = str; \
-		while (*p) { \
-			*p = tolower(*p); \
-			++p; \
-		} \
-	} while (0);
+    do { \
+        char *p = str; \
+        while (*p) { \
+            *p = tolower(*p); \
+            ++p; \
+        } \
+    } while (0);
 
 #define STR2UPPER(str) \
-	do { \
-		char *p = str; \
-		while (*p) { \
-			*p = toupper(*p); \
-			++p; \
-		} \
-	} while (0);
+    do { \
+        char *p = str; \
+        while (*p) { \
+            *p = toupper(*p); \
+            ++p; \
+        } \
+    } while (0);
 
 #ifdef __cplusplus
 }

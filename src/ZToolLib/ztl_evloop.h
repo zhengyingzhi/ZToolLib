@@ -132,17 +132,25 @@ int ztl_connection_save(ztl_evloop_t* evloop, ztl_connection_t* conn);
 void ztl_evloop_lock(ztl_evloop_t* evloop);
 void ztl_evloop_unlock(ztl_evloop_t* evloop);
 
-/* add a timer event */
-int ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
+/* update timestamp for evloop */
+void ztl_evloop_timestamp_update(ztl_evloop_t* evloop);
+uint64_t ztl_evloop_timestamp_get(ztl_evloop_t* evloop);
+
+/* add a timer event
+ * @return the timer_id, 0 is failed
+ */
+uint64_t ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
     ztl_timer_handler_t handler,
     ztl_timer_finalizer_t finalizer, void* udata);
 
-/* remove the timer, return 0 if success */
+/* remove the timer,
+ * @return 0 if deleted success
+ */
 int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id);
 
 /* expire all the timed out timers
- * @return the nearest time ms, -1 means none
- * not thread safe!
+ * @return the nearest time ms left, -1 means none
+ * @brief not thread safe!
  */
 int ztl_evloop_expire(ztl_evloop_t* evloop, uint64_t currtime);
 

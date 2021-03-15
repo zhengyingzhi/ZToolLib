@@ -354,6 +354,16 @@ void ztl_evloop_unlock(ztl_evloop_t* evloop)
     ztl_thread_mutex_unlock(&evloop->lock);
 }
 
+void ztl_evloop_timestamp_update(ztl_evloop_t* evloop)
+{
+    evloop->timepoint = get_timestamp();
+}
+
+uint64_t ztl_evloop_timestamp_get(ztl_evloop_t* evloop)
+{
+    return evloop->timepoint;
+}
+
 //////////////////////////////////////////////////////////////////////////
 static void _timer_event_handler(void* ctx, ztl_rbtree_node_t* node)
 {
@@ -369,7 +379,7 @@ static void _timer_event_handler(void* ctx, ztl_rbtree_node_t* node)
     ztl_timer_node_free(evloop, timer);
 }
 
-int ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
+uint64_t ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
     ztl_timer_handler_t handler,
     ztl_timer_finalizer_t finalizer, void* udata)
 {
