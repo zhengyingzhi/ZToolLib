@@ -164,7 +164,7 @@ void heap_free(heap_t* hp)
     if (hp == NULL)
         return;
 #if HAVE_PTHREAD
-    pthread_mutex_destroy(&(*hp)->lock);
+    pthread_mutex_destroy(&hp->lock);
 #else
     DeleteCriticalSection(&hp->lock);
 #endif

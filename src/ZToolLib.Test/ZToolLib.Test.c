@@ -33,13 +33,13 @@ int main(int argc, char* argv[])
     //test_ztl_config();
     //test_ztl_log();
 
-    // test_lfqueue();
+    test_lfqueue();
     // test_base64();
     // test_read_file();
     // test_char_conv();
 
     // test_memdb();
-    test_dstr();
+    // test_dstr();
 
     return 0;
 }
@@ -137,7 +137,7 @@ void test_base64()
     // change and encode
     lpChanged = zpassword_change(lString);
     lBase64Length = sizeof(lBase64String) - 1;
-    ztl_base64_encode(lpChanged, strlen(lpChanged), lBase64String, &lBase64Length);
+    ztl_base64_encode(lpChanged, (uint32_t)strlen(lpChanged), lBase64String, &lBase64Length);
 
     // decode and change
     char lTemp[256] = "";
@@ -189,7 +189,7 @@ static const uint32_t powers_of_10_32[] = {
     UINT32_C(1000000000)
 };
 
-static inline uint32_t to_chars_len(int value)
+static inline uint32_t to_chars_len(uint32_t value)
 {
     // FIXME error
     // const unsigned t = (32 - __builtin_clz(value | 1)) * 1233 >> 12;

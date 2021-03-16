@@ -301,6 +301,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="event_dispatcher_demo.c" />
+    <ClCompile Include="producer_consumer_demo.c" />
+    <ClCompile Include="tcp_server_demo.c" />
+    <ClCompile Include="threadpool_demo.c" />
+    <ClCompile Include="udp_demo.c" />
     <ClCompile Include="ZToolLib.Test.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -82,7 +82,7 @@ void Test_ztl_times(ZuTest* zt)
     //ZuAssertTrue(zt, dt > 10000000);
 
     // got 20180102201346
-    int64_t dt2;
+    uint64_t dt2;
     dt2 = ztl_intdatetime();
     ZuAssertTrue(zt, dt2 > 10000000000000ULL);
 

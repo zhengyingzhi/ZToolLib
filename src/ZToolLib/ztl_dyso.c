@@ -6,25 +6,19 @@
 #ifdef _MSC_VER
 
 #include <Windows.h>
-typedef HMODULE ztl_hlib_t;
+// typedef HMODULE ztl_hlib_t;
 
 #else
 
 #include <errno.h>
 #include <dlfcn.h>
-typedef void* ztl_hlib_t;
+// typedef void* ztl_hlib_t;
 
 #endif//_MSC_VER
 
-/// exported types
-struct ztl_dso_handle_st
-{
-    char path[256];
-    ztl_hlib_t hlib;
-};
 
 #ifdef _MSC_VER
-static ztl_hlib_t load_lib(const char* path)
+static ztl_hlib_t load_lib(const char* path, int flags)
 {
     return LoadLibraryA(path);
 }
@@ -38,9 +32,11 @@ static void* symbol_lib(ztl_hlib_t hlib, const char* symname)
 }
 #else// linux platform
 
-static ztl_hlib_t load_lib(const char* path)
+static ztl_hlib_t load_lib(const char* path, int flags)
 {
-    return dlopen(path, RTLD_LAZY | RTLD_LOCAL);
+    if (flags == 0)
+        flags = RTLD_LAZY | RTLD_LOCAL
+    return dlopen(path, flags);
 }
 static void unload_lib(ztl_hlib_t hlib)
 {
@@ -53,24 +49,18 @@ static void* symbol_lib(ztl_hlib_t hlib, const char* symname)
 #endif//_MSC_VER
 
 
-ztl_dso_handle_t* ztl_dso_load(const char* libpath)
+int ztl_dso_load(ztl_dso_handle_t* dso, const char* libpath, int flags)
 {
-    ztl_dso_handle_t* dso = (ztl_dso_handle_t*)malloc(sizeof(ztl_dso_handle_t));
-    if (dso != NULL)
-    {
-        dso->hlib = load_lib(libpath);
-        strncpy(dso->path, libpath, sizeof(dso->path) - 1);
-    }
-    return dso;
+    dso->hlib = load_lib(libpath, flags);
+    strncpy(dso->path, libpath, sizeof(dso->path) - 1);
+    return 0;
 }
 
 void ztl_dso_unload(ztl_dso_handle_t* dso)
 {
-    if (dso)
-    {
-        if (dso->hlib)
-            unload_lib(dso->hlib);
-        free(dso);
+    if (dso->hlib) {
+        unload_lib(dso->hlib);
+        dso->hlib = NULL;
     }
 }
 
@@ -85,8 +75,8 @@ void* ztl_dso_symbol(ztl_dso_handle_t* dso, const char* symname)
 
 int ztl_dso_error(ztl_dso_handle_t* dso, char* buf, int bufsize)
 {
-	if (dso)
-	{
+    if (dso)
+    {
 #if defined(WINDOWS) || defined(WIN32)
         LPVOID lpMsgBuf;
         DWORD dw = GetLastError();

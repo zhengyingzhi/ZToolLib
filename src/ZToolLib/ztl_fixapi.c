@@ -13,14 +13,17 @@ struct ztl_fixapi_s
 {
     ztl_map_t*  fixmap;
     ztl_pool_t* pool;
-    char        buffer[ZTL_FIX_BUF_SIZE];
+    uint32_t    head_size;
     uint32_t    length;
     uint32_t    capacity;
+    char        buffer[ZTL_FIX_BUF_SIZE];
     char*       pbuf;
 };
 
-#define _avail_size(fixapi) (fixapi->capacity <= fixapi->length ? fixapi->capacity - fixapi->length : 0)
-#define _data_len(fixapi)   (fixapi->length)
+#define _data_len(fixapi)       ((fixapi)->head_size + (fixapi)->length)
+#define _kv_data_len(fixapi)    ((fixapi)->length)
+#define _avail_size(fixapi)     \
+    ((fixapi)->capacity <= _data_len(fixapi) ? fixapi->capacity - _data_len(fixapi) : 0)
 
 #if 0 // not used currently
 static ztl_inline void _ztl_insert_item(ztl_fixapi_t* fixapi, fixkey_t id, int64_t value)
@@ -48,15 +51,16 @@ static ztl_inline int64_t _ztl_find_data(ztl_fixapi_t* fixapi, fixkey_t id)
     return ZTL_MAP_INVALID_VALUE;
 }
 
-ztl_fixapi_t* ztl_fixapi_create()
+ztl_fixapi_t* ztl_fixapi_create(uint32_t head_size)
 {
     ztl_fixapi_t* fixapi;
     fixapi = (ztl_fixapi_t*)malloc(ztl_align(sizeof(ztl_fixapi_t), 8));
 
-    fixapi->fixmap = ztl_map_create(0);
+    fixapi->fixmap = ztl_map_create(32);
     fixapi->pool = ztl_create_pool(4096);
 
     memset(fixapi->buffer, 0, ZTL_FIX_BUF_SIZE);
+    fixapi->head_size = head_size;
     fixapi->length = 0;
     fixapi->capacity = ZTL_FIX_BUF_SIZE;
 
@@ -87,9 +91,19 @@ char* ztl_fixapi_data(ztl_fixapi_t* fixapi)
     return fixapi->pbuf;
 }
 
-int ztl_fixapi_length(ztl_fixapi_t* fixapi)
+char* ztl_fixapi_data_kv(ztl_fixapi_t* fixapi)
 {
-    return fixapi->length;
+    return fixapi->pbuf + fixapi->head_size;
+}
+
+uint32_t ztl_fixapi_length(ztl_fixapi_t* fixapi)
+{
+    return _data_len(fixapi);
+}
+
+uint32_t ztl_fixapi_length_kv(ztl_fixapi_t* fixapi)
+{
+    return _kv_data_len(fixapi);
 }
 
 void ztl_fixapi_setbuffer(ztl_fixapi_t* fixapi, char* buffer, int size)
@@ -110,43 +124,43 @@ bool ztl_fixapi_have(ztl_fixapi_t* fixapi, fixkey_t id)
 /* -------- setter ---------*/
 int ztl_fixapi_set_char(ztl_fixapi_t* fixapi, fixkey_t id, const char val)
 {
-    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi), _avail_size(fixapi), "%u=%c%c",
-        id, val, ZTL_FIX_SEP);
+    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi),
+        _avail_size(fixapi), "%u=%c%c", id, val, ZTL_FIX_SEP);
     return 0;
 }
 
 int ztl_fixapi_set_int16(ztl_fixapi_t* fixapi, fixkey_t id, const uint16_t val)
 {
-    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi), _avail_size(fixapi), "%u=%d%c",
-        id, val, ZTL_FIX_SEP);
+    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi),
+        _avail_size(fixapi), "%u=%d%c", id, val, ZTL_FIX_SEP);
     return 0;
 }
 
 int ztl_fixapi_set_int32(ztl_fixapi_t* fixapi, fixkey_t id, const uint32_t val)
 {
-    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi), _avail_size(fixapi), "%u=%u%c",
-        id, val, ZTL_FIX_SEP);
+    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi),
+        _avail_size(fixapi), "%u=%u%c", id, val, ZTL_FIX_SEP);
     return 0;
 }
 
 int ztl_fixapi_set_int64(ztl_fixapi_t* fixapi, fixkey_t id, const int64_t val)
 {
-    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi), _avail_size(fixapi), "%u="ZTL_I64_FMT"%c",
-        id, val, ZTL_FIX_SEP);
+    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi),
+        _avail_size(fixapi), "%u="ZTL_I64_FMT"%c", id, val, ZTL_FIX_SEP);
     return 0;
 }
 
 int ztl_fixapi_set_float(ztl_fixapi_t* fixapi, fixkey_t id, const float val)
 {
-    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi), _avail_size(fixapi), "%u=%f%c",
-        id, val, ZTL_FIX_SEP);
+    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi),
+        _avail_size(fixapi), "%u=%.4f%c", id, val, ZTL_FIX_SEP);
     return 0;
 }
 
 int ztl_fixapi_set_double(ztl_fixapi_t* fixapi, fixkey_t id, const double val)
 {
-    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi), _avail_size(fixapi), "%u=%lf%c",
-        id, val, ZTL_FIX_SEP);
+    fixapi->length += snprintf(fixapi->pbuf + _data_len(fixapi),
+        _avail_size(fixapi), "%u=%.6lf%c", id, val, ZTL_FIX_SEP);
     return 0;
 }
 
@@ -159,7 +173,8 @@ int ztl_fixapi_set_str(ztl_fixapi_t* fixapi, fixkey_t id, const char* val, int l
         return -1;
     }
 
-    fixapi->length += snprintf(fixapi->pbuf + +_data_len(fixapi), _avail_size(fixapi), "%d:", id);
+    fixapi->length += snprintf(fixapi->pbuf + +_data_len(fixapi),
+        _avail_size(fixapi), "%d:", id);
     memcpy(fixapi->pbuf + _data_len(fixapi), val, len);
     fixapi->length += len;
     fixapi->pbuf[fixapi->length] = ZTL_FIX_SEP;
@@ -172,8 +187,7 @@ int ztl_fixapi_set_str(ztl_fixapi_t* fixapi, fixkey_t id, const char* val, int l
 int ztl_fixapi_get_char(ztl_fixapi_t* fixapi, fixkey_t id, char* pval)
 {
     char* pdata = (char*)_ztl_find_data(fixapi, id);
-    if (pdata)
-    {
+    if (pdata) {
         *pval = *pdata;
         return 0;
     }
@@ -183,8 +197,7 @@ int ztl_fixapi_get_char(ztl_fixapi_t* fixapi, fixkey_t id, char* pval)
 int ztl_fixapi_get_int16(ztl_fixapi_t* fixapi, fixkey_t id, uint16_t* pval)
 {
     uint16_t* pdata = (uint16_t*)_ztl_find_data(fixapi, id);
-    if (pdata)
-    {
+    if (pdata) {
         *pval = *pdata;
         return 0;
     }
@@ -195,8 +208,7 @@ int ztl_fixapi_get_int32(ztl_fixapi_t* fixapi, fixkey_t id, uint32_t* pval)
 {
     union_dtype_t data;
     data.i64 = _ztl_find_data(fixapi, id);
-    if (data.i64 != ZTL_MAP_INVALID_VALUE)
-    {
+    if (data.i64 != ZTL_MAP_INVALID_VALUE) {
         *pval = data.i32;
         return 0;
     }
@@ -207,8 +219,7 @@ int ztl_fixapi_get_int64(ztl_fixapi_t* fixapi, fixkey_t id, int64_t* pval)
 {
     union_dtype_t data;
     data.i64 = _ztl_find_data(fixapi, id);
-    if (data.i64 != ZTL_MAP_INVALID_VALUE)
-    {
+    if (data.i64 != ZTL_MAP_INVALID_VALUE) {
         *pval = data.i64;
         return 0;
     }
@@ -219,8 +230,7 @@ int ztl_fixapi_get_float(ztl_fixapi_t* fixapi, fixkey_t id, float* pval)
 {
     union_dtype_t data;
     data.i64 = _ztl_find_data(fixapi, id);
-    if (data.i64 != ZTL_MAP_INVALID_VALUE)
-    {
+    if (data.i64 != ZTL_MAP_INVALID_VALUE) {
         *pval = data.f32;
         return 0;
     }
@@ -231,8 +241,7 @@ int ztl_fixapi_get_double(ztl_fixapi_t* fixapi, fixkey_t id, double* pval)
 {
     union_dtype_t data;
     data.i64 = _ztl_find_data(fixapi, id);
-    if (data.i64 != ZTL_MAP_INVALID_VALUE)
-    {
+    if (data.i64 != ZTL_MAP_INVALID_VALUE) {
         *pval = data.f64;
         return 0;
     }
@@ -243,8 +252,7 @@ int ztl_fixapi_get_str(ztl_fixapi_t* fixapi, fixkey_t id, char* pval, int* plen)
 {
     union_dtype_t data;
     data.i64 = _ztl_find_data(fixapi, id);
-    if (data.i64 != ZTL_MAP_INVALID_VALUE)
-    {
+    if (data.i64 != ZTL_MAP_INVALID_VALUE) {
         *plen = (int)strlen((char*)data.ptr);
         memcpy(pval, data.ptr, *plen);
         return 0;
@@ -256,8 +264,7 @@ int ztl_fixapi_get_value(ztl_fixapi_t* fixapi, fixkey_t id, void** ppval, int* p
 {
     union_dtype_t data;
     data.i64 = _ztl_find_data(fixapi, id);
-    if (data.i64 != ZTL_MAP_INVALID_VALUE)
-    {
+    if (data.i64 != ZTL_MAP_INVALID_VALUE) {
         *ppval = data.ptr;
         *plen = sizeof(data.ptr);
         return 0;

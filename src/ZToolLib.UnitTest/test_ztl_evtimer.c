@@ -15,12 +15,17 @@ static int trigger_count2 = 0;
 
 static void _test_evt_handler(void* ctx, ztl_rbtree_node_t* node)
 {
+    (void)ctx;
+    (void)node;
     assert(ctx != NULL);
     trigger_count += 1;
 }
 
 static int _test_timer_handler(ztl_evloop_t* evloop, uint64_t timer_id, void* udata)
 {
+    (void)evloop;
+    (void)timer_id;
+    (void)udata;
     assert(udata != NULL);
     trigger_count2 += 1;
     return 0;

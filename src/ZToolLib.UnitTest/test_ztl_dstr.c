@@ -11,17 +11,17 @@ void Test_ztl_dstr(ZuTest* zt)
     size_t cap1, cap2, cap3;
 
     s1 = dstr_new("hello");
-    ZuAssertIntEquals(zt, 5, dstr_length(s1));
+    ZuAssertIntEquals(zt, 5, (int)dstr_length(s1));
 
     s1 = dstr_cat(s1, "world");
-    ZuAssertIntEquals(zt, 10, dstr_length(s1));
+    ZuAssertIntEquals(zt, 10, (int)dstr_length(s1));
     ZuAssertTrue(zt, 0 == strcmp(s1, "helloworld"));
 
     cap1 = dstr_capicity(s1);
     dstr_clear(s1);
     cap2 = dstr_capicity(s1);
-    ZuAssertIntEquals(zt, 0, dstr_length(s1));
-    ZuAssertIntEquals(zt, cap1, cap2);
+    ZuAssertIntEquals(zt, 0, (int)dstr_length(s1));
+    ZuAssertIntEquals(zt, (int)cap1, (int)cap2);
 
     s2 = dstr_new_len("hello", 5);
     cap1 = dstr_capicity(s2);
@@ -31,12 +31,12 @@ void Test_ztl_dstr(ZuTest* zt)
 
     s2 = dstr_cat(s2, "world");
     cap3 = dstr_capicity(s2);
-    ZuAssertIntEquals(zt, 10, dstr_length(s2));
+    ZuAssertIntEquals(zt, 10, (int)dstr_length(s2));
     ZuAssertTrue(zt, 0 == strcmp(s2, "helloworld"));
-    ZuAssertIntEquals(zt, cap2, cap3);
+    ZuAssertIntEquals(zt, (int)cap2, (int)cap3);
 
     s3 = dstr_new_len(NULL, 1000);
     s3 = dstr_cat_printf(s3, "%s%s", "hello", "world");
-    ZuAssertIntEquals(zt, 10, dstr_length(s3));
+    ZuAssertIntEquals(zt, 10, (int)dstr_length(s3));
     ZuAssertTrue(zt, 0 == strcmp(s3, "helloworld"));
 }

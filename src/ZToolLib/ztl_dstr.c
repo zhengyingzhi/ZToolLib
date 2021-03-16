@@ -385,7 +385,7 @@ dstr* dstr_split_len(const char* str, size_t length, const char* sep, size_t sep
     if ((tokens[nelems] = dstr_new_len(str + start, length - start)) == NULL)
         goto SPLIT_ERR;
     ++nelems;
-    *count = nelems;
+    *count = (int)nelems;
     return tokens;
 
 SPLIT_ERR:

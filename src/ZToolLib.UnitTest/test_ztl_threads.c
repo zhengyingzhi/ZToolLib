@@ -15,6 +15,7 @@
 ztl_thread_result_t _test_thread_func(void * args)
 {
     int* p1 = (int*)args;
+    (void)p1;
     assert(*p1 == 1);
     return 0;
 }
@@ -48,11 +49,15 @@ void Test_ztl_thread(ZuTest* zt)
 static void _test_thrpool_work(ztl_thrpool_t* tp, void* arg1, void* arg2)
 {
     int* p1 = (int*)arg1;
+    (void)tp;
+    (void)p1;
+    (void)arg2;
     assert(*p1 == 1);
 }
 
 static void _test_thrpool_free(ztl_thrpool_t* tp, void* arg1)
 {
+    (void)tp;
     if (arg1)
     {
         int* p1 = (int*)arg1;

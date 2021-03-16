@@ -18,5 +18,20 @@
     <ClCompile Include="ZToolLib.Test.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="event_dispatcher_demo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="producer_consumer_demo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="threadpool_demo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="udp_demo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tcp_server_demo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

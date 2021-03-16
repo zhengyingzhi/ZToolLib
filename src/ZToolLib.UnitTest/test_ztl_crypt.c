@@ -71,5 +71,5 @@ void Test_ztl_encrypt(ZuTest* zt)
     int  rawlen2 = sizeof(rawdata2);
     ztl_aes_decrypt(key, encryptdata, (int)strlen(encryptdata), rawdata2, &rawlen2);
     ZuAssertTrue(zt, 0 == strcmp(rawdata, rawdata2));
-    ZuAssertTrue(zt, strlen(rawdata) == rawlen2);
+    ZuAssertTrue(zt, (int)strlen(rawdata) == rawlen2);
 }

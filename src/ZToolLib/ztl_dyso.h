@@ -2,14 +2,22 @@
 #define _ZTL_DYNAMIC_SO_H_
 
 /// exported types
-typedef struct ztl_dso_handle_st ztl_dso_handle_t;
+typedef struct  ztl_dso_handle_st ztl_dso_handle_t;
+typedef void*   ztl_hlib_t;
+
+struct ztl_dso_handle_st
+{
+    ztl_hlib_t hlib;
+    char path[1000];
+};
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /// load a DSO library.
-ztl_dso_handle_t* ztl_dso_load(const char* libpath);
+int ztl_dso_load(ztl_dso_handle_t* dso, const char* libpath, int flags);
 
 /// close the DSO library.
 void ztl_dso_unload(ztl_dso_handle_t* dso);

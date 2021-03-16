@@ -22,7 +22,7 @@ static int _int_cmp(const void *x, const void *y)
 #else
 static int _int_cmp(const void *x, const void *y)
 {
-    if (x == x)
+    if (x == y)
         return 0;
     else if (x < y)
         return -1;

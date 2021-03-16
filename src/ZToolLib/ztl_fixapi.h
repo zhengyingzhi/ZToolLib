@@ -19,14 +19,17 @@ typedef struct ztl_fixapi_s ztl_fixapi_t;
 
 /* exported interfaces
  */
-ztl_fixapi_t* ztl_fixapi_create();
+ztl_fixapi_t* ztl_fixapi_create(uint32_t head_size);
 
 void ztl_fixapi_release(ztl_fixapi_t* fixapi);
 
 void ztl_fixapi_clear(ztl_fixapi_t* fixapi);
 
 char* ztl_fixapi_data(ztl_fixapi_t* fixapi);
-int ztl_fixapi_length(ztl_fixapi_t* fixapi);
+char* ztl_fixapi_data_kv(ztl_fixapi_t* fixapi);
+
+uint32_t ztl_fixapi_length(ztl_fixapi_t* fixapi);
+uint32_t ztl_fixapi_length_kv(ztl_fixapi_t* fixapi);
 
 void ztl_fixapi_setbuffer(ztl_fixapi_t* fixapi, char* buffer, int size);
 

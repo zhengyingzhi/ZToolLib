@@ -43,4 +43,9 @@ LIBS += -L$${DESTDIR} -lztoollib$${BuildSuff} -lpthread -lm -lrt -ldl
 
 # Input
 HEADERS += 
-SOURCES += ZToolLib.Test.c
+SOURCES += ZToolLib.Test.c \
+    event_dispatcher_demo.c \
+    producer_consumer_demo.c \
+    tcp_server_demo.c \
+    threadpool_demo.c \
+    udp_demo.c

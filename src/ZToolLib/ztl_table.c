@@ -50,7 +50,7 @@ struct table_node_st {
 struct table_iter_st {
     table_t         table;
     int32_t         i;
-    uint32_t        index;
+    int32_t         index;
     int32_t         safe;
     table_node_t    curr;
     table_node_t    next;
@@ -239,12 +239,13 @@ table_node_t table_next(table_iter_t iter)
     {
         if (iter->curr == NULL)
         {
-            table_intl_t *tip = &iter->table->ti[iter->i];
+            table_intl_t* tip;
+            tip = &iter->table->ti[iter->i];
 
             if (iter->safe && iter->i == 0 && iter->index == -1)
                 ++iter->table->iterators;
             ++iter->index;
-            if (iter->index >= tip->size)
+            if (iter->index >= (int32_t)tip->size)
             {
                 if (iter->table->rehashidx != -1 && iter->i == 0)
                 {
@@ -277,7 +278,7 @@ void table_iter_free(table_iter_t *tip)
 {
     if (tip == NULL || *tip == NULL)
         return;
-    if ((*tip)->safe && !((*tip)->i == 0 && (int)(*tip)->index == -1))
+    if ((*tip)->safe && !((*tip)->i == 0 && (*tip)->index == -1))
         --(*tip)->table->iterators;
     FREE(*tip);
 }
