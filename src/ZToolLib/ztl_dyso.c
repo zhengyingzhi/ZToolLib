@@ -35,7 +35,7 @@ static void* symbol_lib(ztl_hlib_t hlib, const char* symname)
 static ztl_hlib_t load_lib(const char* path, int flags)
 {
     if (flags == 0)
-        flags = RTLD_LAZY | RTLD_LOCAL
+        flags = RTLD_LAZY | RTLD_LOCAL;
     return dlopen(path, flags);
 }
 static void unload_lib(ztl_hlib_t hlib)
