@@ -1,9 +1,18 @@
 #include <stdlib.h>
+
+#ifdef _MSC_VER
+#include <Windows.h>
+#endif
+
+#include "ztl_atomic.h"
+#include "ztl_errors.h"
 #include "ztl_evtimer.h"
 
 
 void ztl_evtimer_init(ztl_evtimer_t* et)
 {
+    et->last_time = 0;
+    et->count = 0;
     ztl_rbtree_init(&et->event_timers, &et->event_timer_sentinel, 
                     ztl_rbtree_insert_timer_value);
 }
@@ -20,7 +29,7 @@ int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer,
     ztl_msec_int_t  diff;
 
     if (timeout_ms == 0) {
-        return -1;
+        return ZTL_ERR_InvalParam;
     }
 
     /* Currently no lock, since event timer is only working at IO thread */
@@ -45,12 +54,14 @@ int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer,
 
     timer->key = key;
     ztl_rbtree_insert(&et->event_timers, timer);
+    ztl_atomic_add(&et->count, 1);
     return 0;
 }
 
 int ztl_evtimer_del(ztl_evtimer_t* et, ztl_rbtree_node_t* timer)
 {
     ztl_rbtree_delete(&et->event_timers, timer);
+    ztl_atomic_dec(&et->count, 1);
 
 #if defined(ZTL_DEBUG)
     timer->left = 0;
@@ -59,6 +70,29 @@ int ztl_evtimer_del(ztl_evtimer_t* et, ztl_rbtree_node_t* timer)
 #endif
 
     return 0;
+}
+
+ztl_rbtree_node_t* ztl_evtimer_min(ztl_evtimer_t* et)
+{
+    ztl_rbtree_node_t* root;
+    root = et->event_timers.root;
+    if (root == et->event_timers.sentinel) {
+        return NULL;
+    }
+
+    return ztl_rbtree_min(root, et->event_timers.sentinel);
+}
+
+ztl_msec_int_t ztl_evtimer_min_ms(ztl_evtimer_t* et, uint64_t currtime)
+{
+    ztl_rbtree_node_t* node;
+    node = ztl_evtimer_min(et);
+    if (node) {
+        if (currtime == 0)
+            currtime = et->last_time;
+        return (ztl_msec_int_t)(node->key - et->last_time);
+    }
+    return -1;
 }
 
 int ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime,
@@ -74,7 +108,7 @@ int ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime,
 
         root = et->event_timers.root;
         if (root == sentinel) {
-            return -1;
+            return ZTL_ERR_Empty;
         }
 
         node = ztl_rbtree_min(root, sentinel);

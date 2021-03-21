@@ -1,8 +1,3 @@
-/*
-* Copyright(C) Yingzhi Zheng.
-* Copyright(C) <zhengyingzhi112@163.com>
-*/
-
 #ifndef _ZTL_PROTOCOL_H_
 #define _ZTL_PROTOCOL_H_
 
@@ -12,23 +7,22 @@
 extern "C" {
 #endif//__cplusplus
 
-#pragma pack(push , 1)
+#pragma pack(push, 1)
 
 /* ztl protocol header
- * 16 bytes
+ * 8 bytes
  */
 struct ZHeader
 {
-    uint16_t m_StartType;
-    uint16_t m_Version;
-    uint32_t m_PayloadLength;
-    uint16_t m_Type;
-    uint16_t m_Flags;
-    uint32_t m_SessionKey;
+    uint16_t type;
+    uint16_t version;
+    uint32_t length;
 };
 
 #pragma pack(pop)
 
+/* the protocol body */
+#define ZPROTO_BODY(head)       ((struct ZHeader*)(head) + 1)
 
 
 #ifdef __cplusplus

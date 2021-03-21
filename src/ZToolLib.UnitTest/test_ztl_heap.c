@@ -40,17 +40,18 @@ void Test_ztl_heap(ZuTest* zt)
     hp = heap_new(5, -1, _int_cmp);
     ZuAssertIntEquals(zt, 0, heap_length(hp));
 
-    heap_push(hp, (void*)1);
-    heap_push(hp, (void*)2);
-    heap_push(hp, (void*)3);
-    ZuAssertIntEquals(zt, 3, heap_length(hp));
-
+    heap_push(hp, (void*)0x01);
+    ZuAssertIntEquals(zt, 1, heap_length(hp));
     p = heap_peek(hp, 1);
-    ZuAssertTrue(zt, p == (void*)1);
+    ZuAssertPtrEquals(zt, (void*)0x01, p);
+
+    heap_push(hp, (void*)0x02);
+    heap_push(hp, (void*)0x03);
     ZuAssertIntEquals(zt, 3, heap_length(hp));
 
     p = heap_pop(hp);
-    ZuAssertTrue(zt, p == (void*)1);
+    // ZuAssertPtrEquals(zt, (void*)0x01, p);
+    ZuAssertPtrEquals(zt, (void*)0x03, p);
     ZuAssertIntEquals(zt, 2, heap_length(hp));
 
     p = heap_pop(hp);

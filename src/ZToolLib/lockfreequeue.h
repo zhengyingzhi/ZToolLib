@@ -1,8 +1,3 @@
-/*
- * Copyright (C) Yingzhi Zheng
- * Copyright (C) <zhengyingzhi112@163.com>
- */
-
 #ifndef _LOCK_FREE_QUEUE_H_
 #define _LOCK_FREE_QUEUE_H_
 
@@ -40,7 +35,7 @@ lfqueue_t* lfqueue_create2(uint32_t quesize, uint32_t elemsize, void* memory, in
 
 /* @brief  push an element's pointer at the tail of the queue
  * @param  the element to insert in the queue
- * @return 0 if the element was inserted in the queue. -1 if the queue was full
+ * @return 0 if the element was inserted in the queue. other if the queue was full
  * @note   element size was specified when 'lfqueue_create',
  *         and the queue internally will do a copy of pdata (no keep the pointer)
  *         use 'lfqueue_pop' to retrieve elem
@@ -50,12 +45,13 @@ int lfqueue_push(lfqueue_t* que, const void* pdata);
 /* @brief  pop an element's address pointer from the queue at the head
  * @param  the element to pop out, output the elem's address
  * @return 0 if the element was successfully extracted from the queue. 
- *          -1 if the queue was empty
+ *          other if the queue was empty
  * @note   must reserve at least elemsize space for pdata
  */
 int lfqueue_pop(lfqueue_t* que, void** ppdata);
 
 /* @brief  get the data of the queue head
+ * @return 0 is success
  */
 int lfqueue_head(lfqueue_t* que, void** ppdata);
 

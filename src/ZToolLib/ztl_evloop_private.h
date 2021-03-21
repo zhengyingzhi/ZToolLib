@@ -16,8 +16,8 @@
 #define ZTL_DEF_POLL_TIMEOUT_MS     200
 #define ZTL_DEF_CONN_INIT_COUNT     256
 
-typedef struct ztl_event_ops ztl_event_ops_t;
-typedef struct ztl_timer_event_st ztl_timer_event_t;
+typedef struct ztl_event_ops        ztl_event_ops_t;
+typedef struct ztl_timer_event_st   ztl_timer_event_t;
 
 typedef struct ztl_fired_event_st {
     sockhandle_t    fd;
@@ -45,14 +45,19 @@ struct ztl_evloop_st
     void*               userdata;
     sockhandle_t        listen_fd;  // will be removed
 
+    ztl_timer_event_t*  idle_timers;
+    ztl_timer_event_t*  work_timers;
     ztl_evtimer_t       timers;
     uint64_t            timepoint;
+    uint32_t            timer_count;
 
     int                 event_size;
     ztl_fired_event_t*  fired_events;
+#ifdef _MSC_VER
     ztl_connection_t**  connections;  // FIXME: use a hash table?
-    ztl_timer_event_t*  idle_timers;
-    ztl_timer_event_t*  work_timers;
+#else
+    ztl_connection_t**  connections;
+#endif//_MSC_VER
     ztl_thread_mutex_t  lock;
     int                 io_thread_id;
 
@@ -84,7 +89,7 @@ int ztl_do_send(ztl_connection_t* conn);
 ztl_connection_t* ztl_do_accept(ztl_evloop_t* evloop, sockhandle_t listenfd);
 
 ztl_timer_event_t* ztl_timer_node_new(ztl_evloop_t* evloop);
-ztl_timer_event_t* ztl_timer_node_get(ztl_evloop_t* evloop, uint64_t timer_id);
+ztl_timer_event_t* ztl_timer_node_find(ztl_evloop_t* evloop, uint64_t timer_id);
 int ztl_timer_node_save(ztl_evloop_t* evloop, ztl_timer_event_t* node);
 int ztl_timer_node_free(ztl_evloop_t* evloop, ztl_timer_event_t* node);
 int ztl_timer_node_free_all(ztl_evloop_t* evloop);

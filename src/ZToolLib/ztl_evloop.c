@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "ztl_atomic.h"
+#include "ztl_errors.h"
 #include "ztl_evloop_private.h"
 #include "ztl_network.h"
 #include "ztl_mem.h"
@@ -51,7 +52,7 @@ static int _pipe_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int event
     (void)evloop;
     (void)conn;
     (void)events;
-	fprintf(stderr, "_pipe_handler\n");
+    fprintf(stderr, "_pipe_handler\n");
     return 0;
 }
 
@@ -63,12 +64,13 @@ int ztl_evloop_create(ztl_evloop_t** pevloop, int size)
 
     evops = _event_ops_provider(ZTL_EPM_Default);
     if (!evops) {
-        return -1;  // enot support
+        return ZTL_ERR_NotImpl;
     }
 
     evloop = (ztl_evloop_t*)ALLOC(sizeof(ztl_evloop_t));
     if (!evloop) {
         *pevloop = NULL;
+        return ZTL_ERR_AllocFailed;
     }
 
     memset(evloop, 0, sizeof(ztl_evloop_t));
@@ -98,25 +100,10 @@ int ztl_evloop_create(ztl_evloop_t** pevloop, int size)
 int ztl_evloop_init(ztl_evloop_t* evloop)
 {
     int rv;
-    sockhandle_t pipe_fd0;
-
+    // ztl_evloop_make_pipes(evloop);
     rv = evloop->evops->init(&evloop->evops_ctx);
     if (rv != 0) {
         return rv;
-    }
-
-    pipe_fd0 = evloop->pipe_fd[0];
-    if (pipe_fd0 == INVALID_SOCKET || pipe_fd0 == 0)
-    {
-        sockhandle_t pipefds[2];
-        make_sockpair(pipefds, AF_INET);
-        set_closeonexec(pipefds[0]);
-        set_closeonexec(pipefds[1]);
-
-        evloop->pipe_fd[0] = pipefds[0];
-        evloop->pipe_fd[1] = pipefds[1];
-
-        ztl_evloop_add(evloop, pipefds[1], ZEV_POLLIN, _pipe_handler, NULL);
     }
 
     return rv;
@@ -138,17 +125,36 @@ int ztl_evloop_stop(ztl_evloop_t* evloop)
     return rv;
 }
 
+int ztl_evloop_make_pipes(ztl_evloop_t* evloop)
+{
+    sockhandle_t pipe_fd0;
+    pipe_fd0 = evloop->pipe_fd[0];
+    if (!IS_VALID_SOCKET(pipe_fd0))
+    {
+        sockhandle_t pipefds[2];
+        make_sockpair(pipefds, AF_INET);
+        set_closeonexec(pipefds[0]);
+        set_closeonexec(pipefds[1]);
+
+        evloop->pipe_fd[0] = pipefds[0];
+        evloop->pipe_fd[1] = pipefds[1];
+
+        return ztl_evloop_add(evloop, pipefds[1], ZEV_POLLIN, _pipe_handler, NULL);
+    }
+    return 0;
+}
+
 int ztl_evloop_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents,
                    ztl_ev_handler_t handler, void* udata)
 {
     int rv;
     ztl_connection_t* conn;
 
-    if (fd > evloop->event_size)
+    if ((int)fd > evloop->event_size)
     {
         fprintf(stderr, "evloop_add fd:%d>size:%d\n", (int)fd, evloop->event_size);
         errno = ERANGE;
-        return -1;
+        return ZTL_ERR_OutOfRange;
     }
 
     conn = ztl_connection_find(evloop, fd);
@@ -167,7 +173,7 @@ int ztl_evloop_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents,
     conn->userdata = udata;
 
     rv = evloop->evops->add(evloop->evops_ctx, fd, reqevents, conn->events);
-    if (rv == -1) {
+    if (rv < 0) {
         return rv;
     }
 
@@ -237,7 +243,7 @@ int ztl_evloop_release(ztl_evloop_t* evloop)
     ztl_connection_t* conn;
 
     if (!evloop) {
-        return -1;
+        return ZTL_ERR_NotCreated;
     }
 
     if (evloop->running == 0) {
@@ -277,7 +283,7 @@ void ztl_evloop_set_usedata(ztl_evloop_t* evloop, void* userdata)
     evloop->userdata = userdata;
 }
 
-
+//////////////////////////////////////////////////////////////////////////
 int ztl_connection_free(ztl_connection_t* conn)
 {
     uint32_t refcount;
@@ -287,8 +293,7 @@ int ztl_connection_free(ztl_connection_t* conn)
     }
 
     conn->events = ZEV_NONE;
-    if (conn->fd != INVALID_SOCKET && conn->fd != 0)
-    {
+    if (IS_VALID_SOCKET(conn->fd)) {
         ztl_connection_remove(conn->evloop, conn->fd);
     }
 
@@ -414,7 +419,7 @@ int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id)
 {
     int safe, rv;
     ztl_timer_event_t* timer;
-    timer = ztl_timer_node_get(evloop, timer_id);
+    timer = ztl_timer_node_find(evloop, timer_id);
     if (!timer) {
         return -1;
     }
@@ -453,4 +458,9 @@ int ztl_evloop_expire(ztl_evloop_t* evloop, uint64_t currtime)
     if (!safe)
         ztl_thread_mutex_unlock(&evloop->lock);
     return ms_left;
+}
+
+uint32_t ztl_evloop_timer_count(ztl_evloop_t* evloop)
+{
+    return ztl_atomic_add(&evloop->timers.count, 0);
 }

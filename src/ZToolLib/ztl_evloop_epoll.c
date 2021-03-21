@@ -2,13 +2,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ztl_atomic.h"
+#include "ztl_errors.h"
 #include "ztl_evloop_private.h"
 #include "ztl_evtimer.h"
 #include "ztl_network.h"
-#include "ztl_utils.h"
 #include "ztl_mempool.h"
-#include "ztl_atomic.h"
 #include "ztl_threads.h"
+#include "ztl_utils.h"
 
 
 #ifdef __linux__
@@ -53,15 +54,13 @@ static int epoll_init(void** evops_ctx)
 {
     epoll_ctx_t* lpctx;
     lpctx = (epoll_ctx_t*)malloc(sizeof(epoll_ctx_t));
-    if (!lpctx)
-    {
-        return -1;
+    if (!lpctx) {
+        return ZTL_ERR_AllocFailed;
     }
 
     memset(lpctx, 0, sizeof(epoll_ctx_t));
     lpctx->epfd = epoll_create(1024);
-    if (lpctx->epfd < 0)
-    {
+    if (lpctx->epfd < 0) {
         return -1;
     }
 
@@ -73,8 +72,7 @@ static int epoll_destroy(void* evops_ctx)
 {
     epoll_ctx_t* lpctx;
     lpctx = (epoll_ctx_t*)evops_ctx;
-    if (lpctx)
-    {
+    if (lpctx) {
         close(lpctx->epfd);
         free(lpctx);
     }

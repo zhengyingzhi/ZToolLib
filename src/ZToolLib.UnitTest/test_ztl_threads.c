@@ -82,6 +82,6 @@ void Test_ztl_threadpool(ZuTest* zt)
 
     sleepms(10);
     ztl_thrpool_stop(tp);
-    ztl_thrpool_join(tp);
+    ztl_thrpool_join(tp, -1);
     ztl_thrpool_release(tp);
 }

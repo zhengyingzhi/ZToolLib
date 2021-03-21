@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ztl_errors.h"
 #include "ztl_network.h"
 
 
@@ -30,6 +31,7 @@ void net_cleanup()
 static char win_err_buf[64] = "";
 const char* get_strerror(int no)
 {
+    // also see winerror.h
     switch (no)
     {
     case WSAEINTR:          return "WSAEINTR";
@@ -46,6 +48,10 @@ const char* get_strerror(int no)
     case WSAECONNRESET:     return "WSAECONNRESET";
     case WSAENOBUFS:        return "WSAENOBUFS";
     case WSAETIMEDOUT:      return "WSAETIMEDOUT";
+    case WSAECONNREFUSED:   return "WSAECONNREFUSED";
+    case WSASYSNOTREADY:    return "WSASYSNOTREADY";
+    case WSAVERNOTSUPPORTED:return "WSAVERNOTSUPPORTED";
+    case WSANOTINITIALISED: return "WSANOTINITIALISED";
     default:
         return strerror(no);
         // sprintf(win_err_buf, "Unknown:%d", no);
@@ -126,7 +132,7 @@ sockhandle_t create_socket(int socktype)
 
 void close_socket(sockhandle_t sockfd)
 {
-    if (sockfd != INVALID_SOCKET && sockfd != 0)
+    if (IS_VALID_SOCKET(sockfd))
     {
 #ifdef _MSC_VER
         closesocket(sockfd);
@@ -138,7 +144,10 @@ void close_socket(sockhandle_t sockfd)
 
 int shutdown_socket(sockhandle_t sockfd, int how)
 {
-    return shutdown(sockfd, how);
+    if (IS_VALID_SOCKET(sockfd)) {
+        return shutdown(sockfd, how);
+    }
+    return ZTL_ERR_BadFD;
 }
 
 int set_nonblock(sockhandle_t sockfd, bool on)
@@ -268,7 +277,7 @@ int set_snd_timeout(sockhandle_t sockfd, int timeout_ms)
 int get_ipport(char* ip, int size, uint16_t* port, const struct sockaddr_in* psa)
 {
     if (!psa) {
-        return -1;
+        return ZTL_ERR_InvalParam;
     }
 
     if (ip)
@@ -302,7 +311,7 @@ int make_sockaddr(struct sockaddr_in* psa, const char* ip, uint16_t port)
 uint32_t string_to_inetaddr(const char* ip)
 {
     struct in_addr lAddr;
-    if (ip == NULL || strlen(ip) == 0) {
+    if (ip == NULL || *ip == '\0') {
         lAddr.s_addr = htonl(INADDR_ANY);
     }
     else {
@@ -348,8 +357,8 @@ int get_socket_error(sockhandle_t sockfd, int* perror)
 
 int tcp_msg_peek(sockhandle_t sockfd, char* buf, int len)
 {
-    if (sockfd == INVALID_SOCKET)
-        return -1;
+    if (!IS_VALID_SOCKET(sockfd))
+        return ZTL_ERR_BadFD;
 
     int rv = 0;
     rv = recv(sockfd, buf, len, MSG_PEEK);
@@ -516,8 +525,8 @@ int tcp_listen(sockhandle_t listenfd, const char* ip, uint16_t port,
                bool reuse, int backlog/* = SOMAXCONN*/)
 {
     int rv = 0;
-    if (listenfd < 0) {
-        return -1;
+    if (!IS_VALID_SOCKET(listenfd)) {
+        return ZTL_ERR_BadFD;
     }
 
     set_reuseaddr(listenfd, reuse);
@@ -547,6 +556,9 @@ sockhandle_t tcp_listen_ex(const char* bindip, uint16_t port, bool nonblock, boo
     int rv;
     sockhandle_t fd;
     fd = create_socket(SOCK_STREAM);
+    if (!IS_VALID_SOCKET(fd)) {
+        return ZTL_ERR_BadFD;
+    }
 
     if (nonblock)
         set_nonblock(fd, 1);
@@ -680,7 +692,7 @@ sockhandle_t udp_receiver(const char* localip, uint16_t localport, bool reuseadd
     int rv = 0;
     sockhandle_t fd;
     fd = create_socket(SOCK_DGRAM);
-    if (fd == INVALID_SOCKET || fd == 0) {
+    if (!IS_VALID_SOCKET(fd)) {
         return -1;
     }
 
@@ -692,8 +704,7 @@ sockhandle_t udp_receiver(const char* localip, uint16_t localport, bool reuseadd
     struct sockaddr_in laddr;
     memset(&laddr, 0, sizeof laddr);
     make_sockaddr(&laddr, localip, localport);
-    if ((rv = bind(fd, (struct sockaddr*)&laddr, sizeof laddr)) < 0)
-    {
+    if ((rv = bind(fd, (struct sockaddr*)&laddr, sizeof laddr)) < 0) {
         close_socket(fd);
         return rv;
     }
@@ -702,8 +713,8 @@ sockhandle_t udp_receiver(const char* localip, uint16_t localport, bool reuseadd
 
 int udp_recv(sockhandle_t sockfd, char* buf, int size, struct sockaddr_in* fromaddr, int timeoutms)
 {
-    if (sockfd == INVALID_SOCKET)
-        return -1;
+    if (!IS_VALID_SOCKET(sockfd))
+        return ZTL_ERR_BadFD;
 
     socklen_t addrlen;
     struct timeval* ptv = NULL;
@@ -793,8 +804,8 @@ int make_sockpair(sockhandle_t sockfds[], int type)
     newfd = -1;
 
     lsock = socket(AF_INET, type, 0);
-    if (lsock < 0) {
-        return -1;
+    if (!IS_VALID_SOCKET(lsock)) {
+        return ZTL_ERR_BadFD;
     }
 
     // bind to port 0

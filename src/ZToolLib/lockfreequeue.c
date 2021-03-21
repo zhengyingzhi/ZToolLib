@@ -5,6 +5,7 @@
 
 #include "lockfreequeue.h"
 #include "ztl_atomic.h"
+#include "ztl_errors.h"
 #include "ztl_utils.h"
 
 #ifdef _MSC_VER
@@ -101,14 +102,14 @@ lfqueue_t* lfqueue_create(uint32_t quesize, uint32_t elemsize)
     int64_t     memsize;
 
     que = (lfqueue_t*)malloc(sizeof(lfqueue_t));
-    if (que == NULL) {
+    if (!que) {
         return NULL;
     }
     memset(que, 0, sizeof(lfqueue_t));
 
     memsize = lfqueue_memory_size(quesize, elemsize);
     addr = (char*)calloc(1, (size_t)memsize);
-    if (addr == NULL) {
+    if (!addr) {
         free(que);
         return NULL;
     }
@@ -130,7 +131,7 @@ lfqueue_t* lfqueue_create2(uint32_t quesize, uint32_t elemsize, void* memory, in
     }
 
     que = (lfqueue_t*)malloc(sizeof(lfqueue_t));
-    if (que == NULL) {
+    if (!que) {
         return NULL;
     }
     memset(que, 0, sizeof(lfqueue_t));
@@ -151,14 +152,13 @@ int lfqueue_push(lfqueue_t* que, const void* pdata)
     uint32_t curReadIndex;
 
     // find the index to be inserted to
-    do
-    {
+    do {
         curWriteIndex = *que->wtindex;
         curReadIndex = *que->rdindex;
 
         // if queue is full
         if (TO_INDEX(curWriteIndex + 1, que->size) == curReadIndex)
-            return -1;
+            return ZTL_ERR_QueueFull;
     } while (!ztl_atomic_cas(que->wtindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size)));
 
     // save the data pointer since the current write index is reserved for us
@@ -169,8 +169,7 @@ int lfqueue_push(lfqueue_t* que, const void* pdata)
     // It wouldn't fail if there is only one producer thread intserting data into the queue.
     // It will failed once more than 1 producer threads because
     // the maxReadIndex_ should be done automic as the previous CAS
-    while (!ztl_atomic_cas(que->maxreadindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size)))
-    {
+    while (!ztl_atomic_cas(que->maxreadindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size))) {
         ztl_sched_yield();
     }
     return 0;
@@ -195,7 +194,7 @@ int lfqueue_pop(lfqueue_t* que, void** ppdata)
         // a producer thread has occupied space in the queue,
         // but is waiting to commit the data into it
         if (curReadIndex == curMaxReadIndex)
-            return -1;
+            return ZTL_ERR_Empty;
 
         // retrieve the data pointer from the queue
         srcaddr = que->arrdata + que->eltsize * curReadIndex;
@@ -227,7 +226,7 @@ int lfqueue_head(lfqueue_t* que, void** ppdata)
 
     // empty or not
     if (curReadIndex == curMaxReadIndex) {
-        return -1;
+        return ZTL_ERR_Empty;
     }
 
     // retrieve the data pointer from the queue
@@ -266,7 +265,7 @@ uint32_t lfqueue_elem_size(lfqueue_t* que)
 
 bool lfqueue_empty(lfqueue_t* que)
 {
-    if (que == NULL)
+    if (!que)
         return true;
     return (*que->wtindex == *que->rdindex) ? true : false;
 }

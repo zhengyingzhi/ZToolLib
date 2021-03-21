@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "ztl_common.h"
+#include "ztl_errors.h"
 #include "ztl_evloop.h"
 #include "ztl_network.h"
 #include "ztl_tcp_server.h"
@@ -88,8 +89,8 @@ static int _accept_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int eve
     for (;;)
     {
         ns = tcp_accept(tcpsvr->listenfd, &from_addr);
-        if (ns == INVALID_SOCKET || ns == 0) {
-            return -1;
+        if (!IS_VALID_SOCKET(ns)) {
+            return ZTL_ERR_BadFD;
         }
 
         get_ipport(from_ip, sizeof(from_ip) - 1, &from_port, &from_addr);
@@ -99,7 +100,6 @@ static int _accept_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int eve
         set_nonblock(ns, true);
         set_tcp_keepalive(ns, true);
 
-        // add-in
         ztl_evloop_add(evloop, ns, ZEV_POLLIN, _read_handler, tcpsvr);
     }
 
@@ -129,6 +129,9 @@ int ztl_tcp_server_create(ztl_tcp_server_t** ptcpsvr)
     ztl_tcp_server_t* tcpsvr;
 
     tcpsvr = (ztl_tcp_server_t*)malloc(sizeof(ztl_tcp_server_t));
+    if (!tcpsvr) {
+        return ZTL_ERR_AllocFailed;
+    }
     memset(tcpsvr, 0, sizeof(ztl_tcp_server_t));
 
     *ptcpsvr = tcpsvr;
@@ -138,7 +141,7 @@ int ztl_tcp_server_create(ztl_tcp_server_t** ptcpsvr)
 int ztl_tcp_server_release(ztl_tcp_server_t* tcpsvr)
 {
     if (!tcpsvr) {
-        return -1;
+        return ZTL_ERR_NullType;
     }
 
     if (tcpsvr->evloop) {
@@ -157,7 +160,7 @@ int ztl_tcp_server_init(ztl_tcp_server_t* tcpsvr, ztl_tcp_server_config_t* confi
     ztl_evloop_t*   evloop;
 
     if (tcpsvr->inited) {
-        return -1;
+        return ZTL_ERR_NotInited;
     }
     tcpsvr->inited = 1;
 
@@ -168,15 +171,15 @@ int ztl_tcp_server_init(ztl_tcp_server_t* tcpsvr, ztl_tcp_server_config_t* confi
 
     memcpy(&tcpsvr->svrconf, config, sizeof(ztl_tcp_server_config_t));
 
-    if (config->listen_fd == 0 || config->listen_fd == INVALID_SOCKET)
+    if (!IS_VALID_SOCKET(config->listen_fd))
     {
         listenfd = tcp_listen_ex(config->listen_ip, config->listen_port,
             config->reuse_addr, config->tcp_nodelay);
-        if (listenfd < 0)
+        if (!IS_VALID_SOCKET(listenfd))
         {
             fprintf(stderr, "ztl_tcp_server_init listen failed at %s:%d\n",
                     config->listen_ip, config->listen_port);
-            return rv;
+            return ZTL_ERR_BadFD;
         }
         tcpsvr->listenfd = listenfd;
     }
@@ -195,16 +198,16 @@ int ztl_tcp_server_init(ztl_tcp_server_t* tcpsvr, ztl_tcp_server_config_t* confi
 int ztl_tcp_server_start(ztl_tcp_server_t* tcpsvr)
 {
     if (tcpsvr->running) {
-        return 1;
+        return ZTL_ERR_AlreadyRunning;
     }
     tcpsvr->running = 1;
 
-    if (!tcpsvr->evloop)
-    {
-        return -1;
+    if (!tcpsvr->evloop) {
+        return ZTL_ERR_NotCreated;
     }
 
-    ztl_evloop_add(tcpsvr->evloop, tcpsvr->listenfd, ZEV_POLLIN, _accept_handler, tcpsvr);
+    ztl_evloop_add(tcpsvr->evloop, tcpsvr->listenfd,
+        ZEV_POLLIN, _accept_handler, tcpsvr);
     ztl_evloop_start(tcpsvr->evloop);
 
     ztl_thread_create(&tcpsvr->thd, NULL, _tcp_server_thread_func, tcpsvr);
@@ -215,16 +218,16 @@ int ztl_tcp_server_start(ztl_tcp_server_t* tcpsvr)
 int ztl_tcp_server_start_no_thread(ztl_tcp_server_t* tcpsvr)
 {
     if (tcpsvr->running) {
-        return 1;
+        return ZTL_ERR_AlreadyRunning;
     }
     tcpsvr->running = 1;
 
-    if (!tcpsvr->evloop)
-    {
-        return -1;
+    if (!tcpsvr->evloop) {
+        return ZTL_ERR_NotCreated;
     }
 
-    ztl_evloop_add(tcpsvr->evloop, tcpsvr->listenfd, ZEV_POLLIN, _accept_handler, tcpsvr);
+    ztl_evloop_add(tcpsvr->evloop, tcpsvr->listenfd,
+        ZEV_POLLIN, _accept_handler, tcpsvr);
     ztl_evloop_start(tcpsvr->evloop);
 
     tcpsvr->thd = 0;
@@ -235,7 +238,7 @@ int ztl_tcp_server_start_no_thread(ztl_tcp_server_t* tcpsvr)
 int ztl_tcp_server_stop(ztl_tcp_server_t* tcpsvr)
 {
     if (!tcpsvr->running) {
-        return 0;
+        return ZTL_ERR_NotRunning;
     }
 
     tcpsvr->running = 0;

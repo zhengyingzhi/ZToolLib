@@ -90,7 +90,7 @@ ztl_timer_event_t* ztl_timer_node_new(ztl_evloop_t* evloop)
     return node;
 }
 
-ztl_timer_event_t* ztl_timer_node_get(ztl_evloop_t* evloop, uint64_t timer_id)
+ztl_timer_event_t* ztl_timer_node_find(ztl_evloop_t* evloop, uint64_t timer_id)
 {
     ztl_timer_event_t* node;
     node = evloop->work_timers;

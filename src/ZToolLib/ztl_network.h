@@ -1,8 +1,3 @@
-/*
- * Copyright (C) Yingzhi Zheng.
- * Copyright (C) <zhengyingzhi112@163.com>
- */
-
 #ifndef _ZTL_NETWORK_H_
 #define _ZTL_NETWORK_H_
 
@@ -55,6 +50,8 @@ typedef struct iovec    EIOVEC;
 #define EIOVEC_LEN      iov_len
 
 #endif//WIN32
+
+#define IS_VALID_SOCKET(fd)     ((fd) != -1 && (fd) != 0)
 
 
 #ifdef __cplusplus

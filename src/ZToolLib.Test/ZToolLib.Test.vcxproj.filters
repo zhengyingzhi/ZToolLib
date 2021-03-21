@@ -33,5 +33,8 @@
     <ClCompile Include="tcp_server_demo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tcp_client_demo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

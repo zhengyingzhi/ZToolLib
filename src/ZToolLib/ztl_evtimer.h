@@ -1,8 +1,3 @@
-/*
- * Copyright(C) Yingzhi Zheng.
- * Copyright(C) <zhengyingzhi112@163.com>
- */
-
 #ifndef _ZTL_EVENT_TIMER_H_
 #define _ZTL_EVENT_TIMER_H_
 
@@ -27,6 +22,7 @@ struct ztl_evtimer_s
     ztl_rbtree_t        event_timers;
     ztl_rbtree_node_t   event_timer_sentinel;
     uint64_t            last_time;
+    uint32_t            count;
 };
 
 /* init the timer container
@@ -44,6 +40,15 @@ int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer,
 
 /* delete the timer from container */
 int ztl_evtimer_del(ztl_evtimer_t* et, ztl_rbtree_node_t* timer);
+
+/* get the mininum timer node
+ */
+ztl_rbtree_node_t* ztl_evtimer_min(ztl_evtimer_t* et);
+
+/* get the mininum timer ms remaining
+ * @param: currtime could be passed 0 means et.last_time
+ */
+ztl_msec_int_t ztl_evtimer_min_ms(ztl_evtimer_t* et, uint64_t currtime);
 
 /* expire timedout timers,
  * @return the nearest time ms left, -1 is none

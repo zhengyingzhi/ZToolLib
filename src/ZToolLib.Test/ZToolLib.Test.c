@@ -24,22 +24,43 @@ void test_char_conv();
 void test_memdb();
 void test_dstr();
 
+extern void tcp_server_demo(int argc, char* argv[]);
+extern void tcp_client_demo(int argc, char* argv[]);
+extern void threadpool_demo(int argc, char* argv[]);
+extern void event_dispatcher_demo(int argc, char* argv[]);
+extern void producer_consumer_demo(int argc, char* argv[]);
+
 
 int main(int argc, char* argv[])
 {
     ZTL_NOTUSED(argc);
     ZTL_NOTUSED(argv);
 
+    net_init();
+
     //test_ztl_config();
     //test_ztl_log();
 
-    test_lfqueue();
+    // test_lfqueue();
     // test_base64();
     // test_read_file();
     // test_char_conv();
 
     // test_memdb();
     // test_dstr();
+
+    if (argc > 2 && strcmp(argv[1], "server") == 0) {
+        tcp_server_demo(argc, argv);
+        return 0;
+    }
+    else if (argc > 2 && strcmp(argv[1], "client") == 0) {
+        tcp_client_demo(argc, argv);
+        return 0;
+    }
+
+    threadpool_demo(argc, argv);
+    event_dispatcher_demo(argc, argv);
+    producer_consumer_demo(argc, argv);
 
     return 0;
 }

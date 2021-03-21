@@ -289,6 +289,7 @@
     <ClInclude Include="ztl_dlist.h" />
     <ClInclude Include="ztl_dstr.h" />
     <ClInclude Include="ztl_dyso.h" />
+    <ClInclude Include="ztl_errors.h" />
     <ClInclude Include="ztl_event_dispatcher.h" />
     <ClInclude Include="ztl_evloop.h" />
     <ClInclude Include="ztl_evloop_private.h" />
@@ -316,6 +317,7 @@
     <ClInclude Include="ztl_shm.h" />
     <ClInclude Include="ztl_simple_event.h" />
     <ClInclude Include="ztl_table.h" />
+    <ClInclude Include="ztl_tcp_client.h" />
     <ClInclude Include="ztl_tcp_server.h" />
     <ClInclude Include="ztl_threadpool.h" />
     <ClInclude Include="ztl_threads.h" />
@@ -372,6 +374,7 @@
     <ClCompile Include="ztl_shm.c" />
     <ClCompile Include="ztl_simple_event.c" />
     <ClCompile Include="ztl_table.c" />
+    <ClCompile Include="ztl_tcp_client.c" />
     <ClCompile Include="ztl_tcp_server.c" />
     <ClCompile Include="ztl_threadpool.c" />
     <ClCompile Include="ztl_threads.c" />

@@ -6,10 +6,11 @@
 
 #include "ztl_evloop_private.h"
 
-#include "ztl_mempool.h"
-#include "ztl_evtimer.h"
-#include "ztl_network.h"
 #include "ztl_atomic.h"
+#include "ztl_errors.h"
+#include "ztl_evtimer.h"
+#include "ztl_mempool.h"
+#include "ztl_network.h"
 #include "ztl_utils.h"
 
 #ifdef _WIN32
@@ -59,7 +60,7 @@ static int select_init(void** evops_ctx)
     select_ctx_t* lpctx;
     lpctx = (select_ctx_t*)malloc(sizeof(select_ctx_t));
     if (!lpctx) {
-        return -1;
+        return ZTL_ERR_AllocFailed;
     }
 
     memset(lpctx, 0, sizeof(select_ctx_t));

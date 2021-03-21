@@ -55,6 +55,7 @@ HEADERS += lockfreequeue.h \
     ztl_dlist.h \
     ztl_dstr.h \
     ztl_dyso.h \
+    ztl_errors.h \
     ztl_event_dispatcher.h \
     ztl_evtimer.h \
     ztl_evloop.h \
@@ -85,6 +86,7 @@ HEADERS += lockfreequeue.h \
     ztl_table.h \
     ztl_threadpool.h \
     ztl_times.h \
+    ztl_tcp_client.h \
     ztl_tcp_server.h \
     ztl_threads.h \
     ztl_unit_test.h \
@@ -135,6 +137,7 @@ SOURCES += lockfreequeue.c \
     ztl_simple_event.c \
     ztl_table.c \
     ztl_threadpool.c \
+    ztl_tcp_client.c \
     ztl_tcp_server.c \
     ztl_threads.c \
     ztl_times.c \

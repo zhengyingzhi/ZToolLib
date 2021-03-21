@@ -303,6 +303,7 @@
   <ItemGroup>
     <ClCompile Include="event_dispatcher_demo.c" />
     <ClCompile Include="producer_consumer_demo.c" />
+    <ClCompile Include="tcp_client_demo.c" />
     <ClCompile Include="tcp_server_demo.c" />
     <ClCompile Include="threadpool_demo.c" />
     <ClCompile Include="udp_demo.c" />

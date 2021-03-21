@@ -9,11 +9,14 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "ztl_common.h"
-#include "ztl_mempool.h"
 #include "ztl_atomic.h"
+#include "ztl_common.h"
+#include "ztl_errors.h"
+#include "ztl_mempool.h"
 #include "ztl_threads.h"
 #include "ztl_threadpool.h"
+#include "ztl_times.h"
+
 
 #ifdef _WIN32
 #include <process.h>
@@ -55,13 +58,36 @@ static void _empty_dispatch_fn(ztl_thrpool_t* tp, void* arg1, void* arg2)
     ZTL_NOTUSED(arg2);
 }
 
-static void _append_task(ztl_thrpool_t* tp, ztl_task_t* task)
+static ztl_task_t* _new_task(ztl_thrpool_t* tp, ztl_dispatch_fn func,
+    void* arg1, void* arg2, ztl_free_fn afree1, ztl_free_fn afree2)
 {
-    if (!tp->head)
+    ztl_task_t* task;
+    task = (ztl_task_t*)ztl_mp_alloc(tp->task_pool);
+    task->next = NULL;
+    task->arg1 = arg1;
+    task->arg2 = arg2;
+    task->func = func;
+    task->afree1 = afree1;
+    task->afree2 = afree2;
+    return task;
+}
+
+static void _append_task(ztl_thrpool_t* tp, ztl_task_t* task, int priority)
+{
+    if (!tp->head) {
         tp->head = task;
-    else
+        tp->tail = task;
+    }
+    else if (priority) {
+        task->next = tp->head;
+        tp->head = task;
+        if (!tp->tail)
+            tp->tail = task;
+    }
+    else {
         tp->tail->next = task;
-    tp->tail = task;
+        tp->tail = task;
+    }
 }
 
 static ztl_task_t* _get_head_task(ztl_thrpool_t* tp)
@@ -122,7 +148,6 @@ static ztl_thread_result_t ZTL_THREAD_CALL _thrpool_worker_thread(void* arg)
         if ((task = _get_task(tp, 100)) == NULL)
             continue;
 
-        // execute actual task
         if (task->func)
             task->func(tp, task->arg1, task->arg2);
 
@@ -134,10 +159,9 @@ static ztl_thread_result_t ZTL_THREAD_CALL _thrpool_worker_thread(void* arg)
     return 0;
 }
 
-static int _create_worker_thread(ztl_thrpool_t* tp)
+static int _create_thrpool_worker_thread(ztl_thrpool_t* tp)
 {
-    if (tp->activenum >= tp->thrnum)
-    {
+    if (tp->activenum >= tp->thrnum) {
         return -1;
     }
 
@@ -176,10 +200,10 @@ ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size)
 
 int ztl_thrpool_start(ztl_thrpool_t* thpool)
 {
-    int n;
+    uint32_t n;
     for (n = 0; n < thpool->thrnum; ++n)
     {
-        if (0 != _create_worker_thread(thpool)) {
+        if (0 != _create_thrpool_worker_thread(thpool)) {
             break;
         }
     }
@@ -192,27 +216,44 @@ int ztl_thrpool_start(ztl_thrpool_t* thpool)
     return 0;
 }
 
-int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* arg1, void* arg2,
-    ztl_free_fn afree1, ztl_free_fn afree2)
+int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func,
+    void* arg1, void* arg2, ztl_free_fn afree1, ztl_free_fn afree2)
 {
     if (thpool->taskn >= thpool->maxsize) {
-        return -1;
+        return ZTL_ERR_QueueFull;
     }
 
     uint32_t    old_taskn;
     ztl_task_t* task;
 
-    task = (ztl_task_t*)ztl_mp_alloc(thpool->task_pool);
-    task->next  = NULL;
-    task->arg1  = arg1;
-    task->arg2  = arg2;
-    task->func  = func;
-    task->afree1= afree1;
-    task->afree2= afree2;
+    task = _new_task(thpool, func, arg1, arg2, afree1, afree2);
 
-    // apend the task at the tail of task list, and try wakeup worker
     ztl_thread_mutex_lock(&thpool->lock);
-    _append_task(thpool, task);
+    _append_task(thpool, task, 0);
+    old_taskn = ztl_atomic_add(&thpool->taskn, 1);
+    ztl_thread_mutex_unlock(&thpool->lock);
+
+    if (old_taskn == 0) {
+        ztl_thread_cond_signal(&thpool->workcond);
+    }
+
+    return 0;
+}
+
+int ztl_thrpool_dispatch_priority(ztl_thrpool_t* thpool, ztl_dispatch_fn func,
+    void* arg1, void* arg2, ztl_free_fn afree1, ztl_free_fn afree2)
+{
+    if (thpool->taskn >= thpool->maxsize) {
+        return ZTL_ERR_QueueFull;
+    }
+
+    uint32_t    old_taskn;
+    ztl_task_t* task;
+
+    task = _new_task(thpool, func, arg1, arg2, afree1, afree2);
+
+    ztl_thread_mutex_lock(&thpool->lock);
+    _append_task(thpool, task, 1);
     old_taskn = ztl_atomic_add(&thpool->taskn, 1);
     ztl_thread_mutex_unlock(&thpool->lock);
 
@@ -225,10 +266,6 @@ int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* arg1
 
 int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func)
 {
-    if (NULL == thpool) {
-        return -1;
-    }
-
     ztl_task_t* task, *nexttask;
 
     nexttask = NULL;
@@ -239,7 +276,6 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func)
         goto REMOVE_END;
     }
 
-    // traverse the task list
     nexttask = task->next;
     while (nexttask)
     {
@@ -267,7 +303,7 @@ REMOVE_END:
         return 0;
     }
 
-    return -1;
+    return ZTL_ERR_NotFound;
 }
 
 void ztl_thrpool_set_data(ztl_thrpool_t* thpool, void* userdata)
@@ -292,13 +328,19 @@ int ztl_thrpool_thrnum(ztl_thrpool_t* thpool)
     return thpool->thrnum;
 }
 
-int ztl_thrpool_join(ztl_thrpool_t* thpool)
+int ztl_thrpool_join(ztl_thrpool_t* thpool, uint32_t timeout_ms)
 {
+    uint64_t curr_time;
     if (thpool == NULL)
         return -1;
 
-    while (ztl_atomic_add(&thpool->activenum, 0) > 0) {
+    curr_time = get_timestamp();
+    while (ztl_atomic_add(&thpool->activenum, 0) > 0)
+    {
         sleepms(1);
+        if (get_timestamp() - curr_time >= timeout_ms) {
+            return ZTL_ERR_Timeout;
+        }
     }
     return 0;
 }
@@ -315,8 +357,6 @@ int ztl_thrpool_stop(ztl_thrpool_t* thpool)
         ztl_thread_cond_signal(&thpool->workcond);
     }
     ztl_thread_cond_broadcast(&thpool->workcond);
-
-    sleepms(1);
     return 0;
 }
 
@@ -352,4 +392,3 @@ int ztl_thrpool_release(ztl_thrpool_t* thpool)
     free(thpool);
     return 0;
 }
-

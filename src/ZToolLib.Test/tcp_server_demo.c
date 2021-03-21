@@ -19,6 +19,20 @@ static int timer_finalizer(ztl_evloop_t* evloop, uint64_t timer_id, void* udata)
     return 0;
 }
 
+static int _tcp_server_ns(ztl_tcp_server_t* tcpsvr, sockhandle_t fd)
+{
+    fprintf(stderr, "_tcp_server_ns fd=%d\n", (int)fd);
+    return 0;
+}
+
+static int _tcp_server_event(ztl_tcp_server_t* tcpsvr,
+    uint32_t type, void* msg, uint32_t length)
+{
+    fprintf(stderr, "_tcp_server_event type=%d, msg=%s, length=%d\n",
+        type, (char*)msg, length);
+    return 0;
+}
+
 
 void tcp_server_demo(int argc, char* argv[])
 {
@@ -31,6 +45,8 @@ void tcp_server_demo(int argc, char* argv[])
     lconfig.listen_port = 13579;
     lconfig.reuse_addr = 1;
     lconfig.poll_timeout = 1000;
+    lconfig.newconn_handler = _tcp_server_ns;
+    lconfig.event_handler = _tcp_server_event;
 
     tcpsvr = NULL;
     ztl_tcp_server_create(&tcpsvr);

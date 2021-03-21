@@ -7,6 +7,7 @@
 #define _ZTL_THREAD_POOL_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,8 +47,13 @@ int ztl_thrpool_start(ztl_thrpool_t* thpool);
  * @param   afree2: to free the arg2 after task finished
  * @return  0 success, -1 the task queue is full
  */
-int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func, void* arg1, void* arg2,
-    ztl_free_fn afree1, ztl_free_fn afree2);
+int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func,
+    void* arg1, void* arg2, ztl_free_fn afree1, ztl_free_fn afree2);
+
+/* @brief   dispatch a high priority new task to the thread pool with argument 'arg'
+ */
+int ztl_thrpool_dispatch_priority(ztl_thrpool_t* thpool, ztl_dispatch_fn func,
+    void* arg1, void* arg2, ztl_free_fn afree1, ztl_free_fn afree2);
 
 /* @brief   remove the queued task from thread pool by passed dispatch func
  * @return  0 success, -1 no compared
@@ -69,7 +75,7 @@ int ztl_thrpool_thrnum(ztl_thrpool_t* thpool);
 
 /* @brief   wait all threads exit
  */
-int ztl_thrpool_join(ztl_thrpool_t* thpool);
+int ztl_thrpool_join(ztl_thrpool_t* thpool, uint32_t timeout_ms);
 
 /* @brief   thrpool stop all working threads
  */

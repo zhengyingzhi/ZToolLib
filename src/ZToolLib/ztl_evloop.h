@@ -1,8 +1,3 @@
-/*
- * Copyright(C) Yingzhi Zheng.
- * Copyright(C) <zhengyingzhi112@163.com>
- */
-
 #ifndef _ZTL_EVENT_LOOP_H_
 #define _ZTL_EVENT_LOOP_H_
 
@@ -98,6 +93,9 @@ int ztl_evloop_start(ztl_evloop_t* evloop);
 /* stop the event loop */
 int ztl_evloop_stop(ztl_evloop_t* evloop);
 
+/* create pipes for evloop */
+int ztl_evloop_make_pipes(ztl_evloop_t* evloop);
+
 /* update new event to event loop,
  * internally will create a new connection object for the fd if not exists
  */
@@ -154,6 +152,9 @@ int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id);
  */
 int ztl_evloop_expire(ztl_evloop_t* evloop, uint64_t currtime);
 
+/* get the pending timers count
+ */
+uint32_t ztl_evloop_timer_count(ztl_evloop_t* evloop);
 
 #ifdef __cplusplus
 }
