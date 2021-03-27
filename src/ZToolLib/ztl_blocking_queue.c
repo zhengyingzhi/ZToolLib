@@ -5,17 +5,13 @@
 #include <limits.h>
 
 #include "ztl_atomic.h"
+#include "ztl_errors.h"
 #include "lockfreequeue.h"
 #include "ztl_threads.h"
 #include "ztl_simple_event.h"
 
 #include "ztl_blocking_queue.h"
 
-typedef struct
-{
-    void*   data;
-    int64_t type;
-}ztl_bq_data_t;
 
 struct ztl_blocking_queue_st
 {
@@ -26,14 +22,14 @@ struct ztl_blocking_queue_st
 };
 
 
-ztl_blocking_queue_t* ztl_bq_create(int quesize)
+ztl_blocking_queue_t* ztl_bq_create(uint32_t quesize, uint32_t elemsize)
 {
     ztl_blocking_queue_t* zbq = NULL;
 
     zbq = (ztl_blocking_queue_t*)malloc(sizeof(ztl_blocking_queue_t));
     memset(zbq, 0, sizeof(ztl_blocking_queue_t));
 
-    zbq->queue  = lfqueue_create(quesize, sizeof(ztl_bq_data_t));
+    zbq->queue  = lfqueue_create(quesize, elemsize);
     zbq->event  = ztl_simevent_create();
     zbq->udata  = NULL;
     zbq->waitors= 0;
@@ -45,41 +41,39 @@ void ztl_bq_release(ztl_blocking_queue_t* zbq)
 {
     if (zbq)
     {
-        lfqueue_release(zbq->queue);
-        ztl_simevent_release(zbq->event);
+        if (zbq->queue)
+            lfqueue_release(zbq->queue);
+        if (zbq->event)
+            ztl_simevent_release(zbq->event);
         free(zbq);
     }
 }
 
 
-int ztl_bq_push(ztl_blocking_queue_t* zbq, void* datap, int64_t datai)
+int ztl_bq_push(ztl_blocking_queue_t* zbq, void* datap)
 {
-    ztl_bq_data_t ldata = { datap, datai };
-    if (lfqueue_push(zbq->queue, &ldata) == 0)
+    if (lfqueue_push(zbq->queue, datap) == 0)
     {
-        if (ztl_atomic_add(&zbq->waitors, 0) > 0)
-        {
+        if (ztl_atomic_add(&zbq->waitors, 0) > 0) {
             ztl_simevent_signal(zbq->event);
         }
         return 0;
     }
-    return -1;
+    return ZTL_ERR_QueueFull;
 }
 
-int ztl_bq_pop(ztl_blocking_queue_t* zbq, int timeout_ms, void** datap, int64_t* datai)
+int ztl_bq_pop(ztl_blocking_queue_t* zbq, void* datap, int timeout_ms)
 {
-    ztl_bq_data_t ldata = { 0, 0 };
-
+    int rv;
     if (timeout_ms < 0)
         timeout_ms = INT_MAX;
 
     ztl_atomic_add(&zbq->waitors, 1);
 
     do {
-        if (lfqueue_pop(zbq->queue, (void**)&ldata) == 0)
+        if ((rv = lfqueue_pop(zbq->queue, (void**)datap)) == 0)
             break;
 
-        // wait a while 
         ztl_simevent_timedwait(zbq->event, 1);
 
         --timeout_ms;
@@ -87,21 +81,10 @@ int ztl_bq_pop(ztl_blocking_queue_t* zbq, int timeout_ms, void** datap, int64_t*
 
     ztl_atomic_dec(&zbq->waitors, 1);
 
-    if (timeout_ms == 0)
-    {
-        return 0;
-    }
-    else
-    {
-        if (datap)
-            *datap = ldata.data;
-        if (datai)
-            *datai = ldata.type;
-        return 1;
-    }
+    return rv == 0 ? 0 : ZTL_ERR_Timeout;
 }
 
-int ztl_bq_size(ztl_blocking_queue_t* zbq)
+uint32_t ztl_bq_size(ztl_blocking_queue_t* zbq)
 {
     return lfqueue_size(zbq->queue);
 }

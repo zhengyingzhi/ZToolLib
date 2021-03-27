@@ -19,6 +19,8 @@
 
 #define ztl_min(a,b)            (a) < (b) ? (a) : (b)
 #define ztl_max(a,b)            (a) > (b) ? (a) : (b)
+#define ztl_new_val(p,type,val) {(p) = (type*)malloc(sizeof(type)); *((type*)(p))=val;}
+
 
 #ifdef __cplusplus
 #define ztl_inline inline

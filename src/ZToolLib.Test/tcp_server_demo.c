@@ -41,12 +41,16 @@ void tcp_server_demo(int argc, char* argv[])
     ztl_tcp_server_config_t lconfig;
     memset(&lconfig, 0, sizeof(ztl_tcp_server_config_t));
 
-    strcpy(lconfig.listen_ip, "127.0.0.1");
-    lconfig.listen_port = 13579;
-    lconfig.reuse_addr = 1;
-    lconfig.poll_timeout = 1000;
+    // strcpy(lconfig.listen_ip, "127.0.0.1");
+    strcpy(lconfig.listen_ip, "");
+    lconfig.listen_port     = 13579;
+    lconfig.reuse_addr      = 1;
+    lconfig.poll_timeout    = 1000;
     lconfig.newconn_handler = _tcp_server_ns;
-    lconfig.event_handler = _tcp_server_event;
+    lconfig.event_handler   = _tcp_server_event;
+
+    fprintf(stderr, "tcp_server_demo works at %s:%d\n",
+        lconfig.listen_ip, lconfig.listen_port);
 
     tcpsvr = NULL;
     ztl_tcp_server_create(&tcpsvr);
@@ -60,6 +64,9 @@ void tcp_server_demo(int argc, char* argv[])
 
         rv = ztl_evloop_expire(tcpsvr->evloop, get_timestamp());
         ztl_evloop_looponce(tcpsvr->evloop, 1200);
+
+        times += 1;
+        continue;
 
         // sleepms(50);
         ztl_evloop_addtimer(tcpsvr->evloop, 1500, timer_handler, timer_finalizer, (void*)150);

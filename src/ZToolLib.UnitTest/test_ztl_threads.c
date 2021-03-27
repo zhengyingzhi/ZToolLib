@@ -9,6 +9,7 @@
 #include <ZToolLib/ztl_simple_event.h>
 #include <ZToolLib/ztl_threads.h>
 #include <ZToolLib/ztl_threadpool.h>
+#include <ZToolLib/ztl_utils.h>
 #include <ZToolLib/ztl_unit_test.h>
 
 
@@ -36,10 +37,10 @@ void Test_ztl_thread(ZuTest* zt)
     ztl_simevent_signal(sev);
     ztl_simevent_release(sev);
 
-    int* p1 = malloc(sizeof(int));
-    *p1 = 1;
+    int* p1;
+    ztl_new_val(p1, int, 1);
     ztl_thread_create(&thr, NULL, _test_thread_func, p1);
-    sleepms(10);
+    ztl_sleepms(10);
 
     ztl_thread_join(thr, &rval);
     (void)rval;
@@ -74,10 +75,10 @@ void Test_ztl_threadpool(ZuTest* zt)
 
     ztl_thrpool_start(tp);
 
-    sleepms(10);
+    ztl_sleepms(10);
 
-    int* p1 = malloc(sizeof(int));
-    *p1 = 1;
+    int* p1;
+    ztl_new_val(p1, int, 1);
     ztl_thrpool_dispatch(tp, _test_thrpool_work, p1, NULL, _test_thrpool_free, NULL);
 
     sleepms(10);

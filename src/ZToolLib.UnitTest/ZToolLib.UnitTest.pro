@@ -48,6 +48,7 @@ SOURCES += ZToolUnitTests.c \
     test_cJSON.c \
     test_lfqueue.c \
     test_ztl_array.c \
+    test_ztl_blocking_queue.c \
     test_ztl_buffer.c \
     test_ztl_crypt.c \
     test_ztl_dict.c \
@@ -58,6 +59,7 @@ SOURCES += ZToolUnitTests.c \
     test_ztl_linklist.c \
     test_ztl_map.c \
     test_ztl_mempool.c \
+    test_ztl_msg_buffer.c \
     test_ztl_pc.c \
     test_ztl_ring.c \
     test_ztl_shm.c \

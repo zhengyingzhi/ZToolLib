@@ -337,7 +337,7 @@ int ztl_thrpool_join(ztl_thrpool_t* thpool, uint32_t timeout_ms)
     curr_time = get_timestamp();
     while (ztl_atomic_add(&thpool->activenum, 0) > 0)
     {
-        sleepms(1);
+        ztl_sleepms(1);
         if (get_timestamp() - curr_time >= timeout_ms) {
             return ZTL_ERR_Timeout;
         }

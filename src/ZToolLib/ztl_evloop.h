@@ -72,6 +72,8 @@ struct ztl_connection_st
     ztl_ev_handler_t write_handler;
     ztl_recv_t       recv;
     ztl_send_t       send;
+
+    // free the object if the last refcount
     int            (*free)(ztl_connection_t*);
 };
 

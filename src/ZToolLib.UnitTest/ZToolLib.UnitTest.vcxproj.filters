@@ -84,6 +84,12 @@
     <ClCompile Include="test_ztl_threads.c">
       <Filter>TestCases</Filter>
     </ClCompile>
+    <ClCompile Include="test_ztl_msg_buffer.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
+    <ClCompile Include="test_ztl_blocking_queue.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ZToolUnitTest.h">

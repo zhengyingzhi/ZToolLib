@@ -87,15 +87,16 @@ static int select_add(void* evops_ctx, sockhandle_t fd, int reqevents, int flags
     select_ctx_t* lpctx;
     lpctx = (select_ctx_t*)evops_ctx;
 
-#ifndef _WIN32
     if (lpctx->maxfd < fd)
         lpctx->maxfd = fd;
-#endif
 
-    if (reqevents & ZEV_POLLIN)
+    if (reqevents & ZEV_POLLIN) {
         FD_SET(fd, &lpctx->in_read_set);
-    if (reqevents & ZEV_POLLOUT)
+    }
+    if (reqevents & ZEV_POLLOUT) {
         FD_SET(fd, &lpctx->in_write_set);
+        FD_SET(fd, &lpctx->in_except_set);
+    }
     return 0;
 }
 
@@ -108,7 +109,7 @@ static int select_del(void* evops_ctx, sockhandle_t fd, int delevents, int flags
     sockhandle_t  lmaxfd;
 
     lpctx = (select_ctx_t*)evops_ctx;
-    lmaxfd = 0;
+    lmaxfd = INVALID_SOCKET;
 
     if (delevents & ZEV_POLLIN)
         FD_CLR(fd, &lpctx->in_read_set);
@@ -116,7 +117,11 @@ static int select_del(void* evops_ctx, sockhandle_t fd, int delevents, int flags
         FD_CLR(fd, &lpctx->in_write_set);
     FD_CLR(fd, &lpctx->in_except_set);
 
-    // FIXME: re-find the max fd
+    if (lmaxfd != fd) {
+        return 0;
+    }
+
+    // re-find the max fd
     lfdarray = lpctx->in_read_set.fd_array;
     for (uint32_t i = 0; i < lpctx->in_read_set.fd_count; ++i)
     {
@@ -151,9 +156,11 @@ static int select_poll(void* evops_ctx, ztl_fired_event_t* fired_events, int siz
 
     ltv.tv_sec = ms / 1000;
     ltv.tv_usec = (ms % 1000) * 1000;
-    num = select(0, &lpctx->out_read_set,
-                    &lpctx->out_write_set,
-                    &lpctx->out_except_set, &ltv);
+    num = select((int)lpctx->maxfd + 1,
+                 &lpctx->out_read_set,
+                 &lpctx->out_write_set,
+                 &lpctx->out_except_set,
+                 &ltv);
     if (num <= 0) {
         return num;
     }

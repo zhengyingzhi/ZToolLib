@@ -7,7 +7,10 @@
 #include "ztl_evloop.h"
 #include "ztl_network.h"
 #include "ztl_tcp_server.h"
+#include "ztl_utils.h"
 
+
+#define ZTL_DEFAULT_NS_TIMEOUT_MS   15000
 
 static int _read_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int events)
 {
@@ -25,6 +28,7 @@ static int _read_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int event
         if (conn->bytes_recved == 0 && conn->rbuf == NULL) {
             // buffer could be from memory pool
             conn->rbuf = (char*)malloc(1024);
+            conn->rbuf[0] = '\0';
             conn->rsize = 1023;
         }
         else {
@@ -40,8 +44,9 @@ static int _read_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int event
 
         // use conn->rbuf,bytesrecved
 
-        if (size == 0)
+        if (size == 0 || (size < 0 && !is_wouldblock(get_errno())))
         {
+            // fprintf(stderr, "read_handler fd=%d broken!\n", (int)conn->fd);
             ztl_evloop_del(evloop, conn->fd, ZEV_POLLIN | ZEV_POLLOUT);
 
             ztl_connection_remove(evloop, conn->fd);
@@ -73,13 +78,24 @@ static int _write_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int even
     return 0;
 }
 
+static int _timeout_handler(ztl_evloop_t* evloop, uint64_t timer_id, void* udata)
+{
+    fprintf(stderr, "_timeout_handler\n");
+    sockhandle_t fd;
+    union_dtype_t d;
+    d.ptr = udata;
+    fd = d.i32;
+    shutdown_socket(fd, 2);
+    return 0;
+}
+
 static int _accept_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int events)
 {
     ZTL_NOTUSED(conn);
     ZTL_NOTUSED(events);
 
     sockhandle_t        ns;
-    ztl_tcp_server_t*    tcpsvr;
+    ztl_tcp_server_t*   tcpsvr;
     struct sockaddr_in  from_addr;
     char                from_ip[32];
     uint16_t            from_port;
@@ -101,6 +117,11 @@ static int _accept_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int eve
         set_tcp_keepalive(ns, true);
 
         ztl_evloop_add(evloop, ns, ZEV_POLLIN, _read_handler, tcpsvr);
+
+        union_dtype_t d;
+        d.i32 = ns;
+        ztl_evloop_addtimer(evloop, ZTL_DEFAULT_NS_TIMEOUT_MS, _timeout_handler,
+            NULL, d.ptr);
     }
 
     return 0;
@@ -114,10 +135,9 @@ static ztl_thread_result_t ZTL_THREAD_CALL _tcp_server_thread_func(void * args)
     timeout_ms = tcpsvr->svrconf.poll_timeout;
 
     fprintf(stderr, "tcp_server_thread running\n");
-    while (tcpsvr->running)
-    {
-        ztl_evloop_loop(tcpsvr->evloop, timeout_ms);
-    }
+    tcpsvr->running = 1;
+    ztl_evloop_loop(tcpsvr->evloop, timeout_ms);
+    tcpsvr->running = 0;
 
     fprintf(stderr, "tcp_server_thread done!\n");
     return 0;

@@ -301,6 +301,7 @@
   <ItemGroup>
     <ClCompile Include="test_cJSON.c" />
     <ClCompile Include="test_lfqueue.c" />
+    <ClCompile Include="test_ztl_blocking_queue.c" />
     <ClCompile Include="test_ztl_dict.c" />
     <ClCompile Include="test_ztl_crypt.c" />
     <ClCompile Include="test_ztl_dstr.c" />
@@ -312,6 +313,7 @@
     <ClCompile Include="test_ztl_buffer.c" />
     <ClCompile Include="test_ztl_map.c" />
     <ClCompile Include="test_ztl_mempool.c" />
+    <ClCompile Include="test_ztl_msg_buffer.c" />
     <ClCompile Include="test_ztl_pc.c" />
     <ClCompile Include="test_ztl_ring.c" />
     <ClCompile Include="test_ztl_shm.c" />

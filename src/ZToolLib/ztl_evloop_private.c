@@ -123,7 +123,7 @@ int ztl_timer_node_save(ztl_evloop_t* evloop, ztl_timer_event_t* new_node)
     return 0;
 }
 
-int ztl_timer_node_free(ztl_evloop_t* evloop, ztl_timer_event_t* node)
+int ztl_timer_node_remove(ztl_evloop_t* evloop, ztl_timer_event_t* node)
 {
     if (node->next) {
         node->next->prev = node->prev;

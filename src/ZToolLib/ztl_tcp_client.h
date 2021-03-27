@@ -43,6 +43,7 @@ struct ztl_tcp_client_st
     uint32_t        rcv_buffsize;
     uint64_t        connected_time;
     int32_t         debug_mode;
+    int32_t         added;
 
     ztl_tcp_client_connect_pt       on_connect;
     ztl_tcp_client_disconnect_pt    on_disconnect;

@@ -14,7 +14,7 @@
 #include <ZToolLib/ztl_memdb.h>
 #include <ZToolLib/ztl_utils.h>
 
-
+extern void net_init();
 void test_ztl_config();
 void test_ztl_log();
 void test_lfqueue();
@@ -57,6 +57,9 @@ int main(int argc, char* argv[])
         tcp_client_demo(argc, argv);
         return 0;
     }
+
+    tcp_server_demo(argc, argv);
+    return 0;
 
     threadpool_demo(argc, argv);
     event_dispatcher_demo(argc, argv);

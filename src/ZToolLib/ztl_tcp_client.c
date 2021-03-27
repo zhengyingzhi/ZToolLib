@@ -37,7 +37,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _io_thread_func(void * args)
 
             curr_time = get_timestamp();
             if (curr_time - prev_time < cli->reconnect_ms) {
-                sleepms(1);
+                ztl_sleepms(1);
                 continue;
             }
 
@@ -174,7 +174,7 @@ int ztl_tcp_client_do_connect(ztl_tcp_client_t* cli,
         if (is_wouldblock(get_errno()))
         {
             cli->fd = fd;
-            cli->evops->add(cli->evops_ctx, cli->fd, ZEV_POLLIN, 0);
+            rv = ztl_tcp_client_add_fd(cli, fd, ZEV_POLLIN);
         }
         else
         {
@@ -191,8 +191,7 @@ int ztl_tcp_client_do_connect(ztl_tcp_client_t* cli,
 
         cli->connect_status = ZTL_CLIENT_STATUS_Connected;
         cli->fd = fd;
-
-        cli->evops->add(cli->evops_ctx, cli->fd, ZEV_POLLIN, 0);
+        rv = ztl_tcp_client_add_fd(cli, fd, ZEV_POLLIN);
     }
 
     return rv;
@@ -270,6 +269,11 @@ int ztl_tcp_client_close_fd(ztl_tcp_client_t* cli)
 {
     if (IS_VALID_SOCKET(cli->fd))
     {
+        if (cli->added) {
+            cli->added = 0;
+            cli->evops->del(cli->evops_ctx, cli->fd, ZEV_POLLIN | ZEV_POLLOUT, 0);
+        }
+
         shutdown_socket(cli->fd, 2);
         close_socket(cli->fd);
         cli->fd = INVALID_SOCKET;
@@ -325,6 +329,8 @@ int ztl_tcp_client_set_rcv_buffsize(ztl_tcp_client_t* cli, uint32_t rcv_buffsize
 
 int ztl_tcp_client_add_fd(ztl_tcp_client_t* cli, sockhandle_t fd, int reqevents)
 {
+    int op;
+
     if (!IS_VALID_SOCKET(fd)) {
         return ZTL_ERR_BadFD;
     }
@@ -333,7 +339,14 @@ int ztl_tcp_client_add_fd(ztl_tcp_client_t* cli, sockhandle_t fd, int reqevents)
         return ZTL_ERR_NotInited;
     }
 
-    return cli->evops->add(cli->evops_ctx, fd, reqevents, 0);
+    if (fd == cli->fd) {
+        op = cli->added;
+        cli->added = 1;
+    }
+    else {
+        op = 0;  // FIXME
+    }
+    return cli->evops->add(cli->evops_ctx, fd, reqevents, op);
 }
 
 int ztl_tcp_client_poll(ztl_tcp_client_t* cli, uint32_t timeout_ms)
@@ -351,9 +364,8 @@ int ztl_tcp_client_poll(ztl_tcp_client_t* cli, uint32_t timeout_ms)
             _read_handler(cli, fired_ev->fd, cli->udata);
         }
 
-        if (fired_ev->events & ZEV_POLLOUT) {
-            if (cli->on_write)
-                cli->on_write(cli, fired_ev->fd, cli->udata);
+        if (fired_ev->events & ZEV_POLLOUT && cli->on_write) {
+            cli->on_write(cli, fired_ev->fd, cli->udata);
         }
     }
     return nevents;
@@ -385,6 +397,7 @@ int ztl_tcp_client_recv(ztl_tcp_client_t* cli, char* buf, int len)
     }
 
     if (cli->connect_status == ZTL_CLIENT_STATUS_DisConnected) {
+        cli->added = 0;
         rv = cli->evops->del(cli->evops_ctx, cli->fd, ZEV_POLLIN | ZEV_POLLOUT, 0);
     }
 
@@ -424,7 +437,7 @@ static int _connected_handler(ztl_tcp_client_t* cli, sockhandle_t fd, void* udat
         fprintf(stderr, "_connected_handler\n");
 
     cli->evops->del(cli->evops_ctx, fd, ZEV_POLLOUT, 0);
-    cli->evops->add(cli->evops_ctx, fd, ZEV_POLLIN, 0);
+    ztl_tcp_client_add_fd(cli, fd, ZEV_POLLIN);
 
     if (cli->on_connect)
         cli->on_connect(cli);

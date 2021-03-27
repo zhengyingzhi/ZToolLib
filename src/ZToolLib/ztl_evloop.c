@@ -288,7 +288,7 @@ int ztl_connection_free(ztl_connection_t* conn)
 {
     uint32_t refcount;
     refcount = ztl_atomic_dec(&conn->refcount, 1);
-    if (refcount != 0) {
+    if (refcount != 1) {
         return refcount;
     }
 
@@ -381,7 +381,7 @@ static void _timer_event_handler(void* ctx, ztl_rbtree_node_t* node)
         timer->handler(evloop, timer->timer_id, timer->udata);
     if (timer->finalizer)
         timer->finalizer(evloop, timer->timer_id, timer->udata);
-    ztl_timer_node_free(evloop, timer);
+    ztl_timer_node_remove(evloop, timer);
 }
 
 uint64_t ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
@@ -430,10 +430,11 @@ int ztl_evloop_deltimer(ztl_evloop_t* evloop, uint64_t timer_id)
         ztl_thread_mutex_lock(&evloop->lock);
     }
 
+    ztl_timer_node_remove(evloop, timer);
     rv = ztl_evtimer_del(&evloop->timers, &timer->node);
+
     if (timer->finalizer)
         timer->finalizer(evloop, timer_id, timer->udata);
-    ztl_timer_node_free(evloop, timer);
 
     if (!safe)
         ztl_thread_mutex_unlock(&evloop->lock);

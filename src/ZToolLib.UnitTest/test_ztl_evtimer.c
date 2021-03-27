@@ -43,10 +43,10 @@ void Test_ztl_evtimer(ZuTest* zt)
     ztl_rbtree_node_t timer1;
     ztl_evtimer_add(&evt, &timer1, 200, 0);
 
-    sleepms(201);
+    ztl_sleepms(201);
     ztl_evtimer_expire(&evt, get_timestamp(), _test_evt_handler, &evt);
 
-    sleepms(1);
+    ztl_sleepms(1);
     ZuAssertIntEquals(zt, 1, trigger_count);
 }
 

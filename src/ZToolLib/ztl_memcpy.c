@@ -31,7 +31,7 @@ static unsigned int gettime()
     return timeGetTime();
 #else
     // static struct timezone tz={ 0,0 };
-	struct timeval time;
+    struct timeval time;
     gettimeofday(&time, NULL);
     return (time.tv_sec * 1000 + time.tv_usec / 1000);
 #endif

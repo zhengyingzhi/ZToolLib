@@ -53,12 +53,7 @@ static void ztl_now(ztl_tm* ptm)
     struct tm ltm;
     struct timeval tv;
     gettimeofday(&tv, NULL);
-
-#if defined (_POSIX_THREAD_SAFE_FUNCTIONS)
-    localtime_r(&tv.tv_sec, &ltm);
-#else
-    ltm = *localtime(&tv.tv_sec);
-#endif
+    LOCALTIME_S(&tv.tv_sec, &ltm);
 
     ptm->tm_usec    = tv.tv_usec;
     ptm->tm_sec     = ltm.tm_sec;
@@ -127,7 +122,7 @@ int ztl_ymd(char* buf, time_t t)
     struct tm ltm;
     if (t <= 0)
         t = time(NULL);
-    LOCALTIME_S(&ltm, &t);
+    LOCALTIME_S(&t, &ltm);
     return (int)strftime(buf, sz, DATE_FORMAT, &ltm);
 }
 
@@ -139,7 +134,7 @@ int ztl_ymd0(char* buf, time_t t)
     struct tm ltm;
     if (t <= 0)
         t = time(NULL);
-    LOCALTIME_S(&ltm, &t);
+    LOCALTIME_S(&t, &ltm);
     return (int)strftime(buf, sz, "%Y%m%d", &ltm);
 }
 
@@ -150,7 +145,7 @@ int ztl_hms(char* buf, time_t t)
     struct tm ltm;
     if (t <= 0)
         t = time(NULL);
-    LOCALTIME_S(&ltm, &t);
+    LOCALTIME_S(&t, &ltm);
     return (int)strftime(buf, sz, TIME_FORMAT, &ltm);
 }
 
@@ -175,7 +170,7 @@ int ztl_ymdhms(char* buf, time_t t)
     struct tm ltm;
     if (t <= 0)
         t = time(NULL);
-    LOCALTIME_S(&ltm, &t);
+    LOCALTIME_S(&t, &ltm);
     return (int)strftime(buf, sz, DATE_TIME_FORMAT, &ltm);
 }
 
@@ -243,7 +238,7 @@ int ztl_tointdate(time_t atime)
 
     // got 20180102
     struct tm ltm;
-    LOCALTIME_S(&ltm, &atime);
+    LOCALTIME_S(&atime, &ltm);
 
     return ((ltm.tm_year + 1900) * 10000) + ((ltm.tm_mon + 1) * 100) + ltm.tm_mday;
 }
@@ -255,7 +250,7 @@ int ztl_tointtime(time_t atime)
 
     // got 201346 
     struct tm ltm;
-    LOCALTIME_S(&ltm, &atime);
+    LOCALTIME_S(&atime, &ltm);
 
     return (ltm.tm_hour * 10000) + (ltm.tm_min * 100) + ltm.tm_sec;
 }
@@ -371,13 +366,8 @@ int ztl_diffday(int startday, int endday)
     struct tm ls, le;
     int res, rem;
 
-#if defined (_POSIX_THREAD_SAFE_FUNCTIONS)
-    localtime_r(&t, &ls);
-    localtime_r(&t, &le);
-#else
-    ls = *localtime(&t);
-    le = *localtime(&t);
-#endif
+    LOCALTIME_S(&t, &ls);
+    LOCALTIME_S(&t, &le);
 
     ls.tm_mday = startday % 100;
     ls.tm_mon  = startday / 100 % 100 - 1;
@@ -391,16 +381,12 @@ int ztl_diffday(int startday, int endday)
 
 int ztl_diffnow(int endday)
 {
-    time_t t = time(NULL);
-    struct tm le;
     int res, rem;
+    struct tm le;
+    time_t t;
 
-#if defined (_POSIX_THREAD_SAFE_FUNCTIONS)
-    localtime_r(&t, &le);
-#else
-    le = *localtime(&t);
-#endif
-
+    t = time(NULL);
+    LOCALTIME_S(&t, &le);
     le.tm_mday = endday % 100;
     le.tm_mon  = endday / 100 % 100 - 1;
     le.tm_year = endday / 10000 - 1900;

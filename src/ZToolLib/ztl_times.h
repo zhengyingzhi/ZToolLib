@@ -17,10 +17,10 @@ extern "C" {
 #define ztl_inline 
 #endif//__cplusplus
 
-#ifdef __linux__
-#define LOCALTIME_S(x,y) localtime_r(y,x)
+#if defined(__linux__) || defined(_POSIX_THREAD_SAFE_FUNCTIONS)
+#define LOCALTIME_S(t,ltm)      localtime_r(t,ltm)
 #else
-#define LOCALTIME_S(x,y) localtime_s(x,y)
+#define LOCALTIME_S(t,ltm)      localtime_s(ltm,t)
 #endif
 #define DATE_FORMAT             "%Y-%m-%d"
 #define DATE_FORMAT_CLEAN       "%4d-%02d-%02d"

@@ -28,6 +28,7 @@
 #define ZTL_ERR_Empty                   (ZTL_ERR_BASE - 14)
 #define ZTL_ERR_OutOfEVID               (ZTL_ERR_BASE - 15)
 #define ZTL_ERR_OutOfRange              (ZTL_ERR_BASE - 16)
+#define ZTL_ERR_OutOfMem                (ZTL_ERR_BASE - 17)
 
 #define ZTL_ERR_BadFD                   (ZTL_ERR_BASE - 20)
 #define ZTL_ERR_NotConnected            (ZTL_ERR_BASE - 21)

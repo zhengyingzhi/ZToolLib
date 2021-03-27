@@ -91,7 +91,7 @@ ztl_connection_t* ztl_do_accept(ztl_evloop_t* evloop, sockhandle_t listenfd);
 ztl_timer_event_t* ztl_timer_node_new(ztl_evloop_t* evloop);
 ztl_timer_event_t* ztl_timer_node_find(ztl_evloop_t* evloop, uint64_t timer_id);
 int ztl_timer_node_save(ztl_evloop_t* evloop, ztl_timer_event_t* node);
-int ztl_timer_node_free(ztl_evloop_t* evloop, ztl_timer_event_t* node);
+int ztl_timer_node_remove(ztl_evloop_t* evloop, ztl_timer_event_t* node);
 int ztl_timer_node_free_all(ztl_evloop_t* evloop);
 
 
