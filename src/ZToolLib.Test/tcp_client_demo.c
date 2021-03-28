@@ -110,12 +110,13 @@ int _client_api_on_read(ztl_tcp_client_t* cli, sockhandle_t fd, void* udata)
 
     rv = ztl_tcp_client_recv(cli, p, api->recv_len);
     if (rv <= 0) {
-        return;
+        return 0;
     }
 
     struct ZHeader* lpHeader;
     lpHeader = (struct ZHeader*)p;
     // process recved data...
+    return 0;
 }
 
 void _tcp_client_on_connect(ztl_tcp_client_t* cli)

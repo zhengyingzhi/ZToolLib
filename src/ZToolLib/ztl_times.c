@@ -83,6 +83,14 @@ int64_t get_timestamp()
 #endif//_MSC_VER
 }
 
+int64_t get_timestamp_us()
+{
+    int64_t us;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    us = (int64_t)tv.tv_sec * 1000000 + tv.tv_usec;
+    return us;
+}
 
 /// get time of day
 #ifdef _MSC_VER
@@ -111,6 +119,41 @@ void gettimeofday(struct timeval *tp, void* reserve)
 
     tp->tv_sec = (long)(intervals / 10000000);
     tp->tv_usec = (long)((intervals % 10000000) / 10);
+}
+
+typedef LONG(__stdcall* NtDelayExecution)(BOOLEAN Alertable, PLARGE_INTEGER Interval);
+static NtDelayExecution g_pNtDelayExec = NULL;
+
+void ztl_sleepus(int us)
+{
+    LARGE_INTEGER large;
+    if (!g_pNtDelayExec) {
+        HMODULE hModule = LoadLibraryA("ntdll.dll");
+        g_pNtDelayExec = (NtDelayExecution)GetProcAddress(hModule, "NtDelayExecution");
+    }
+    large.QuadPart = -((LONGLONG)(us * 10000));
+    (*g_pNtDelayExec)(TRUE, &large);
+}
+
+void ztl_sleepns(int ns)
+{
+    LARGE_INTEGER large;
+    if (!g_pNtDelayExec) {
+        HMODULE hModule = LoadLibraryA("ntdll.dll");
+        g_pNtDelayExec = (NtDelayExecution)GetProcAddress(hModule, "NtDelayExecution");
+    }
+    large.QuadPart = -((LONGLONG)(ns * 10));
+    (*g_pNtDelayExec)(TRUE, &large);
+}
+
+#else
+
+void ztl_sleepns(int ns)
+{
+    struct timespec lSpec;
+    lSpec.tv_sec  = 0;
+    lSpec.tv_nsec = 1000 * ns;
+    nanosleep(&lSpec, nullptr);
 }
 
 #endif//_MSC_VER

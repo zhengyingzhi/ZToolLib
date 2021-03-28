@@ -5,6 +5,7 @@
 
 #include <ZToolLib/ztl_producer_consumer.h>
 #include <ZToolLib/ztl_threads.h>
+#include <ZToolLib/ztl_times.h>
 
 static uint32_t gCounter = 0;
 static uint64_t gSum = 0;
@@ -17,7 +18,7 @@ void Test_ztl_producer_consumer(ZuTest* zt)
 
     zpc = ztl_pc_create(1024);
     ztl_pc_start(zpc);
-    sleepms(10);
+    ztl_sleepms(10);
 
     uint32_t lCounter = 0;
     uint64_t lSum = 0;

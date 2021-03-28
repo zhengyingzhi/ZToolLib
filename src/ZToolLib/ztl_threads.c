@@ -133,28 +133,4 @@ int ztl_thread_join(ztl_thread_t thr, void **retval)
 }
 
 
-typedef LONG(__stdcall* NtDelayExecution)(BOOLEAN Alertable, PLARGE_INTEGER Interval);
-static NtDelayExecution g_pNtDelayExec = NULL;
-
-void ztl_sleepns(int us)
-{
-    LARGE_INTEGER large;
-    if (!g_pNtDelayExec) {
-        HMODULE hModule = LoadLibraryA("ntdll.dll");
-        g_pNtDelayExec = (NtDelayExecution)GetProcAddress(hModule, "NtDelayExecution");
-    }
-    large.QuadPart = -((LONGLONG)(us * 10));
-    (*g_pNtDelayExec)(TRUE, &large);
-}
-
-#else
-void ztl_sleepns(int us)
-{
-    // usleep(us);
-    struct timespec lSpec;
-    lSpec.tv_sec = 0;
-    lSpec.tv_nsec = 1000 * us;
-    nanosleep(&lSpec, nullptr);
-}
-
 #endif//_MSC_VER

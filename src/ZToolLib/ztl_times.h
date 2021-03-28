@@ -1,8 +1,3 @@
-/*
-* Copyright (C) Yingzhi Zheng.
-* Copyright (C) <zhengyingzhi112@163.com>
-*/
-
 #ifndef _ZTL_TIMES_H_
 #define _ZTL_TIMES_H_
 
@@ -82,12 +77,28 @@ typedef union {
 
 /// precision to milli-second
 int64_t get_timestamp();
+int64_t get_timestamp_us();
 
-/// get time of day
 #ifdef _MSC_VER
+/// get time of day
 void gettimeofday(struct timeval *tp, void* reserve);
+
+/// try sleep ms/us/ns
+#define sleepms(x)                      Sleep(x)
+#define ztl_sleepms(x)                  Sleep(x)
+void ztl_sleepus(int us);
+void ztl_sleepns(int ns);
+
 #else
 #include <sys/time.h>
+#include <sys/unistd.h>
+
+/// try sleep ms/us/ns
+#define sleepms(x)                      usleep((x)*1000)
+#define ztl_sleepms(x)                  usleep((x)*1000)
+#define ztl_sleepus(x)                  usleep(x)
+void ztl_sleepns(int ns);
+
 #endif//_MSC_VER
 
 

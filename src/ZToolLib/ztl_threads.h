@@ -1,8 +1,3 @@
-/*
- * Copyright (C) Yingzhi Zheng.
- * Copyright (C) <zhengyingzhi112@163.com>
- */
-
 #ifndef _ZTL_THREADS_H_
 #define _ZTL_THREADS_H_
 
@@ -49,10 +44,6 @@ typedef pthread_attr_t                  ztl_thread_attr_t;
 
 #define ZTL_THREAD_CALL
 typedef ztl_thread_result_t (ZTL_THREAD_CALL* ztl_thread_func_t)(void* args);
-
-#define sleepms(x)                      usleep((x)*1000)
-#define ztl_sleepms(x)                  usleep((x)*1000)
-void ztl_sleepns(int us);
 
 #else ///////////////////////////////////////////////////////////////////////
 
@@ -114,11 +105,6 @@ int ztl_thread_join(ztl_thread_t thr, void **retval);
 /// get thread id
 unsigned int ztl_thread_self();
 
-
-/// sleep x milli-seconds
-#define sleepms(x)          Sleep(x)
-#define ztl_sleepms(x)      Sleep(x)
-void ztl_sleepns(int us);
 
 #ifdef __cplusplus
 }

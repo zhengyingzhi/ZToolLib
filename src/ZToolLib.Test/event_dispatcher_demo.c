@@ -3,6 +3,7 @@
 
 #include "ZToolLib/ztl_threads.h"
 #include "ZToolLib/ztl_event_dispatcher.h"
+#include "ZToolLib/ztl_times.h"
 
 
 bool _evd_handler_a(ztl_event_dispatcher_t* zevd, void* ctx, uint32_t evtype, void* evdata)
@@ -61,7 +62,7 @@ void event_dispatcher_demo(int argc, char* argv[])
         fprintf(stderr, "ztl_evd_post4 failed\n");
     }
 
-    sleepms(1000);
+    ztl_sleepms(1000);
     ztl_evd_stop(ed);
     ztl_evd_release(ed);
     fprintf(stderr, "event_dispatcher_demo done!\n\n");

@@ -36,5 +36,22 @@
     <ClCompile Include="tcp_client_demo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="high_time.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="slippage.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="trans_md_demo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="high_time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="slippage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

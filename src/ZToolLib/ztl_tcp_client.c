@@ -7,6 +7,7 @@
 #include "ztl_evloop_private.h"
 #include "ztl_network.h"
 #include "ztl_tcp_client.h"
+#include "ztl_times.h"
 
 extern struct ztl_event_ops selectops;
 

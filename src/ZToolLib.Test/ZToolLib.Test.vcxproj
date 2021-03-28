@@ -303,11 +303,18 @@
   <ItemGroup>
     <ClCompile Include="event_dispatcher_demo.c" />
     <ClCompile Include="producer_consumer_demo.c" />
+    <ClCompile Include="slippage.c" />
     <ClCompile Include="tcp_client_demo.c" />
     <ClCompile Include="tcp_server_demo.c" />
     <ClCompile Include="threadpool_demo.c" />
+    <ClCompile Include="trans_md_demo.c" />
     <ClCompile Include="udp_demo.c" />
+    <ClCompile Include="high_time.c" />
     <ClCompile Include="ZToolLib.Test.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="high_time.h" />
+    <ClInclude Include="slippage.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
