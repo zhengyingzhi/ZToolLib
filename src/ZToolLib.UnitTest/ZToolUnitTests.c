@@ -19,6 +19,7 @@ extern void Test_ztl_trim(ZuTest*);
 extern void Test_ztl_parse_size(ZuTest*);
 extern void Test_ztl_strdelimiter(ZuTest*);
 extern void Test_ztl_ztlncpy(ZuTest* zt);
+extern void Test_ztl_round(ZuTest* zt);
 
 extern void Test_ztl_buffer(ZuTest* zt);
 extern void Test_ztl_buffer2(ZuTest* zt);
@@ -83,6 +84,7 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_parse_size);
     SUITE_ADD_TEST(suite, Test_ztl_strdelimiter);
     SUITE_ADD_TEST(suite, Test_ztl_ztlncpy);
+    SUITE_ADD_TEST(suite, Test_ztl_round);
 
     SUITE_ADD_TEST(suite, Test_ztl_buffer);
     SUITE_ADD_TEST(suite, Test_ztl_buffer2);

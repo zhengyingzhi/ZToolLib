@@ -15,9 +15,6 @@
 #include <ZToolLib/ztl_times.h>
 #include <ZToolLib/ztl_utils.h>
 
-#include "high_time.h"
-#include "slippage.h"
-
 #ifdef _MSC_VER
 #include <Winsock2.h>
 
@@ -35,17 +32,12 @@ void test_char_conv();
 void test_memdb();
 void test_dstr();
 
-void test_high_time();
-void test_slippage();
-
 extern void tcp_server_demo(int argc, char* argv[]);
 extern void tcp_client_demo(int argc, char* argv[]);
 extern void threadpool_demo(int argc, char* argv[]);
 extern void event_dispatcher_demo(int argc, char* argv[]);
 extern void producer_consumer_demo(int argc, char* argv[]);
 extern void trans_md_demo(int argc, char* argv[]);
-
-extern slippage_t* get_slippage(const char* name);
 
 
 int main(int argc, char* argv[])
@@ -65,16 +57,6 @@ int main(int argc, char* argv[])
 
     // test_memdb();
     // test_dstr();
-    // test_high_time();
-    // test_slippage();
-
-    // TODO: 再实现一个行情转发系统
-    /* 2个 connection to server，2个 listen on 8500 & 8501
-     * 1. 向mdgw发起登录请求，并保持心跳
-     * 2. 从mdgw接收行情，并转发给client端，没有客户端则直接抛弃数据包
-     * 3. 接收client端的登录请求，并返回应答（大端模式数据），且要操持心跳
-     * 4. 
-     */
 
     if (argc > 2 && strcmp(argv[1], "server") == 0) {
         tcp_server_demo(argc, argv);
@@ -86,7 +68,7 @@ int main(int argc, char* argv[])
     }
 
     // tcp_server_demo(argc, argv);
-    trans_md_demo(argc, argv);
+    // trans_md_demo(argc, argv);
     return 0;
 
     threadpool_demo(argc, argv);
@@ -364,90 +346,3 @@ void test_dstr()
     res = dstr_cat(res, "\r\n");
     printf("res len:%zu, data:%s\n", dstr_length(res), res);
 }
-
-void test_high_time()
-{
-    high_time_t ht;
-    struct timeval tv;
-    int times[] = { 93000000, 93003000, 93003000, 93006000, 93009000, 93009000,
-        93012000, 93012000, 93015000, 93018000 };
-    int curr_time;
-    int speed;
-
-    speed = 1;      // 1-原速，2-2倍速，4-4倍速
-
-#ifdef _MSC_VER
-    timeBeginPeriod(1);
-#endif
-    high_time_init(&ht, speed);
-    high_time_update_first(&ht, times[0]);
-
-    for (int i = 0; i < sizeof(times) / sizeof(times[0]); ++i)
-    {
-        curr_time = times[i];
-        high_time_update_and_sleep(&ht, curr_time);
-
-        // simulate proc the business of curr_time
-        gettimeofday(&tv, NULL);
-        fprintf(stderr, "[%d.%06d] procing curr_time=%d\n\n",
-            ztl_tointtime(tv.tv_sec), tv.tv_usec, curr_time);
-        // if (i % 2 == 0)
-        //     ztl_sleepus((i + 1) * 500);
-    }
-}
-
-void test_slippage()
-{
-    int rv;
-    int32_t filled_qty;
-    double filled_price;
-    slippage_t* slip;
-
-    // get properate slip object
-    // slip = &slippage_snapshot;
-
-    order_t ord = { 0 };
-    strcpy(ord.instrument, "000001");
-    ord.order_qty = 1000;
-    ord.order_price = 22.21;
-    ord.direction = 'B';
-
-    snapshot_t snap = { 0 };
-    strcpy(snap.instrument, "000001");
-    snap.last_price = 22.02;
-    snap.volume = 123400;
-
-    each_trade_t et = { 0 };
-    strcpy(et.instrument, "000001");
-    et.volume = 600;
-    et.price = 22.04;
-    et.bs_flag = 'B';
-    et.filled_type = 'N';
-
-    kline_t kline = { 0 };
-    strcpy(kline.instrument, "000001");
-    kline.open = 22.02;
-    kline.high = 22.88;
-    kline.low = 22;
-    kline.close = 22.05;
-    kline.volume = 223300;
-
-    filled_qty = 0;
-    filled_price = 0.0;
-    slip = get_slippage(SLIPPAGE_NAME_Snapshot);
-    rv = slip->process_order(slip, &ord, &snap, &filled_qty, &filled_price);
-    fprintf(stderr, "snapshot  rv=%d, filled_qty=%d, filled_price=%.3lf\n", rv, filled_qty, filled_price);
-
-    filled_qty = 0;
-    filled_price = 0.0;
-    slip = get_slippage(SLIPPAGE_NAME_EachTrade);
-    rv = slip->process_order(slip, &ord, &et, &filled_qty, &filled_price);
-    fprintf(stderr, "eachtrade rv=%d, filled_qty=%d, filled_price=%.3lf\n", rv, filled_qty, filled_price);
-
-    filled_qty = 0;
-    filled_price = 0.0;
-    slip = get_slippage(SLIPPAGE_NAME_KLine);
-    rv = slip->process_order(slip, &ord, &kline, &filled_qty, &filled_price);
-    fprintf(stderr, "kline     rv=%d, filled_qty=%d, filled_price=%.3lf\n", rv, filled_qty, filled_price);
-}
-
