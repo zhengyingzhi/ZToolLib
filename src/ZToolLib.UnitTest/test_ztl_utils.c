@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+
 #include <ZToolLib/ztl_unit_test.h>
 #include <ZToolLib/ztl_utils.h>
 
@@ -226,4 +228,22 @@ void Test_ztl_ztlncpy(ZuTest* zt)
     char lpdst[64] = "";
     ztlncpy(lpdst, lpsrc, (int)strlen(lpsrc));
     ZuAssertStrEquals(zt, lpsrc, lpdst);
+}
+
+void Test_ztl_round(ZuTest* zt)
+{
+    double d1, d2;
+    d1 = 11.2344;
+    d2 = 11.5646;
+    ZuAssertTrue(zt, DBL_EQ(ztl_round(d1, 0), 11.0, DBL_EPSILON_E6));
+    ZuAssertTrue(zt, DBL_EQ(ztl_round(d2, 0), 12.0, DBL_EPSILON_E6));
+
+    ZuAssertTrue(zt, DBL_EQ(ztl_round(d1, 1), 11.20, DBL_EPSILON_E6));
+    ZuAssertTrue(zt, DBL_EQ(ztl_round(d2, 1), 11.60, DBL_EPSILON_E6));
+
+    ZuAssertTrue(zt, DBL_EQ(ztl_round(d1, 2), 11.23, DBL_EPSILON_E6));
+    ZuAssertTrue(zt, DBL_EQ(ztl_round(d2, 2), 11.56, DBL_EPSILON_E6));
+
+    ZuAssertTrue(zt, DBL_EQ(ztl_round(d1, 3), 11.234, DBL_EPSILON_E6));
+    ZuAssertTrue(zt, DBL_EQ(ztl_round(d2, 3), 11.565, DBL_EPSILON_E6));
 }

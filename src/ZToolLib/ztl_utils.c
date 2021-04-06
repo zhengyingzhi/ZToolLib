@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <limits.h>
+#include <math.h>
 
 #include "ztl_times.h"
 #include "ztl_utils.h"
@@ -546,4 +547,29 @@ uint32_t ztl_rand(uint32_t* pseed)
 {
     *pseed = (214013 * (*pseed) + 2531011);
     return (*pseed >> 16) & 0x7FFF;
+}
+
+double ztl_round(double x, int precision)
+{
+    double m;
+    switch (precision)
+    {
+    case 0:     m = 1;              break;
+    case 1:     m = 10;             break;
+    case 2:     m = 100;            break;
+    case 3:     m = 1000;           break;
+    case 4:     m = 10000;          break;
+    case 5:     m = 100000;         break;
+    case 6:     m = 1000000;        break;
+    case 7:     m = 10000000;       break;
+    case 8:     m = 100000000;      break;
+    case 9:     m = 1000000000;     break;
+    case 10:    m = 10000000000;    break;
+    case 11:    m = 100000000000;   break;
+    case 12:    m = 1000000000000;  break;
+    default:
+        return x;
+    }
+
+    return round(x * m) / m;
 }

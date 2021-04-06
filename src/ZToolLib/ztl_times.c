@@ -153,7 +153,7 @@ void ztl_sleepns(int ns)
     struct timespec lSpec;
     lSpec.tv_sec  = 0;
     lSpec.tv_nsec = 1000 * ns;
-    nanosleep(&lSpec, nullptr);
+    nanosleep(&lSpec, NULL);
 }
 
 #endif//_MSC_VER

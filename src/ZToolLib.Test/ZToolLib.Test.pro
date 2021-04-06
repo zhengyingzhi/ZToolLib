@@ -42,14 +42,12 @@ LIBS += -L$${DESTDIR} -lztoollib$${BuildSuff} -lpthread -lm -lrt -ldl
 
 
 # Input
-HEADERS += high_time.h \
-    slippage.h
+HEADERS += 
 
 SOURCES += ZToolLib.Test.c \
     event_dispatcher_demo.c \
-    high_time.c \
     producer_consumer_demo.c \
-    slippage.c \
+    tcp_client_demo.c \
     tcp_server_demo.c \
     threadpool_demo.c \
     trans_md_demo.c \

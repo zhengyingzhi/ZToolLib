@@ -1,8 +1,3 @@
-/*
- * Copyright (C) Yingzhi Zheng.
- * Copyright (C) <zhengyingzhi112@163.com>
- */
-
 #ifndef _ZTL_UTILS_H_
 #define _ZTL_UTILS_H_
 
@@ -13,6 +8,14 @@
 #define DOUBLE_ZERO             double(1E-307)
 #define IS_DOUBLE_ZERO(D)       ((D) <= DOUBLE_ZERO && (D) >= -DOUBLE_ZERO)
 #define STR_ZERO_DOUBLE         "0.0000000000000"
+
+#define DBL_EPSILON_E6          (1.0e-6)
+#define DBL_EPSILON_E8          (1.0e-8)
+#define DBL_EPSILON_E12         (1.0e-12)
+
+#define DBL_EQ(d1, d2, ep)      (fabs((d1) - (d2)) < (ep))
+#define DBL_GE(d1, d2, ep)      ((d1) >= ((d2) - (ep)))
+#define DBL_GT(d1, d2, ep)      ((d1) >= ((d2) + (ep)))
 
 #define ztl_align(d,align)      (((d) + ((align) - 1)) & ~((align) - 1))
 #define ztl_align_ptr(p, a)     (uint8_t*) (((uintptr_t) (p) + ((uintptr_t)(a) - 1)) & ~((uintptr_t)(a) - 1))
@@ -121,6 +124,9 @@ char* zpassword_change(char* apdata);
 /// random related
 uint32_t ztl_randseed();
 uint32_t ztl_rand(uint32_t* pseed);
+
+/// round a double val, like round(1.2346, 3) -->> 1.2350
+double ztl_round(double x, int precision);
 
 
 union zudi {
