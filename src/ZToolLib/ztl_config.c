@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "ztl_palloc.h"
+#include "ztl_utils.h"
 #include "ztl_config.h"
 
 #define ZTL_CONFIG_DEFAULT_ITEMS    512
@@ -145,15 +146,26 @@ bool ztl_config_set_item(ztl_config_t* zconf, const char* key, const char* val, 
     return true;
 }
 
-bool ztl_config_read_str(ztl_config_t* zconf, const char* key, char** outval, int* outlen)
+bool ztl_config_read_str(ztl_config_t* zconf, const char* key, char** poutval, int* outlen)
 {
     char* lpv;
-    lpv = ztl_config_have(zconf, key);
+    lpv = ztl_config_have(zconf, key, 0);
     if (lpv) {
-        if (outval)
-            *outval = lpv;
+        if (poutval)
+            *poutval = lpv;
         if (outlen)
             *outlen = (int)strlen(lpv);
+        return true;
+    }
+    return false;
+}
+
+bool ztl_config_read_strval(ztl_config_t* zconf, const char* key, char* outval, int len)
+{
+    char* pv;
+    int   vallen;
+    if (ztl_config_read_str(zconf, key, &pv, &vallen)) {
+        strncpy(outval, pv, len);
         return true;
     }
     return false;
@@ -162,9 +174,9 @@ bool ztl_config_read_str(ztl_config_t* zconf, const char* key, char** outval, in
 bool ztl_config_read_int16(ztl_config_t* zconf, const char* key, void* outi16)
 {
     char* lpv;
-    lpv = ztl_config_have(zconf, key);
+    lpv = ztl_config_have(zconf, key, 0);
     if (lpv) {
-        *(int16_t*)outi16 = atoi(lpv);
+        *((int16_t*)outi16) = atoi(lpv);
         return true;
     }
     return false;
@@ -173,9 +185,9 @@ bool ztl_config_read_int16(ztl_config_t* zconf, const char* key, void* outi16)
 bool ztl_config_read_int32(ztl_config_t* zconf, const char* key, void* outi32)
 {
     char* lpv;
-    lpv = ztl_config_have(zconf, key);
+    lpv = ztl_config_have(zconf, key, 0);
     if (lpv) {
-        *(int32_t*)outi32 = atoi(lpv);
+        *((int32_t*)outi32) = atoi(lpv);
         return true;
     }
     return false;
@@ -184,9 +196,9 @@ bool ztl_config_read_int32(ztl_config_t* zconf, const char* key, void* outi32)
 bool ztl_config_read_int64(ztl_config_t* zconf, const char* key, void* outi64)
 {
     char* lpv;
-    lpv = ztl_config_have(zconf, key);
+    lpv = ztl_config_have(zconf, key, 0);
     if (lpv) {
-        *(int64_t*)outi64 = atoll(lpv);
+        *((int64_t*)outi64) = atoll(lpv);
         return true;
     }
     return false;
@@ -195,9 +207,9 @@ bool ztl_config_read_int64(ztl_config_t* zconf, const char* key, void* outi64)
 bool ztl_config_read_double(ztl_config_t* zconf, const char* key, void* outdbl)
 {
     char* lpv;
-    lpv = ztl_config_have(zconf, key);
+    lpv = ztl_config_have(zconf, key, 0);
     if (lpv) {
-        *(double*)outdbl = atof(lpv);
+        *((double*)outdbl) = atof(lpv);
         return true;
     }
     return false;
@@ -206,7 +218,7 @@ bool ztl_config_read_double(ztl_config_t* zconf, const char* key, void* outdbl)
 bool ztl_config_read_bool(ztl_config_t* zconf, const char* key, bool* outbool)
 {
     char* lpv;
-    lpv = ztl_config_have(zconf, key);
+    lpv = ztl_config_have(zconf, key, 0);
     if (lpv) {
         *outbool = ztl_boolvalue_lookup(lpv);
         return true;
@@ -223,7 +235,7 @@ bool ztl_boolvalue_lookup(const char* desc)
 
     for (int i = 0; zbooltable[i].desc; ++i)
     {
-        if (strcmp(zbooltable[i].desc, desc) == 0) {
+        if (ztl_stricmp(zbooltable[i].desc, desc) == 0) {
             return zbooltable[i].val;
         }
     }
@@ -231,14 +243,14 @@ bool ztl_boolvalue_lookup(const char* desc)
     return false;
 }
 
-char* ztl_config_have(ztl_config_t* zconf, const char* key)
+char* ztl_config_have(ztl_config_t* zconf, const char* key, int strictly)
 {
-    ztl_pair_value_t* lpPair;
+    ztl_pair_value_t* pv;
     for (uint32_t i = 0; i < zconf->count; ++i)
     {
-        lpPair = &zconf->items[i];
-        if (strcmp(lpPair->key, key) == 0) {
-            return lpPair->value;
+        pv = &zconf->items[i];
+        if ((strictly && strcmp(pv->key, key) == 0) || (ztl_stricmp(pv->key, key) == 0)) {
+            return pv->value;
         }
     }
 

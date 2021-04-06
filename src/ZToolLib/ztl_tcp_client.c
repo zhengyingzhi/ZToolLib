@@ -9,7 +9,11 @@
 #include "ztl_tcp_client.h"
 #include "ztl_times.h"
 
+#ifdef _MSC_VER
 extern struct ztl_event_ops selectops;
+#else
+extern struct ztl_event_ops epollops;
+#endif//_MSC_VER
 
 
 static int _connected_handler(ztl_tcp_client_t* cli, sockhandle_t fd, void* udata);
@@ -71,7 +75,11 @@ int ztl_tcp_client_create(ztl_tcp_client_t** pcli)
     cli = (ztl_tcp_client_t*)malloc(sizeof(ztl_tcp_client_t));
     memset(cli, 0, sizeof(ztl_tcp_client_t));
 
+#ifdef _MSC_VER
     cli->evops          = &selectops;
+#else
+    cli->evops          = &epollops;
+#endif
     cli->evops_ctx      = NULL;
     cli->fd             = INVALID_SOCKET;
     cli->reconnect_ms   = 1000;
@@ -238,7 +246,7 @@ int ztl_tcp_client_init(ztl_tcp_client_t* cli, bool sync_mode)
         rv = 0;
     }
 
-    return 0;
+    return rv;
 }
 
 int ztl_tcp_client_stop(ztl_tcp_client_t* cli)

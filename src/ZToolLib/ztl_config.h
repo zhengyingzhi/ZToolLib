@@ -34,7 +34,8 @@ bool ztl_config_set_item(ztl_config_t* zconf, const char* key, const char* val, 
 /* read configure items
  * if return false (read failed), the outval will not be changed
  */
-bool ztl_config_read_str(ztl_config_t* zconf, const char* key, char** outval, int* outlen);
+bool ztl_config_read_str(ztl_config_t* zconf, const char* key, char** poutval, int* outlen);
+bool ztl_config_read_strval(ztl_config_t* zconf, const char* key, char* outval, int len);
 bool ztl_config_read_int16(ztl_config_t* zconf, const char* key, void* outi16);
 bool ztl_config_read_int32(ztl_config_t* zconf, const char* key, void* outi32);
 bool ztl_config_read_int64(ztl_config_t* zconf, const char* key, void* outi64);
@@ -47,9 +48,10 @@ bool ztl_config_read_bool(ztl_config_t* zconf, const char* key, bool* outbool);
 bool ztl_boolvalue_lookup(const char* val_desc);
 
 /* have the configure item or not,
+ * @param strictly, look up strictly or not
  * return the value ptr if find
  */
-char* ztl_config_have(ztl_config_t* zconf, const char* key);
+char* ztl_config_have(ztl_config_t* zconf, const char* key, int strictly);
 
 #ifdef __cplusplus
 }
