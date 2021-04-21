@@ -23,6 +23,7 @@ struct ztl_msg_buffer_st
     void*               owner;
     void*               udata;
     uint32_t            flags;
+    uint32_t            msg_type;
     uint32_t            body_size;
     uint32_t            used;
     uint32_t            refcount;
@@ -31,10 +32,10 @@ struct ztl_msg_buffer_st
 
 /* Create a msg buffer, and the returned object's refcount is already 1
  * @param body_size nbytes space to use
- * @note  you can use prev/next/owner/udata/flags variables
+ * @note  you can use prev/next/owner/udata/flags/msg_type variables
  */
-ztl_msg_buffer_t* zlt_mb_alloc(uint32_t body_size);
-ztl_msg_buffer_t* zlt_mb_clone(ztl_msg_buffer_t* zmb);
+ztl_msg_buffer_t* ztl_mb_alloc(uint32_t body_size);
+ztl_msg_buffer_t* ztl_mb_clone(ztl_msg_buffer_t* zmb);
 
 /* Init a msg buffer if you created ztl_msg_buffer_t object
  */

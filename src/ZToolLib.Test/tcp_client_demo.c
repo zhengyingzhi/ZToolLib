@@ -103,7 +103,7 @@ int _client_api_on_read(ztl_tcp_client_t* cli, sockhandle_t fd, void* udata)
     uint32_t len;
 
     if (!api->zmb) {
-        api->zmb = zlt_mb_alloc(4000);
+        api->zmb = ztl_mb_alloc(4000);
     }
     len = ztl_mb_length(api->zmb);
     p = ztl_mb_data(api->zmb) + len;

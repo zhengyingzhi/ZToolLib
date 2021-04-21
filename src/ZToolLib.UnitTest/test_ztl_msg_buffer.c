@@ -13,7 +13,7 @@ void Test_ztl_msg_buffer(ZuTest* zt)
     ztl_msg_buffer_t* zmb;
 
     body_size = 16;
-    zmb = zlt_mb_alloc(body_size);
+    zmb = ztl_mb_alloc(body_size);
 
     ztl_mb_addref(zmb);
     rv = ztl_mb_append(zmb, "hello", 5);

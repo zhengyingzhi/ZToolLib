@@ -18,7 +18,7 @@ static void _zmb_free(ztl_msg_buffer_t* zmb)
         FREE(zmb);
 }
 
-ztl_msg_buffer_t* zlt_mb_alloc(uint32_t body_size)
+ztl_msg_buffer_t* ztl_mb_alloc(uint32_t body_size)
 {
     ztl_msg_buffer_t* zmb;
     uint32_t nbytes;
@@ -29,10 +29,10 @@ ztl_msg_buffer_t* zlt_mb_alloc(uint32_t body_size)
     return zmb;
 }
 
-ztl_msg_buffer_t* zlt_mb_clone(ztl_msg_buffer_t* zmb)
+ztl_msg_buffer_t* ztl_mb_clone(ztl_msg_buffer_t* zmb)
 {
     ztl_msg_buffer_t* new_zmb;
-    new_zmb = (ztl_msg_buffer_t*)zlt_mb_alloc(zmb->body_size);
+    new_zmb = (ztl_msg_buffer_t*)ztl_mb_alloc(zmb->body_size);
     memcpy(new_zmb, zmb, sizeof(ztl_msg_buffer_t) + zmb->body_size);
     new_zmb->refcount = 1;
     new_zmb->cleanup = _zmb_free;
@@ -40,7 +40,7 @@ ztl_msg_buffer_t* zlt_mb_clone(ztl_msg_buffer_t* zmb)
 }
 
 #if 0
-ztl_msg_buffer_t* zlt_mb_realloc(ztl_msg_buffer_t* zmb, uint32_t body_size)
+ztl_msg_buffer_t* ztl_mb_realloc(ztl_msg_buffer_t* zmb, uint32_t body_size)
 {
     uint32_t nbytes;
 

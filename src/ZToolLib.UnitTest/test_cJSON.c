@@ -35,26 +35,14 @@ void Test_cJSON(ZuTest* zt)
     json = cJSON_Parse(str);
     ZuAssertTrue(zt, json != NULL);
 
-    node = cJSON_GetObjectItem(json, "family");
-    if (!node)
-    {
-        printf("family node is null\n");
-        return;
-    }
-
     // verify whether key is string option, return 1 if has, otherwise return 0
-    if (1 == cJSON_HasObjectItem(json, "family")) {
-        printf("found family node\n");
-    }
-    else {
-        printf("not found family node\n");
-    }
+    ZuAssertTrue(zt, cJSON_HasObjectItem(json, "family"));
+    node = cJSON_GetObjectItem(json, "family");
+    ZuAssertPtrNotNull(zt, node);
 
     node = cJSON_GetObjectItem(json, "family");
-    if (node->type == cJSON_Array)
-    {
-        printf("array size is %d\n", cJSON_GetArraySize(node));
-    }
+    ZuAssertTrue(zt, node->type == cJSON_Array);
+    ZuAssertIntEquals(zt, 5, cJSON_GetArraySize(node));
 
     //非array类型的node 被当做array获取size的大小是未定义的行为 不要使用
 
