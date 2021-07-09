@@ -1,8 +1,3 @@
-/*
- * Copyright (C) Yingzhi Zheng
- * Copyright (C) zhengyingzhi112@163.com
- */
-
 #ifndef _ZTL_MESSAGE_BUFFER_H_
 #define _ZTL_MESSAGE_BUFFER_H_
 
@@ -42,9 +37,9 @@ ztl_msg_buffer_t* ztl_mb_clone(ztl_msg_buffer_t* zmb);
 int ztl_mb_init(ztl_msg_buffer_t* zmb, uint32_t body_size);
 
 /* Add refcount for the object,
- * @return the new refcount
+ * @return the old refcount
  */
-uint32_t ztl_mb_addref(ztl_msg_buffer_t* zmb);
+uint32_t ztl_mb_addref(ztl_msg_buffer_t* zmb, int delta);
 
 /* Dec refcount for the object, will free it if the last reference,
  * we usually call this to free the object
@@ -69,7 +64,7 @@ int ztl_mb_update_used(ztl_msg_buffer_t* zmb, int size);
 
 #define ztl_mb_length(zmb)      ((zmb)->used)
 #define ztl_mb_avail(zmb)       ((zmb)->body_size - (zmb)->used)
-#define ztl_mb_data(zmb)        (char*)((zmb) + 1)
+#define ztl_mb_data(zmb)        ((char*)((zmb) + 1))
 #define ztl_mb_object(zmb)      (ztl_msg_buffer_t*)((char*)(zmb) - sizeof(ztl_msg_buffer_t))
 
 

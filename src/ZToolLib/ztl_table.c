@@ -2,17 +2,10 @@
 #include <string.h>
 #include <limits.h>
 
-#if _MSC_VER
-#include <WinSock2.h>
-#define HAVE_PTHREAD    0
-#else
-#include <pthread.h>
-#define HAVE_PTHREAD    1
-#endif//_MSC_VER
-
 #include "ztl_mem.h"
 #include "ztl_table.h"
 #include "ztl_times.h"
+#include "ztl_threads.h"
 
 
 typedef struct table_intl_t {
@@ -28,12 +21,8 @@ struct table_st {
     hash_ptr        hash;
     free_ptr        kfree;
     free_ptr        vfree;
-#if HAVE_PTHREAD
-    pthread_mutex_t     lock;
-    pthread_rwlock_t    rwlock;
-#else
-    CRITICAL_SECTION    lock;
-#endif//HAVE_PTHREAD
+    ztl_thread_rwlock_t lock;
+    ztl_thread_rwlock_t rwlock;
 };
 
 struct table_node_st {
@@ -108,10 +97,7 @@ static long long get_ms(void)
 table_t table_new(cmp_ptr cmp, hash_ptr hash, free_ptr kfree, free_ptr vfree)
 {
     table_t table;
-#if HAVE_PTHREAD
-    pthread_mutexattr_t mattr;
-    pthread_rwlockattr_t rwattr;
-#endif//HAVE_PTHREAD
+    ztl_thread_mutexattr_t mattr;
 
     if (NEW(table) == NULL)
         return NULL;
@@ -124,18 +110,11 @@ table_t table_new(cmp_ptr cmp, hash_ptr hash, free_ptr kfree, free_ptr vfree)
     table->kfree        = kfree;
     table->vfree        = vfree;
 
-#if HAVE_PTHREAD
-    pthread_mutexattr_init(&mattr);
-    pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ADAPTIVE_NP);
-    pthread_mutex_init(&table->lock, &mattr);
-    pthread_mutexattr_destroy(&mattr);
-    pthread_rwlockattr_init(&rwattr);
-    pthread_rwlockattr_setkind_np(&rwattr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-    pthread_rwlock_init(&table->rwlock, &rwattr);
-    pthread_rwlockattr_destroy(&rwattr);
-#else
-    InitializeCriticalSection(&table->lock);
-#endif//HAVE_PTHREAD
+    ztl_thread_mutexattr_init(&mattr);
+    ztl_thread_mutex_init(&table->lock, &mattr);
+    ztl_thread_mutexattr_destroy(&mattr);
+    ztl_thread_rwlock_init(&table->rwlock);
+
     return table;
 }
 
@@ -548,54 +527,34 @@ void table_lock(table_t table)
 {
     if (table == NULL)
         return;
-#if HAVE_PTHREAD
-    pthread_mutex_lock(&table->lock);
-#else
-    EnterCriticalSection(&table->lock);
-#endif
+    ztl_thread_mutex_lock(&table->lock);
 }
 
 void table_unlock(table_t table)
 {
     if (table == NULL)
         return;
-#if HAVE_PTHREAD
-    pthread_mutex_unlock(&table->lock);
-#else
-    LeaveCriticalSection(&table->lock);
-#endif
+    ztl_thread_mutex_unlock(&table->lock);
 }
 
 void table_rwlock_rdlock(table_t table)
 {
     if (table == NULL)
         return;
-#if HAVE_PTHREAD
-    pthread_rwlock_rdlock(&table->rwlock);
-#else
-    EnterCriticalSection(&table->lock);
-#endif
+    ztl_thread_rwlock_rdlock(&table->rwlock);
 }
 
 void table_rwlock_wrlock(table_t table)
 {
     if (table == NULL)
         return;
-#if HAVE_PTHREAD
-    pthread_rwlock_wrlock(&table->rwlock);
-#else
-    EnterCriticalSection(&table->lock);
-#endif
+    ztl_thread_rwlock_wrlock(&table->rwlock);
 }
 
 void table_rwlock_unlock(table_t table)
 {
     if (table == NULL)
         return;
-#if HAVE_PTHREAD
-    pthread_rwlock_unlock(&table->rwlock);
-#else
-    LeaveCriticalSection(&table->lock);
-#endif
+    ztl_thread_rwlock_unlock(&table->rwlock);
 }
 

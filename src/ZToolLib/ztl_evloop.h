@@ -46,19 +46,22 @@ typedef int(*ztl_timer_finalizer_t)(ztl_evloop_t* evloop, uint64_t timer_id, voi
 struct ztl_connection_st
 {
     sockhandle_t    fd;             // socket fd
-    uint32_t        addr;           // address
-    uint16_t        port;           // port
+    uint32_t        addr;           // socket address
+    uint16_t        port;           // socket port
     uint16_t        events;         // request events
+    uint32_t        flags;
 
+    uint32_t        lock;
     uint32_t        refcount;
     uint8_t         added;
     uint8_t         closed;
     uint8_t         disconncted;
-    uint8_t         padding;
+    uint8_t         authenticated;
 
     ztl_evloop_t*   evloop;
     void*           internal;
-    void*           userdata;       // for upper app, framework would not use it
+    void*           userdata1;      // for upper user, framework would not use it
+    void*           userdata2;
 
     char*           rbuf;
     uint32_t        rsize;

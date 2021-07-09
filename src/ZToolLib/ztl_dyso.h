@@ -1,6 +1,15 @@
 #ifndef _ZTL_DYNAMIC_SO_H_
 #define _ZTL_DYNAMIC_SO_H_
 
+
+#ifdef _MSC_VER
+#define     RTLD_LAZY   1
+#define     RTLD_LOCAL  0
+#else
+#include <dlfcn.h>
+#endif//_MSC_VER
+
+
 /// exported types
 typedef struct  ztl_dso_handle_st ztl_dso_handle_t;
 typedef void*   ztl_hlib_t;

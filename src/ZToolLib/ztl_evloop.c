@@ -166,13 +166,12 @@ int ztl_evloop_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents,
         ztl_connection_save(evloop, conn);
     }
 
-    conn->userdata = udata;
+    conn->userdata1 = udata;
     conn->events |= reqevents;
     if (reqevents & ZEV_POLLIN)
         conn->read_handler = handler;
     if (reqevents & ZEV_POLLOUT)
         conn->write_handler = handler;
-    conn->userdata = udata;
 
     rv = evloop->evops->add(evloop->evops_ctx, fd, reqevents, conn->events);
     if (rv < 0) {

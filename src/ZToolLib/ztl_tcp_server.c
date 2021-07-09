@@ -73,7 +73,7 @@ static int _write_handler(ztl_evloop_t* evloop, ztl_connection_t* conn, int even
     ZTL_NOTUSED(events);
     fprintf(stderr, "_write_handler\n");
     ztl_evloop_del(evloop, conn->fd, ZEV_POLLOUT);
-    ztl_evloop_add(evloop, conn->fd, ZEV_POLLIN, _read_handler, conn->userdata);
+    ztl_evloop_add(evloop, conn->fd, ZEV_POLLIN, _read_handler, conn->userdata1);
 
     return 0;
 }

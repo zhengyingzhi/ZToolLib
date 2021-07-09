@@ -166,7 +166,8 @@ static ztl_connection_t* _iocp_newconn(ztl_evloop_t* evloop, per_io_data_t* apIO
     memset(newconn, 0, sizeof(ztl_connection_t));
 
     newconn->fd         = apIOData->sockfd;
-    newconn->userdata   = NULL;
+    newconn->userdata1 = NULL;
+    newconn->userdata2 = NULL;
 
     newconn->recv       = _iocp_recv;
     newconn->send       = _iocp_send;
@@ -468,7 +469,7 @@ static unsigned __stdcall iocp_accept_entry(void* arg)
     while (evloop->running)
     {
         // accept new socket (todo: try waiting)
-        rv = poll_read(&evloop->listen_fd, 1, evloop->timeout_ms);
+        rv = poll_read(evloop->listen_fd, evloop->timeout_ms);
         if (rv == 0) {
             continue;
         }

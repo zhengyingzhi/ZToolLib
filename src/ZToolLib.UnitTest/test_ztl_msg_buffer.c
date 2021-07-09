@@ -15,7 +15,7 @@ void Test_ztl_msg_buffer(ZuTest* zt)
     body_size = 16;
     zmb = ztl_mb_alloc(body_size);
 
-    ztl_mb_addref(zmb);
+    ztl_mb_addref(zmb, 2);
     rv = ztl_mb_append(zmb, "hello", 5);
     ZuAssertIntEquals(zt, 0, rv);
     ZuAssertTrue(zt, strncmp("hello", ztl_mb_data(zmb), 5) == 0);

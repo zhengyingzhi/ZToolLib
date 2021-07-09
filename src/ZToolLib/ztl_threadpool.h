@@ -40,7 +40,7 @@ ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size);
 int ztl_thrpool_start(ztl_thrpool_t* thpool);
 
 /* @brief   dispatch a new task to the thread pool with argument 'arg'
- * @param   func: the work func to be scheduled in pool
+ * @param   func: the work func to be scheduled in pool, void (*fn)(ztl_thrpool_t* tp, void* arg1, void* arg2)
  * @param   arg1: the first arg for func
  * @param   arg2: the second arg for func
  * @param   afree1: to free the arg1 after task finished

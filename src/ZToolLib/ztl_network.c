@@ -405,7 +405,7 @@ sockhandle_t tcp_accept2(sockhandle_t listenfd, char ip[], int sz, uint16_t* por
 }
 
 #define _POLL_ONCE_MAX_N    8
-int poll_read(sockhandle_t sockfds[], int nfds, int timeout_ms)
+int poll_reads(sockhandle_t sockfds[], int nfds, int timeout_ms)
 {
     if (nfds > _POLL_ONCE_MAX_N) {
         return -2;
@@ -441,6 +441,25 @@ int poll_read(sockhandle_t sockfds[], int nfds, int timeout_ms)
     return n;
 }
 
+int poll_read(sockhandle_t sockfd, int timeout_ms)
+{
+    int n = 0;
+    struct pollfd fds;
+    fds.fd = sockfd;
+    fds.events = POLLIN;
+    fds.revents = 0;
+
+#ifdef _MSC_VER
+    n = WSAPoll(&fds, 1, timeout_ms);
+#else
+    n = poll(&fds, 1, timeout_ms);
+#endif//_MSC_VER
+
+    if (n > 0)
+        return fds.revents > 0 ? 1 : 0;
+    return n;
+}
+
 int send_iov(sockhandle_t sockfd, EIOVEC* iovec, int iovec_cnt)
 {
 #ifdef _MSC_VER
@@ -460,46 +479,46 @@ int send_iov(sockhandle_t sockfd, EIOVEC* iovec, int iovec_cnt)
 }
 
 //////////////////////////////////////////////////////////////////////////
-int net_connect(sockhandle_t connfd, const char* ip, uint16_t port)
+int net_connect(sockhandle_t sockfd, const char* ip, uint16_t port)
 {
     struct sockaddr_in laddr;
     memset(&laddr, 0, sizeof laddr);
     make_sockaddr(&laddr, ip, port);
-    return connect(connfd, (struct sockaddr*)&laddr, sizeof laddr);
+    return connect(sockfd, (struct sockaddr*)&laddr, sizeof laddr);
 }
 
-int net_connect_nonb(sockhandle_t fd, const char* ip, uint16_t port, int timeout_ms)
+int net_connect_nonb(sockhandle_t sockfd, const char* ip, uint16_t port, int timeout_ms)
 {
     int rv;
     fd_set wtfds;
     struct timeval* ptv = NULL;
     struct timeval tv;
 
-    set_nonblock(fd, true);
-    set_rcv_timeout(fd, 0);
-    set_snd_timeout(fd, 0);
+    set_nonblock(sockfd, true);
+    set_rcv_timeout(sockfd, 0);
+    set_snd_timeout(sockfd, 0);
 
     if (timeout_ms >= 0) {
         to_timeval(&tv, timeout_ms);
         ptv = &tv;
     }
 
-    if ((rv = net_connect(fd, ip, port)) == 0)
+    if ((rv = net_connect(sockfd, ip, port)) == 0)
         goto conn_done;
     else if (rv < 0 && !is_wouldblock(get_errno()))
         goto conn_done;
 
     FD_ZERO(&wtfds);
-    FD_SET(fd, &wtfds);
-    if ((rv = select((int)(fd + 1), NULL, &wtfds, NULL, ptv)) == 0) {
+    FD_SET(sockfd, &wtfds);
+    if ((rv = select((int)(sockfd + 1), NULL, &wtfds, NULL, ptv)) == 0) {
         rv = -1;
         goto conn_done;
     }
 
-    if (FD_ISSET(fd, &wtfds))
+    if (FD_ISSET(sockfd, &wtfds))
     {
         int error = 0;
-        int iret = get_socket_error(fd, &error);
+        int iret = get_socket_error(sockfd, &error);
 
         // if has error, getsockopt returns -1 on Solaris, returns 0 on Berkely,
         /// and both of them set error type to 'error' variable
@@ -513,7 +532,7 @@ int net_connect_nonb(sockhandle_t fd, const char* ip, uint16_t port, int timeout
     else
     {
 #if defined(_DEBUG) || defined(DEBUG)
-        fprintf(stderr, "select error: sockfd not set [%d]", (int)fd);
+        fprintf(stderr, "select error: sockfd not set [%d]", (int)sockfd);
 #endif//DEBUG
     }
 
@@ -685,6 +704,11 @@ int tcp_echo_server(const char* listenip, uint16_t listenport)
     fprintf(stderr, "tcp echo server listen at %s:%d\n", listenip, listenport);
 
     return tcp_simple_server(listenfd, echo_func, NULL);
+}
+
+int net_send(sockhandle_t sockfd, const char* buf, int size, int flag)
+{
+    return send(sockfd, buf, size, flag);
 }
 
 sockhandle_t udp_receiver(const char* localip, uint16_t localport, bool reuseaddr)

@@ -64,7 +64,7 @@ void Test_ztl_dlist(ZuTest* zt)
 {
     int rv;
     ztl_dlist_t* dl;
-    dl = ztl_dlist_create(4);
+    dl = ztl_dlist_create(4, NULL, NULL);
 
     void* head, *tail;
     for (int64_t i = 1; i <= 6; ++i)
@@ -149,9 +149,9 @@ void Test_ztl_dlist(ZuTest* zt)
 
     // direction remove expect data
     void* actual;
-    actual = ztl_dlist_remove(dl, (void*)0x04, NULL);
+    actual = ztl_dlist_remove(dl, (void*)0x04);
     ZuAssertTrue(zt, actual == (void*)0x04);
-    actual = ztl_dlist_remove(dl, (void*)0x04, NULL);
+    actual = ztl_dlist_remove(dl, (void*)0x04);
     ZuAssertTrue(zt, actual == NULL);
 
     // the left data

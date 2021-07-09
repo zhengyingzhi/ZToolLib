@@ -314,15 +314,11 @@ ztl_log_t* ztl_log_create(const char* filename, ztl_log_output_t outType, bool i
 
     if (log->is_async)
     {
-#ifdef _WIN32
-        ztl_thread_mutex_init(&log->lock, NULL);
-#else
         ztl_thread_mutexattr_t ma;
         ztl_thread_mutexattr_init(&ma);
         ztl_thread_mutexattr_settype(&ma, ZTL_THREAD_MUTEX_ADAPTIVE_NP);
         ztl_thread_mutex_init(&log->lock, &ma);
         ztl_thread_mutexattr_destroy(&ma);
-#endif//_WIN32
         ztl_thread_cond_init(&log->cond, NULL);
 
         log->queue  = lfqueue_create(ZTL_LOG_QUEUE_SIZE, sizeof(char*));
@@ -388,15 +384,11 @@ ztl_log_t* ztl_log_create_udp(const char* filename, ztl_log_output_t outType,
             return NULL;
         }
 
-#ifdef _WIN32
-        ztl_thread_mutex_init(&log->lock, NULL);
-#else
         ztl_thread_mutexattr_t ma;
         ztl_thread_mutexattr_init(&ma);
         ztl_thread_mutexattr_settype(&ma, ZTL_THREAD_MUTEX_ADAPTIVE_NP);
         ztl_thread_mutex_init(&log->lock, &ma);
         ztl_thread_mutexattr_destroy(&ma);
-#endif//_WIN32
         ztl_thread_cond_init(&log->cond, NULL);
 
         // create udp log recv thread
@@ -457,7 +449,31 @@ void ztl_log_set_level(ztl_log_t* log, ztl_log_level_t level)
         log->log_level = level;
 }
 
-extern ztl_log_level_t ztl_log_get_level(ztl_log_t* log)
+int  ztl_log_set_levelstr(ztl_log_t* log, const char* level)
+{
+    if (!log)
+        return -1;
+
+    if (ztl_stricmp(level, "trace") == 0)
+        log->log_level = ZTL_LOG_DEBUG;
+    else if (ztl_stricmp(level, "debug") == 0)
+        log->log_level = ZTL_LOG_DEBUG;
+    else if (ztl_stricmp(level, "info") == 0)
+        log->log_level = ZTL_LOG_INFO;
+    else if (ztl_stricmp(level, "notice") == 0)
+        log->log_level = ZTL_LOG_NOTICE;
+    else if (ztl_stricmp(level, "warn") == 0)
+        log->log_level = ZTL_LOG_WARN;
+    else if (ztl_stricmp(level, "error") == 0)
+        log->log_level = ZTL_LOG_ERROR;
+    else if (ztl_stricmp(level, "critical") == 0)
+        log->log_level = ZTL_LOG_CRITICAL;
+    else
+        return -1;
+    return 0;
+}
+
+ztl_log_level_t ztl_log_get_level(ztl_log_t* log)
 {
     if (log)
         return log->log_level;

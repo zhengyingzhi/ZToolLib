@@ -4,10 +4,9 @@
 #include <assert.h>
 
 #include "ztl_mempool.h"
-
 #include "ztl_linklist.h"
-
 #include "ztl_dlist.h"
+#include "ztl_threads.h"
 
 
 typedef struct 
@@ -21,14 +20,50 @@ struct ztl_dlist_st
     ztl_queue_t             que;
     ztl_mempool_t*          mp;
     uint32_t                size;
-    uint32_t                lock;
     ztl_dlist_iterator_t*   iter;
+    int                    (*cmp)(const void* expect, const void* actual);
+    int                    (*vfree)(void* val);
+
+    ztl_thread_rwlock_t     lock;
+    ztl_thread_rwlock_t     rwlock;
 };
 
 
-ztl_dlist_t* ztl_dlist_create(int reserve_nodes)
+static inline int _ztl_dlist_cmp(const void* expect, const void* actual)
+{
+    if (expect == actual) {
+        return 0;
+    }
+    else if (expect < actual) {
+        return -1;
+    }
+    else {
+        return 1;
+    }
+}
+
+static inline void* _ztl_dlist_remove(ztl_dlist_t* dl, ztl_queue_t* quelink)
+{
+    void*           data;
+    ztl_dlnode_t*   dlnode;
+
+    dlnode = ztl_queue_data(quelink, ztl_dlnode_t, link);
+    data = dlnode->data;
+
+    --dl->size;
+    ztl_queue_remove(quelink);
+    ztl_mp_free(dl->mp, dlnode);
+    return data;
+}
+
+//////////////////////////////////////////////////////////////////////////
+ztl_dlist_t* ztl_dlist_create(int reserve_nodes,
+    int(*cmp)(const void* expect, const void* actual),
+    int(*vfree)(void* val))
 {
     ztl_dlist_t* dl;
+    ztl_thread_mutexattr_t mattr;
+
     dl = (ztl_dlist_t*)malloc(sizeof(ztl_dlist_t));
     memset(dl, 0, sizeof(*dl));
 
@@ -39,15 +74,34 @@ ztl_dlist_t* ztl_dlist_create(int reserve_nodes)
     ztl_queue_init(&dl->que);
     dl->mp      = ztl_mp_create(sizeof(ztl_dlnode_t), reserve_nodes, true);
     dl->size    = 0;
-    dl->lock    = 0;
     dl->iter    = (ztl_dlist_iterator_t*)malloc(sizeof(ztl_dlist_iterator_t));
+    dl->cmp     = cmp ? cmp : _ztl_dlist_cmp;
+
+    ztl_thread_mutexattr_init(&mattr);
+    ztl_thread_mutex_init(&dl->lock, &mattr);
+    ztl_thread_mutexattr_destroy(&mattr);
+    ztl_thread_rwlock_init(&dl->rwlock);
 
     return dl;
 }
 
 void ztl_dlist_release(ztl_dlist_t* dl)
 {
+    ztl_dlist_iterator_t* iter;
+    iter = ztl_dlist_iter_new(dl, ZTL_DLSTART_HEAD);
+    while (true)
+    {
+        void* actual = ztl_dlist_next(dl, iter);
+        if (!actual) {
+            break;
+        }
+        if (dl->vfree) {
+            dl->vfree(actual);
+        }
+    }
+
     ztl_mp_release(dl->mp);
+
     if (dl->iter) {
         free(dl->iter);
     }
@@ -104,20 +158,6 @@ int ztl_dlist_insert_tail(ztl_dlist_t* dl, void* data)
     return 0;
 }
 
-static inline void* _ztl_dlist_remove(ztl_dlist_t* dl, ztl_queue_t* quelink)
-{
-    void*           data;
-    ztl_dlnode_t*   dlnode;
-
-    dlnode = ztl_queue_data(quelink, ztl_dlnode_t, link);
-    data = dlnode->data;
-
-    --dl->size;
-    ztl_queue_remove(quelink);
-    ztl_mp_free(dl->mp, dlnode);
-    return data;
-}
-
 void* ztl_dlist_pop(ztl_dlist_t* dl)
 {
     if (dl->size == 0) {
@@ -140,27 +180,14 @@ void* ztl_dlist_pop_back(ztl_dlist_t* dl)
     return _ztl_dlist_remove(dl, quelink);
 }
 
-static inline int _ztl_dlist_cmp(void* expect, void* actual)
-{
-    if (expect == actual) {
-        return 0;
-    }
-    else if (expect < actual) {
-        return -1;
-    }
-    else {
-        return 1;
-    }
-}
-
-bool ztl_dlist_have(ztl_dlist_t* dl, void* data)
+bool ztl_dlist_have(ztl_dlist_t* dl, void* expect)
 {
     void* actual;
-    actual = ztl_dlist_search(dl, data, _ztl_dlist_cmp);
+    actual = ztl_dlist_search(dl, expect);
     return actual ? true : false;
 }
 
-void* ztl_dlist_search(ztl_dlist_t* dl, void* expect, int(*cmp)(void* expect, void* actual))
+void* ztl_dlist_search(ztl_dlist_t* dl, void* expect)
 {
     void* actual = NULL;
     ztl_dlist_iterator_t* iter;
@@ -171,7 +198,7 @@ void* ztl_dlist_search(ztl_dlist_t* dl, void* expect, int(*cmp)(void* expect, vo
         if (actual == NULL) {
             break;
         }
-        else if (cmp(expect, actual) == 0) {
+        else if (dl->cmp(expect, actual) == 0) {
             break;
         }
         actual = NULL;
@@ -182,11 +209,8 @@ void* ztl_dlist_search(ztl_dlist_t* dl, void* expect, int(*cmp)(void* expect, vo
     return actual;
 }
 
-void* ztl_dlist_remove(ztl_dlist_t* dl, void* expect, int(*cmp)(void* expect, void* actual))
+void* ztl_dlist_remove(ztl_dlist_t* dl, void* expect)
 {
-    if (!cmp)
-        cmp = _ztl_dlist_cmp;
-
     void* actual = NULL;
     ztl_dlist_iterator_t* iter;
     iter = ztl_dlist_iter_new(dl, ZTL_DLSTART_HEAD);
@@ -196,7 +220,7 @@ void* ztl_dlist_remove(ztl_dlist_t* dl, void* expect, int(*cmp)(void* expect, vo
         if (actual == NULL) {
             break;
         }
-        else if (cmp(expect, actual) == 0) {
+        else if (dl->cmp(expect, actual) == 0) {
             ztl_dlist_erase(dl, iter);
             break;
         }
@@ -207,7 +231,6 @@ void* ztl_dlist_remove(ztl_dlist_t* dl, void* expect, int(*cmp)(void* expect, vo
 
     return actual;
 }
-
 
 ztl_dlist_iterator_t* ztl_dlist_iter_new(ztl_dlist_t* dl, int direction)
 {
@@ -299,4 +322,40 @@ bool ztl_dlist_erase(ztl_dlist_t* dl, ztl_dlist_iterator_t* iter)
 
     _ztl_dlist_remove(dl, oldlink);
     return true;
+}
+
+void ztl_dlist_lock(ztl_dlist_t* dl)
+{
+    if (dl == NULL)
+        return;
+
+    ztl_thread_mutex_lock(&dl->lock);
+}
+
+void ztl_dlist_unlock(ztl_dlist_t* dl)
+{
+    if (dl == NULL)
+        return;
+    ztl_thread_mutex_unlock(&dl->lock);
+}
+
+void ztl_dlist_rwlock_rdlock(ztl_dlist_t* dl)
+{
+    if (dl == NULL)
+        return;
+    ztl_thread_rwlock_rdlock(&dl->rwlock);
+}
+
+void ztl_dlist_rwlock_wrlock(ztl_dlist_t* dl)
+{
+    if (dl == NULL)
+        return;
+    ztl_thread_rwlock_wrlock(&dl->rwlock);
+}
+
+void ztl_dlist_rwlock_unlock(ztl_dlist_t* dl)
+{
+    if (dl == NULL)
+        return;
+    ztl_thread_rwlock_unlock(&dl->rwlock);
 }

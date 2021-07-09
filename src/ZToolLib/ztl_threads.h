@@ -13,10 +13,16 @@ typedef pthread_mutex_t                 ztl_thread_mutex_t;
 typedef pthread_cond_t                  ztl_thread_cond_t;
 typedef pthread_t                       ztl_thread_t;
 typedef pthread_attr_t                  ztl_thread_attr_t;
+typedef pthread_rwlock_t                ztl_thread_rwlock_t;
 
 /// ztl thread mutex lock
 #define ztl_thread_mutex_init           pthread_mutex_init
 #define ztl_thread_mutex_destroy        pthread_mutex_destroy
+int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock);
+#define ztl_thread_rwlock_rdlock        pthread_rwlock_rdlock
+#define ztl_thread_rwlock_wrlock        pthread_rwlock_wrlock
+#define ztl_thread_rwlock_unlock        pthread_rwlock_unlock
+
 #define ztl_thread_mutex_lock           pthread_mutex_lock
 #define ztl_thread_mutex_unlock         pthread_mutex_unlock
 
@@ -61,8 +67,9 @@ typedef unsigned ztl_thread_result_t;
 #define ZTL_THREAD_CALL __stdcall
 typedef ztl_thread_result_t (ZTL_THREAD_CALL* ztl_thread_func_t )( void * args );
 
-typedef CRITICAL_SECTION ztl_thread_mutex_t;
-typedef HANDLE  ztl_thread_cond_t;
+typedef CRITICAL_SECTION    ztl_thread_mutex_t;
+typedef CRITICAL_SECTION    ztl_thread_rwlock_t;
+typedef HANDLE              ztl_thread_cond_t;
 
 typedef struct tag_thread_attr {
     int stacksize;
@@ -71,7 +78,7 @@ typedef struct tag_thread_attr {
 
 typedef struct tag_thread_mutex_attr {
     int type;
-}ztl_thread_mutex_attr_t;
+}ztl_thread_mutexattr_t;
 
 #define ZTL_THREAD_CREATE_DETACHED  1
 
@@ -81,9 +88,14 @@ int ztl_thread_mutex_destroy(ztl_thread_mutex_t * mutex );
 int ztl_thread_mutex_lock(ztl_thread_mutex_t * mutex );
 int ztl_thread_mutex_unlock(ztl_thread_mutex_t * mutex );
 
-int ztl_thread_mutexattr_init(ztl_thread_mutex_attr_t * mattr);
-int ztl_thread_mutexattr_settype(ztl_thread_mutex_attr_t * mattr, int type);
-int ztl_thread_mutexattr_destroy(ztl_thread_mutex_attr_t * mattr);
+int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock);
+int ztl_thread_rwlock_rdlock(ztl_thread_rwlock_t* rwlock);
+int ztl_thread_rwlock_wrlock(ztl_thread_rwlock_t* rwlock);
+int ztl_thread_rwlock_unlock(ztl_thread_rwlock_t* rwlock);
+
+int ztl_thread_mutexattr_init(ztl_thread_mutexattr_t* mattr);
+int ztl_thread_mutexattr_settype(ztl_thread_mutexattr_t* mattr, int type);
+int ztl_thread_mutexattr_destroy(ztl_thread_mutexattr_t* mattr);
 #define ZTL_THREAD_MUTEX_ADAPTIVE_NP 0
 
 int ztl_thread_cond_init(ztl_thread_cond_t * cond, void * attr );

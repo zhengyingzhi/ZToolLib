@@ -138,17 +138,18 @@ sockhandle_t tcp_accept(sockhandle_t listenfd, struct sockaddr_in* fromaddr);
 sockhandle_t tcp_accept2(sockhandle_t listenfd, char fromip[], int sz, uint16_t* port);
 
 /// try detect events, the event fds will put front at sockfds array, and return count
-int poll_read(sockhandle_t sockfds[], int nfds, int timeout_ms);
+int poll_reads(sockhandle_t sockfds[], int nfds, int timeout_ms);
+int poll_read(sockhandle_t sockfd, int timeout_ms);
 
 /// send iovec, return send count
 int send_iov(sockhandle_t sockfd, EIOVEC* iovec, int iovec_cnt);
 
 //////////////////////////////////////////////////////////////////////////
 /// connect to server with a blocking socket
-int net_connect(sockhandle_t connfd, const char* ip, uint16_t port);
+int net_connect(sockhandle_t sockfd, const char* ip, uint16_t port);
 
 /// non-block connect to server, timeout is milli-second
-int net_connect_nonb(sockhandle_t connfd, const char* ip, uint16_t port, int timeoutms);
+int net_connect_nonb(sockhandle_t sockfd, const char* ip, uint16_t port, int timeoutms);
 
 /// pass a tcp socket desc and make listening, return 0 if listen success
 int tcp_listen(sockhandle_t listenfd, const char* ip, uint16_t port, bool reuse, int backlog/* = SOMAXCONN*/);
@@ -164,6 +165,9 @@ int tcp_simple_server(sockhandle_t listenfd, pfonevent eventcb, void* udata);
 
 /// make a tcp echo server
 int tcp_echo_server(const char* listenip, uint16_t listenport);
+
+/// write data
+int net_send(sockhandle_t sockfd, const char* buf, int size, int flag);
 
 /// create a udp receiver, return the udp socket descriptor
 sockhandle_t udp_receiver(const char* localip, uint16_t localport, bool reuseaddr);

@@ -1,6 +1,18 @@
 #include "ztl_threads.h"
 
-#ifdef _MSC_VER
+#ifndef _MSC_VER
+
+int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock)
+{
+    pthread_rwlockattr_t rwattr;
+    pthread_rwlockattr_init(&rwattr);
+    pthread_rwlockattr_setkind_np(&rwattr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+    pthread_rwlock_init((pthread_rwlock_t*)rwlock, &rwattr);
+    pthread_rwlockattr_destroy(&rwattr);
+    return 0;
+}
+
+#else
 
 int ztl_thread_mutex_init(ztl_thread_mutex_t * mutex, void * attr)
 {
@@ -26,17 +38,43 @@ int ztl_thread_mutex_unlock(ztl_thread_mutex_t * mutex)
     return 0;
 }
 
-int ztl_thread_mutexattr_init(ztl_thread_mutex_attr_t * mattr)
+int ztl_thread_mutexattr_init(ztl_thread_mutexattr_t* mattr)
 {
     return 0;
 }
-int ztl_thread_mutexattr_settype(ztl_thread_mutex_attr_t * mattr, int type)
+
+int ztl_thread_mutexattr_settype(ztl_thread_mutexattr_t* mattr, int type)
 {
     mattr->type = type;
     return 0;
 }
-int ztl_thread_mutexattr_destroy(ztl_thread_mutex_attr_t * mattr)
+
+int ztl_thread_mutexattr_destroy(ztl_thread_mutexattr_t* mattr)
 {
+    return 0;
+}
+
+int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock)
+{
+    InitializeCriticalSection(rwlock);
+    return 0;
+}
+
+int ztl_thread_rwlock_rdlock(ztl_thread_rwlock_t* rwlock)
+{
+    EnterCriticalSection(rwlock);
+    return 0;
+}
+
+int ztl_thread_rwlock_wrlock(ztl_thread_rwlock_t* rwlock)
+{
+    EnterCriticalSection(rwlock);
+    return 0;
+}
+
+int ztl_thread_rwlock_unlock(ztl_thread_rwlock_t* rwlock)
+{
+    LeaveCriticalSection(rwlock);
     return 0;
 }
 

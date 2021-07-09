@@ -58,6 +58,7 @@ extern void ztl_log_close(ztl_log_t* logger);
 /* set the minimum log level
  */
 extern void ztl_log_set_level(ztl_log_t* logger, ztl_log_level_t level);
+extern int  ztl_log_set_levelstr(ztl_log_t* logger, const char* level);
 
 /* get current log level
  */

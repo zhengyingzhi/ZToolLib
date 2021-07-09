@@ -12,7 +12,7 @@
 #include "ztl_utils.h"
 
 
-static void _zmb_free(ztl_msg_buffer_t* zmb)
+static inline void _zmb_free(ztl_msg_buffer_t* zmb)
 {
     if (zmb)
         FREE(zmb);
@@ -59,14 +59,12 @@ int ztl_mb_init(ztl_msg_buffer_t* zmb, uint32_t body_size)
 {
     memset(zmb, 0, sizeof(ztl_msg_buffer_t));
     zmb->body_size  = body_size;
-    zmb->used       = 0;
-    zmb->refcount   = 1;
     return 0;
 }
 
-uint32_t ztl_mb_addref(ztl_msg_buffer_t* zmb)
+uint32_t ztl_mb_addref(ztl_msg_buffer_t* zmb, int delta)
 {
-    return ztl_atomic_add(&zmb->refcount, 1) + 1;
+    return ztl_atomic_add(&zmb->refcount, delta);
 }
 
 uint32_t ztl_mb_decref_release(ztl_msg_buffer_t* zmb)

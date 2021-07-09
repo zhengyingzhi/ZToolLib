@@ -1,9 +1,3 @@
-/*
- * Copyright (C) Yingzhi Zheng
- * Copyright (C) <zhengyingzhi112@163.com>
- * a easily double linked list
- */
-
 #ifndef _ZTL_DLIST_H_INCLUDED_
 #define _ZTL_DLIST_H_INCLUDED_
 
@@ -32,7 +26,9 @@ typedef struct
 }ztl_dlist_iterator_t;
 
 
-ztl_dlist_t* ztl_dlist_create(int reserve_nodes);
+ztl_dlist_t* ztl_dlist_create(int reserve_nodes,
+    int (*cmp)(const void* expect, const void* actual),
+    int (*vfree)(void* val));
 
 void ztl_dlist_release(ztl_dlist_t* dl);
 
@@ -47,11 +43,11 @@ int ztl_dlist_insert_tail(ztl_dlist_t* dl, void* data);
 void* ztl_dlist_pop(ztl_dlist_t* dl);
 void* ztl_dlist_pop_back(ztl_dlist_t* dl);
 
-bool ztl_dlist_have(ztl_dlist_t* dl, void* data);
+bool ztl_dlist_have(ztl_dlist_t* dl, void* expect);
 
-void* ztl_dlist_search(ztl_dlist_t* dl, void* expect, int(*cmp)(void* expect, void* actual));
+void* ztl_dlist_search(ztl_dlist_t* dl, void* expect);
 
-void* ztl_dlist_remove(ztl_dlist_t* dl, void* expect, int(*cmp)(void* expect, void* actual));
+void* ztl_dlist_remove(ztl_dlist_t* dl, void* expect);
 
 /* get an iterator of the dlist, direction could be ZTL_DLSTART_HEAD/TAIL */
 ztl_dlist_iterator_t* ztl_dlist_iter_new(ztl_dlist_t* dl, int direction);
@@ -61,6 +57,11 @@ void* ztl_dlist_next(ztl_dlist_t* dl, ztl_dlist_iterator_t* iter);
 /* erase the iter data when traverse dlist */
 bool ztl_dlist_erase(ztl_dlist_t* dl, ztl_dlist_iterator_t* iter);
 
+void ztl_dlist_lock(ztl_dlist_t* dl);
+void ztl_dlist_unlock(ztl_dlist_t* dl);
+void ztl_dlist_rwlock_rdlock(ztl_dlist_t* dl);
+void ztl_dlist_rwlock_wrlock(ztl_dlist_t* dl);
+void ztl_dlist_rwlock_unlock(ztl_dlist_t* dl);
 
 
 #ifdef __cplusplus
