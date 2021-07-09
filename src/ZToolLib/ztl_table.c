@@ -21,7 +21,7 @@ struct table_st {
     hash_ptr        hash;
     free_ptr        kfree;
     free_ptr        vfree;
-    ztl_thread_rwlock_t lock;
+    ztl_thread_mutex_t  lock;
     ztl_thread_rwlock_t rwlock;
 };
 
@@ -123,12 +123,8 @@ void table_free(table_t* tp)
     if (tp == NULL || *tp == NULL)
         return;
 
-#if HAVE_PTHREAD
-    pthread_mutex_destroy(&(*tp)->lock);
-    pthread_rwlock_destroy(&(*tp)->rwlock);
-#else
-    DeleteCriticalSection(&(*tp)->lock);
-#endif//HAVE_PTHREAD
+    ztl_thread_mutex_destroy(&(*tp)->lock);
+    ztl_thread_rwlock_destroy(&(*tp)->rwlock);
     table_clear(*tp);
     FREE(*tp);
 }

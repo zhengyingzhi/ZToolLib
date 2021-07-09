@@ -12,6 +12,12 @@ int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock)
     return 0;
 }
 
+int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock)
+{
+    pthread_rwlock_destroy((pthread_rwlock_t*)rwlock);
+    return 0;
+}
+
 #else
 
 int ztl_thread_mutex_init(ztl_thread_mutex_t * mutex, void * attr)
@@ -75,6 +81,12 @@ int ztl_thread_rwlock_wrlock(ztl_thread_rwlock_t* rwlock)
 int ztl_thread_rwlock_unlock(ztl_thread_rwlock_t* rwlock)
 {
     LeaveCriticalSection(rwlock);
+    return 0;
+}
+
+int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock)
+{
+    DeleteCriticalSection(rwlock);
     return 0;
 }
 

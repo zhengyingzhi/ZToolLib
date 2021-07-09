@@ -19,6 +19,7 @@ typedef pthread_rwlock_t                ztl_thread_rwlock_t;
 #define ztl_thread_mutex_init           pthread_mutex_init
 #define ztl_thread_mutex_destroy        pthread_mutex_destroy
 int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock);
+int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock);
 #define ztl_thread_rwlock_rdlock        pthread_rwlock_rdlock
 #define ztl_thread_rwlock_wrlock        pthread_rwlock_wrlock
 #define ztl_thread_rwlock_unlock        pthread_rwlock_unlock
@@ -92,6 +93,7 @@ int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock);
 int ztl_thread_rwlock_rdlock(ztl_thread_rwlock_t* rwlock);
 int ztl_thread_rwlock_wrlock(ztl_thread_rwlock_t* rwlock);
 int ztl_thread_rwlock_unlock(ztl_thread_rwlock_t* rwlock);
+int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock);
 
 int ztl_thread_mutexattr_init(ztl_thread_mutexattr_t* mattr);
 int ztl_thread_mutexattr_settype(ztl_thread_mutexattr_t* mattr, int type);
