@@ -2,6 +2,7 @@
 #include <string.h>
 #include <limits.h>
 
+#include "ztl_hash.h"
 #include "ztl_mem.h"
 #include "ztl_table.h"
 #include "ztl_times.h"
@@ -17,10 +18,10 @@ struct table_st {
     table_intl_t    ti[2];
     int64_t         rehashidx;
     int             iterators;
-    cmp_ptr         cmp;
-    hash_ptr        hash;
-    free_ptr        kfree;
-    free_ptr        vfree;
+    cmp_pt          cmp;
+    hash_pt         hash;
+    free_pt         kfree;
+    free_pt         vfree;
     ztl_thread_mutex_t  lock;
     ztl_thread_rwlock_t rwlock;
 };
@@ -94,7 +95,7 @@ static long long get_ms(void)
     return ((long long)tv.tv_sec) * 1000 + tv.tv_usec / 1000;
 }
 
-table_t table_new(cmp_ptr cmp, hash_ptr hash, free_ptr kfree, free_ptr vfree)
+table_t table_new(cmp_pt cmp, hash_pt hash, free_pt kfree, free_pt vfree)
 {
     table_t table;
     ztl_thread_mutexattr_t mattr;
@@ -554,3 +555,13 @@ void table_rwlock_unlock(table_t table)
     ztl_thread_rwlock_unlock(&table->rwlock);
 }
 
+
+int table_default_cmpstr(const void *x, const void *y)
+{
+    return strcmp((char *)x, (char *)y);
+}
+
+uint64_t table_default_hashstr(const void* val)
+{
+    return ztl_murmur_hash2((unsigned char*)val, (uint32_t)strlen((char*)val));
+}

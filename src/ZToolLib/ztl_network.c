@@ -225,7 +225,7 @@ int leave_multicast(sockhandle_t sockfd, const char* multiip, const char* bindip
     return setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (const char*)&mreq_info, sizeof(mreq_info));
 }
 
-int set_multicase_interface(sockhandle_t sockfd, const char* bindip)
+int set_multicast_interface(sockhandle_t sockfd, const char* bindip)
 {
 #ifdef _MSC_VER
     DWORD lAddr;

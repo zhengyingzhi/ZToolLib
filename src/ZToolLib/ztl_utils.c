@@ -382,7 +382,7 @@ static void print_array(int arr[], int size)
     printf("\n");
 }
 
-int str_delimiter(char* src, char** ret_arr, int arr_size, char delimiter)
+int str_delimiter(char* src, char** arr, int arr_size, char delimiter)
 {
     if (!src) {
         return 0;
@@ -392,13 +392,36 @@ int str_delimiter(char* src, char** ret_arr, int arr_size, char delimiter)
     int n = 0;
     while (n < arr_size)
     {
-        ret_arr[n++] = pur;
+        arr[n++] = pur;
         pur = strchr(pur, delimiter);
         if (!pur) {
             break;
         }
 
         *pur++ = 0x00;
+    }
+    return n;
+}
+
+int str_delimiters(char* src, char** arr, int arr_size, const char* sep)
+{
+    if (!src) {
+        return 0;
+    }
+
+    int sep_len = (int)strlen(sep);
+    char* pcur = src;
+    int n = 0;
+    while (n < arr_size)
+    {
+        arr[n++] = pcur;
+        pcur = strstr(pcur, sep);
+        if (!pcur) {
+            break;
+        }
+
+        *pcur = 0x00;
+        pcur += sep_len;
     }
     return n;
 }

@@ -98,7 +98,7 @@ int set_broadcast(sockhandle_t sockfd, bool on);
 /// multicast operations
 int join_multicast(sockhandle_t sockfd, const char* multiip, const char* bindip);
 int leave_multicast(sockhandle_t sockfd, const char* multiip, const char* bindip);
-int set_multicase_interface(sockhandle_t sockfd, const char* bindip);
+int set_multicast_interface(sockhandle_t sockfd, const char* bindip);
 int enable_multicast_loopback(sockhandle_t sockfd, bool enable);
 int set_multicast_ttl(sockhandle_t sockfd, int ttl);
 

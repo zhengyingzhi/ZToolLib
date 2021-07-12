@@ -24,7 +24,7 @@ struct ztl_dlist_st
     int                    (*cmp)(const void* expect, const void* actual);
     int                    (*vfree)(void* val);
 
-    ztl_thread_rwlock_t     lock;
+    ztl_thread_mutex_t      lock;
     ztl_thread_rwlock_t     rwlock;
 };
 
@@ -76,6 +76,7 @@ ztl_dlist_t* ztl_dlist_create(int reserve_nodes,
     dl->size    = 0;
     dl->iter    = (ztl_dlist_iterator_t*)malloc(sizeof(ztl_dlist_iterator_t));
     dl->cmp     = cmp ? cmp : _ztl_dlist_cmp;
+    dl->vfree   = vfree;
 
     ztl_thread_mutexattr_init(&mattr);
     ztl_thread_mutex_init(&dl->lock, &mattr);

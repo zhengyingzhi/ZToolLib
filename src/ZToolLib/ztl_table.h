@@ -22,12 +22,12 @@ typedef struct table_node_st*   table_node_t;
 typedef struct table_iter_st*   table_iter_t;
 
 
-typedef int(*cmp_ptr)(const void* x, const void* y);
-typedef uint64_t(*hash_ptr)(const void* key);
-typedef void(*free_ptr)(const void* p);
+typedef int(*cmp_pt)(const void* x, const void* y);
+typedef uint64_t(*hash_pt)(const void* key);
+typedef void(*free_pt)(const void* p);
 
 /* exported functions */
-table_t       table_new(cmp_ptr cmp, hash_ptr hash, free_ptr kfree, free_ptr vfree);
+table_t       table_new(cmp_pt cmp, hash_pt hash, free_pt kfree, free_pt vfree);
 void          table_free(table_t* tp);
 int           table_size(table_t table);
 int           table_length(table_t table);
@@ -63,6 +63,10 @@ void          table_unlock(table_t table);
 void          table_rwlock_rdlock(table_t table);
 void          table_rwlock_wrlock(table_t table);
 void          table_rwlock_unlock(table_t table);
+
+
+int           table_default_cmpstr(const void* x, const void* y);
+uint64_t      table_default_hashstr(const void* val);
 
 
 #ifdef __cplusplus

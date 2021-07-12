@@ -100,7 +100,8 @@ int get_cpu_number();
 uint32_t get_file_length(const char* filename);
 
 /// parse the string ptr into the array by the delemiter charactor like '|', return array size 
-int str_delimiter(char* apSrc, char** apRetArr, int aArrSize, char aDelimiter);
+int str_delimiter(char* src, char** arr, int arr_size, char delimiter);
+int str_delimiters(char* src, char** arr, int arr_size, const char* sep);
 
 typedef struct {
     char* ptr;
