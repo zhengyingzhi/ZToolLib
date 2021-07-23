@@ -68,6 +68,7 @@ dstr dstr_new_len(const char* str, size_t length)
     if (str && length) {
         memcpy(dh->buf, str, length);
     }
+    dh->buf[dh->used] = '\0';
     dh->buf[length] = '\0';
     return dh->buf;
 }

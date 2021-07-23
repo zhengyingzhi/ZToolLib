@@ -54,6 +54,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+
+#ifdef _MSC_VER
 #include <windows.h>
 
 #include "ztl_win32_getopt.h"
@@ -561,3 +563,5 @@ getopt_long_only(int nargc, char * const *nargv, const char *options,
 	return (getopt_internal(nargc, nargv, options, long_options, idx,
 	    FLAG_PERMUTE|FLAG_LONGONLY));
 }
+
+#endif//_MSC_VER

@@ -13,12 +13,12 @@
 
 #if defined(_WIN32)
 extern struct ztl_event_ops iocpops;
+extern struct ztl_event_ops selectops;
 #elif defined(__linux__)
 extern struct ztl_event_ops epollops;
 #else
 extern struct ztl_event_ops selectops;
 #endif//_WIN32
-extern struct ztl_event_ops selectops;
 
 
 #define ZTL_DEFAULT_CONNECT_SIZE    16384

@@ -12,8 +12,9 @@ static int str_cmp(const void *x, const void *y)
     return strcmp((char *)x, (char *)y);
 }
 
-static uint64_t _hashpjw(const void* key)
+static uint64_t _hashpjw(const void* key, int keysz)
 {
+    (void)keysz;
     return (uint64_t)ztl_hashpjw(key);
 }
 
@@ -28,12 +29,13 @@ void Test_ztl_table(ZuTest* zt)
     const char* cmds[] = { "help", "config", "show", "module", "quit" };
     const char* cmds_val[] = { "h", "c", "s", "m", "q" };
     ncmds = sizeof(cmds) / sizeof(cmds[0]);
-    for (i = 0; i < ncmds; ++i) {
-        table_insert(tbl, cmds[i], (void*)cmds_val[i]);
+    for (i = 0; i < ncmds; ++i)
+    {
+        table_insert(tbl, cmds[i], (int)strlen(cmds[i]), (void*)cmds_val[i]);
     }
     ZuAssertIntEquals(zt, (int)ncmds, table_length(tbl));
 
-    p = table_get_value(tbl, "config");
+    p = table_get_value(tbl, "config", -1);
     ZuAssertTrue(zt, 0 == strcmp("c", (char*)p));
 
     table_free(&tbl);

@@ -29,6 +29,7 @@ struct table_st {
 struct table_node_st {
     table_node_t    next;
     const void*     key;
+    int             keysz;
     union {
         void*   value;
         int     i;
@@ -305,7 +306,7 @@ inline void table_resize_disable(void)
     table_can_resize = 0;
 }
 
-table_node_t table_insert_raw(table_t table, const void* key)
+table_node_t table_insert_raw(table_t table, const void* key, int keysz)
 {
     table_node_t  node;
     table_intl_t* tip;
@@ -313,16 +314,17 @@ table_node_t table_insert_raw(table_t table, const void* key)
 
     if (table == NULL)
         return NULL;
-    if ((node = table_find(table, key)))
+    if ((node = table_find(table, key, keysz)))
         return node;
     if (table_expand_if_needed(table) == -1)
         return NULL;
     if (NEW0(node) == NULL)
         return NULL;
     tip = table->rehashidx != -1 ? &table->ti[1] : &table->ti[0];
-    index = table->hash(key) & tip->sizemask;
+    index = table->hash(key, keysz) & tip->sizemask;
     node->next = tip->buckets[index];
     node->key = key;
+    node->keysz = keysz;
     tip->buckets[index] = node;
     ++tip->used;
     return node;
@@ -356,21 +358,21 @@ void table_set_double(table_node_t node, double d)
     node->v.d = d;
 }
 
-void* table_insert(table_t table, const void* key, void* value)
+void* table_insert(table_t table, const void* key, int keysz, void* value)
 {
     table_node_t node;
     void* prev;
 
     if (key == NULL)
         return NULL;
-    if ((node = table_insert_raw(table, key)) == NULL)
+    if ((node = table_insert_raw(table, key, keysz)) == NULL)
         return NULL;
     prev = node->v.value ? node->v.value : NULL;
     node->v.value = value;
     return prev;
 }
 
-table_node_t table_find(table_t table, const void* key)
+table_node_t table_find(table_t table, const void* key, int keysz)
 {
     uint32_t i;
     uint64_t h;
@@ -379,7 +381,7 @@ table_node_t table_find(table_t table, const void* key)
         return NULL;
     if (table->rehashidx != -1)
         table_rehash_step(table);
-    h = table->hash(key);
+    h = table->hash(key, keysz);
     for (i = 0; i < 2; ++i)
     {
         uint32_t index = h & table->ti[i].sizemask;
@@ -394,14 +396,14 @@ table_node_t table_find(table_t table, const void* key)
     return NULL;
 }
 
-void* table_get_value(table_t table, const void* key)
+void* table_get_value(table_t table, const void* key, int keysz)
 {
-    table_node_t node = table_find(table, key);
+    table_node_t node = table_find(table, key, keysz);
 
     return node ? node->v.value : NULL;
 }
 
-void* table_remove(table_t table, const void* key)
+void* table_remove(table_t table, const void* key, int keysz)
 {
     uint32_t i;
     uint64_t h;
@@ -410,7 +412,7 @@ void* table_remove(table_t table, const void* key)
         return NULL;
     if (table->rehashidx != -1)
         table_rehash_step(table);
-    h = table->hash(key);
+    h = table->hash(key, keysz);
     for (i = 0; i < 2; ++i)
     {
         uint32_t index = h & table->ti[i].sizemask;
@@ -427,7 +429,7 @@ void* table_remove(table_t table, const void* key)
                 else
                     prev->next = curr->next;
                 if (table->kfree)
-                    table->kfree(curr->key);
+                    table->kfree((void*)curr->key);
                 value = curr->v.value;
                 FREE(curr);
                 --table->ti[i].used;
@@ -458,7 +460,7 @@ void table_clear(table_t table)
             {
                 next = curr->next;
                 if (table->kfree)
-                    table->kfree(curr->key);
+                    table->kfree((void*)curr->key);
                 if (table->vfree)
                     table->vfree(curr->v.value);
                 FREE(curr);
@@ -496,7 +498,7 @@ int table_rehash(table_t table, int n)
         curr = table->ti[0].buckets[table->rehashidx];
         while (curr)
         {
-            unsigned index = table->hash(curr->key) & table->ti[1].sizemask;
+            unsigned index = table->hash(curr->key, curr->keysz) & table->ti[1].sizemask;
 
             next = curr->next;
             curr->next = table->ti[1].buckets[index];
@@ -556,12 +558,31 @@ void table_rwlock_unlock(table_t table)
 }
 
 
+void table_default_free(void* p)
+{
+    if (p)
+        free(p);
+}
+
 int table_default_cmpstr(const void *x, const void *y)
 {
     return strcmp((char *)x, (char *)y);
 }
 
-uint64_t table_default_hashstr(const void* val)
+uint64_t table_default_hashstr(const void* val, int size)
 {
-    return ztl_murmur_hash2((unsigned char*)val, (uint32_t)strlen((char*)val));
+    if (size <= 0)
+        size = (int)strlen((char*)val);
+    return ztl_murmur_hash2((unsigned char*)val, size);
+}
+
+int table_default_cmpint(const void* x, const void* y)
+{
+    return x == y ? 0 : -1;
+}
+
+uint64_t table_default_hashint(const void* val, int size)
+{
+    (void)size;
+    return (uint64_t)val;
 }

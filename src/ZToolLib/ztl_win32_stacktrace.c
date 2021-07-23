@@ -1,8 +1,10 @@
 /*
-* Copyright (c), SZKingdom, Inc.
+* Yingzhi Zheng
 * All rights reserved.
 * trace stack on windows platform, could generate a mini dump if specified
 */
+
+#ifdef _MSC_VER
 
 #include <Windows.h>
 #include <DbgHelp.h>
@@ -329,3 +331,5 @@ void ztl_stack_trace_init(const char* apMiniDumpName)
     // Handler for abort()
     signal(SIGABRT, &AbortHandler);
 }
+
+#endif//_MSC_VER
