@@ -89,6 +89,17 @@ void dstr_free(dstr ds)
     }
 }
 
+bool dstr_empty(dstr ds)
+{
+    dstr_head_t* dh;
+    if (ds)
+    {
+        dh = DSTR_HEAD(ds);
+        return dh->used == 0;
+    }
+    return true;
+}
+
 size_t dstr_capicity(const dstr ds)
 {
     dstr_head_t* dh;
@@ -150,12 +161,12 @@ dstr dstr_reserve(dstr ds, size_t length)
     return dh->buf;
 }
 
-void dstr_incr_len(dstr ds, size_t incr)
+int dstr_incr_len(dstr ds, size_t incr)
 {
     dstr_head_t* dh;
 
     if (!ds) {
-        return;
+        return -1;
     }
 
     dh = DSTR_HEAD(ds);
@@ -163,7 +174,9 @@ void dstr_incr_len(dstr ds, size_t incr)
     {
         dh->used += incr;
         ds[dh->used] = '\0';
+        return 0;
     }
+    return -2;
 }
 
 dstr dstr_remove_avail(dstr ds)

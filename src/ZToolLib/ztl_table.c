@@ -558,7 +558,7 @@ void table_rwlock_unlock(table_t table)
 }
 
 
-void table_default_free(void* p)
+void table_default_kvfree(void* p)
 {
     if (p)
         free(p);

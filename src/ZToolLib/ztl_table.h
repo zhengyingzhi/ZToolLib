@@ -65,7 +65,7 @@ void          table_rwlock_wrlock(table_t table);
 void          table_rwlock_unlock(table_t table);
 
 
-void          table_default_free(void* p);
+void          table_default_kvfree(void* p);
 
 int           table_default_cmpstr(const void* x, const void* y);
 uint64_t      table_default_hashstr(const void* val, int size);
