@@ -167,7 +167,6 @@ int ztl_evloop_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents,
     }
 
     conn->userdata1 = udata;
-    conn->events |= reqevents;
     if (reqevents & ZEV_POLLIN)
         conn->read_handler = handler;
     if (reqevents & ZEV_POLLOUT)
@@ -178,6 +177,7 @@ int ztl_evloop_add(ztl_evloop_t* evloop, sockhandle_t fd, int reqevents,
         return rv;
     }
 
+    conn->events |= reqevents;
     // update maxfd ?
     return 0;
 }

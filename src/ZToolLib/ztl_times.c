@@ -357,9 +357,9 @@ int ztl_int_to_ptime(ztl_tm_time_t* pt, int time_int, int have_millisec)
     if (have_millisec)
         hhmmss /= 1000;
 
-    pt->hour = time_int / 10000;
-    pt->minute = (time_int / 100) % 100;
-    pt->second = time_int % 100;
+    pt->hour = hhmmss / 10000;
+    pt->minute = (hhmmss / 100) % 100;
+    pt->second = hhmmss % 100;
     return 0;
 }
 
@@ -395,6 +395,15 @@ int ztl_intdt_to_tm(ztl_tm_dt_t* pdt, int32_t date_int, int32_t time_int, int ha
     return 0;
 }
 
+int ztl_i64_totmdt(ztl_tm_dt_t* pdt, int64_t i64dt)
+{
+    ztl_union_dt_t ud;
+    ud.i64 = i64dt;
+    pdt->date = ud.dt.date;
+    pdt->time = ud.dt.time;
+    return 0;
+}
+
 int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt)
 {
     ztl_union_dt_t ud;
@@ -403,7 +412,7 @@ int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt)
     return ud.i64;
 }
 
-int ztl_diffday(int startday, int endday)
+int ztl_diffday(int startday, int endday, int exclude_weekend)
 {
     time_t t = time(NULL);
     struct tm ls, le;
@@ -419,10 +428,12 @@ int ztl_diffday(int startday, int endday)
     le.tm_mon  = endday / 100 % 100 - 1;
     le.tm_year = endday / 10000 - 1900;
     res = (int)difftime(mktime(&le), mktime(&ls)) / (24 * 60 * 60);
-    return res / 7 * 5 + ((rem = res % 7) == 6 ? 5 : rem);
+    if (exclude_weekend)
+        return res / 7 * 5 + ((rem = res % 7) == 6 ? 5 : rem);
+    return res;
 }
 
-int ztl_diffnow(int endday)
+int ztl_diffnow(int endday, int exclude_weekend)
 {
     int res, rem;
     struct tm le;
@@ -434,5 +445,7 @@ int ztl_diffnow(int endday)
     le.tm_mon  = endday / 100 % 100 - 1;
     le.tm_year = endday / 10000 - 1900;
     res = (int)difftime(mktime(&le), t) / (24 * 60 * 60);
-    return res / 7 * 5 + ((rem = res % 7) == 6 ? 5 : rem);
+    if (exclude_weekend)
+        return res / 7 * 5 + ((rem = res % 7) == 6 ? 5 : rem);
+    return res;
 }
