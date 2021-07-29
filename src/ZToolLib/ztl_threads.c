@@ -2,6 +2,11 @@
 
 #ifndef _MSC_VER
 
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+
 int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock)
 {
     pthread_rwlockattr_t rwattr;
@@ -16,6 +21,16 @@ int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock)
 {
     pthread_rwlock_destroy((pthread_rwlock_t*)rwlock);
     return 0;
+}
+
+int ztl_getpid()
+{
+    return getpid();
+}
+
+unsigned int ztl_gettid()
+{
+    return syscall(SYS_gettid);
 }
 
 #else
@@ -124,9 +139,19 @@ int ztl_thread_cond_broadcast(ztl_thread_cond_t * cond)
     return 0 == rv ? GetLastError() : 0;
 }
 
-unsigned int ztl_thread_self()
+int ztl_getpid()
 {
-    return (unsigned int)GetCurrentThreadId();
+    return GetCurrentProcessId();
+}
+
+int ztl_gettid()
+{
+    return (int)GetCurrentThreadId();
+}
+
+int ztl_thread_self()
+{
+    return (int)GetCurrentThreadId();
 }
 
 int ztl_thread_attr_init(ztl_thread_attr_t * attr)

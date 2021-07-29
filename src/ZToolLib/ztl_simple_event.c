@@ -87,9 +87,9 @@ void ztl_simevent_wait(ztl_simevent_t* sev)
 {
     pthread_mutex_lock(&sev->mutex);
     sev->bsignaled = 0;
-    while (!sev->bsignaled) {
+    // while (!sev->bsignaled) {
         pthread_cond_wait(&sev->cond, &sev->mutex);
-    }
+    // }
     pthread_mutex_unlock(&sev->mutex);
 }
 
@@ -106,9 +106,7 @@ void ztl_simevent_timedwait(ztl_simevent_t* sev, int timeoutMS)
 
     pthread_mutex_lock(&sev->mutex);
     sev->bsignaled = 0;
-    while (!sev->bsignaled) {
-        pthread_cond_timedwait(&sev->cond, &sev->mutex, &abstime);
-    }
+    pthread_cond_timedwait(&sev->cond, &sev->mutex, &abstime);
     pthread_mutex_unlock(&sev->mutex);
 }
 

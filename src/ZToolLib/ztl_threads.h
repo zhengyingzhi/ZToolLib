@@ -45,6 +45,7 @@ int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock);
 #define ZTL_THREAD_CREATE_DETACHED      PTHREAD_CREATE_DETACHED
 #define ztl_thread_attr_setstacksize    pthread_attr_setstacksize
 
+int ztl_gettid();
 #define ztl_thread_self                 pthread_self
 #define ztl_thread_create               pthread_create
 #define ztl_thread_join                 pthread_join
@@ -62,8 +63,8 @@ typedef ztl_thread_result_t (ZTL_THREAD_CALL* ztl_thread_func_t)(void* args);
 extern "C" {
 #endif
 
-typedef void* ztl_thread_t;
-typedef unsigned ztl_thread_result_t;
+typedef void*               ztl_thread_t;
+typedef unsigned            ztl_thread_result_t;
 
 #define ZTL_THREAD_CALL __stdcall
 typedef ztl_thread_result_t (ZTL_THREAD_CALL* ztl_thread_func_t )( void * args );
@@ -117,7 +118,9 @@ int ztl_thread_create(ztl_thread_t * thr, ztl_thread_attr_t * attr, ztl_thread_f
 int ztl_thread_join(ztl_thread_t thr, void **retval);
 
 /// get thread id
-unsigned int ztl_thread_self();
+int ztl_getpid();
+int ztl_gettid();
+int ztl_thread_self();
 
 
 #ifdef __cplusplus

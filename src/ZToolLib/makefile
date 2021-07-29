@@ -1,5 +1,6 @@
 CC=gcc
-CC_FLAG=-std=gnu11 -fPIC -O2 -D__STDC_FORMAT_MACROS -Wno-unused-parameter
+# CC_FLAG=-std=gnu11 -fPIC -O2 -D__STDC_FORMAT_MACROS -Wno-unused-parameter
+CC_FLAG=-fPIC -O2 -D__STDC_FORMAT_MACROS -Wno-unused-parameter
 
 #this is your target name
 TARGET=libztoollib.a

@@ -20,7 +20,7 @@ extern "C" {
 
 #define ZTL_DEFAULT_POOL_SIZE    (16 * 1024)
 
-#define ZTL_ALIGNMENT            sizeof(unsigned long) 
+#define ZTL_ALIGNMENT            sizeof(void*) 
 
 #define ZTL_POOL_ALIGNMENT       16
 #define ZTL_MIN_POOL_SIZE                                                   \
@@ -50,7 +50,7 @@ struct ztl_pool_large_s {
 
 
 typedef struct {
-    uint8_t				*last;
+    uint8_t             *last;
     uint8_t             *end;
     ztl_pool_t           *next;
     uint32_t             failed;

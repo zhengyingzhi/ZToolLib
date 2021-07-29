@@ -35,13 +35,12 @@ typedef union ztl_bufnode_u
 
 struct ztl_mempool_st
 {
-    uint32_t nEntitySize;
-    uint32_t nInitCount;
-    int32_t  AutoExpand;
-    uint32_t ExposedCount;
+    uint32_t            nEntitySize;
+    uint32_t            nInitCount;
+    int32_t             AutoExpand;
+    uint32_t            ExposedCount;
     volatile uint32_t   nFreeCount;
-    volatile uint32_t   freelock;
-    volatile uint32_t   alloclock;
+    volatile uint32_t   lock;
 
     ztl_memblock_t*     blocks;
     ztl_bufnode_t*      freenodes;
@@ -88,20 +87,18 @@ ztl_mempool_t* ztl_mp_create(int nEntitySize, int nInitCount, int aAutoExpand)
         mp->ExposedCount= 0;
         mp->nFreeCount  = 0;
         mp->AutoExpand  = aAutoExpand;
-
         mp->nFreeCount  = 0;
-        mp->freelock    = 0;
-        mp->alloclock   = 0;
+        mp->lock        = 0;
 
         mp->blocks      = NULL;
         mp->freenodes   = NULL;
 
-        if (_alloc_block(mp) == NULL) {
+        if (_alloc_block(mp) == NULL)
+        {
             ztl_free(mp);
             return NULL;
         }
 
-        // try prepare one
         void* lpaddr = ztl_mp_alloc(mp);
         ztl_mp_free(mp, lpaddr);
     }
@@ -133,20 +130,18 @@ char* ztl_mp_alloc(ztl_mempool_t* mp)
     ztl_bufnode_t*  pnode;
     ztl_memblock_t* theblock;
 
-    ztl_spinlock(&mp->alloclock, 1, ZTL_LOCK_SPIN);
-    if (mp->nFreeCount > 0)
+    ztl_spinlock(&mp->lock, 1, ZTL_LOCK_SPIN);
+    if (mp->freenodes)
     {
-        // get memory from freenodes list firstly
-        pnode           = mp->freenodes;
-        mp->freenodes   = pnode->nextbuf;
-
+        pnode = mp->freenodes;
+        mp->freenodes = pnode->nextbuf;
         ztl_atomic_dec(&mp->nFreeCount, 1);
     }
     else
     {
-        // get memory from os
         theblock = mp->blocks;
-        if (theblock->curindex == theblock->count) {
+        if (theblock->curindex == theblock->count)
+        {
             if (mp->AutoExpand)
                 theblock = _alloc_block(mp);
             else
@@ -156,31 +151,27 @@ char* ztl_mp_alloc(ztl_mempool_t* mp)
         pnode = (ztl_bufnode_t*)(theblock->block + (theblock->curindex * mp->nEntitySize));
         ++theblock->curindex;
     }
+    ztl_unlock(&mp->lock);
 
     ztl_atomic_add(&mp->ExposedCount, 1);
-
-    ztl_unlock(&mp->alloclock);
-
     pnode->nextbuf = NULL;
     return pnode->buf;
 }
 
 void ztl_mp_free(ztl_mempool_t* mp, void* paddr)
 {
-    if (NULL == paddr) {
+    if (!paddr) {
         return;
     }
 
     ztl_bufnode_t* pnode = (ztl_bufnode_t*)paddr;
-
-    // put to freenodes list head
-    ztl_spinlock(&mp->freelock, 1, ZTL_LOCK_SPIN);
+    ztl_spinlock(&mp->lock, 1, ZTL_LOCK_SPIN);
     pnode->nextbuf = mp->freenodes;
     mp->freenodes = pnode;
-    ztl_unlock(&mp->freelock);
+    ztl_unlock(&mp->lock);
 
-    ztl_atomic_dec(&mp->ExposedCount, 1);
     ztl_atomic_add(&mp->nFreeCount, 1);
+    ztl_atomic_dec(&mp->ExposedCount, 1);
 }
 
 int ztl_mp_entity_size(ztl_mempool_t* mp)

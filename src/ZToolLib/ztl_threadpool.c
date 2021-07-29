@@ -12,10 +12,13 @@
 #include "ztl_atomic.h"
 #include "ztl_common.h"
 #include "ztl_errors.h"
-#include "ztl_mempool.h"
+#include "ztl_locks.h"
+#include "ztl_palloc.h"
 #include "ztl_threads.h"
 #include "ztl_threadpool.h"
 #include "ztl_times.h"
+#include "ztl_utils.h"
+#include "lockfreequeue.h"
 
 
 #ifdef _WIN32
@@ -42,10 +45,12 @@ struct ztl_thrpool_st {
     uint32_t        maxsize;            // max task num in task-list
     int32_t         stop;               // running or stop flag
     uint32_t        taskn;              // current task num in job-list
+    uint32_t        pool_lock;
     void*           userdata;           // user data
     ztl_task_t      *head, *tail;       // the task list head and tail
-    ztl_mempool_t*      task_pool;      // a lock free cache list
-    ztl_thread_mutex_t  lock;           // thread pool lock
+    lfqueue_t*          idle_tasks;
+    ztl_pool_t*         pool;
+    ztl_thread_mutex_t  mutex;           // thread pool lock
     ztl_thread_cond_t   workcond;       // thread condition for task active
     ztl_thread_cond_t   waitcond;       // thread condition for waiting
 };
@@ -61,8 +66,15 @@ static void _empty_dispatch_fn(ztl_thrpool_t* tp, void* arg1, void* arg2)
 static ztl_task_t* _new_task(ztl_thrpool_t* tp, ztl_dispatch_fn func,
     void* arg1, void* arg2, ztl_free_fn afree1, ztl_free_fn afree2)
 {
-    ztl_task_t* task;
-    task = (ztl_task_t*)ztl_mp_alloc(tp->task_pool);
+    ztl_task_t* task = NULL;
+    lfqueue_pop(tp->idle_tasks, (void**)&task);
+    if (!task)
+    {
+        ztl_spinlock(&tp->pool_lock, 1, 2048);
+        task = (ztl_task_t*)ztl_palloc(tp->pool, sizeof(ztl_task_t));
+        ztl_unlock(&tp->pool_lock);
+    }
+
     task->next = NULL;
     task->arg1 = arg1;
     task->arg2 = arg2;
@@ -74,17 +86,20 @@ static ztl_task_t* _new_task(ztl_thrpool_t* tp, ztl_dispatch_fn func,
 
 static void _append_task(ztl_thrpool_t* tp, ztl_task_t* task, int priority)
 {
-    if (!tp->head) {
+    if (!tp->head)
+    {
         tp->head = task;
         tp->tail = task;
     }
-    else if (priority) {
+    else if (priority)
+    {
         task->next = tp->head;
         tp->head = task;
         if (!tp->tail)
             tp->tail = task;
     }
-    else {
+    else
+    {
         tp->tail->next = task;
         tp->tail = task;
     }
@@ -110,20 +125,13 @@ static ztl_task_t* _get_task(ztl_thrpool_t* tp, int timeout)
 
     ztl_task_t* task = NULL;
 
-    ztl_thread_mutex_lock(&tp->lock);
+    ztl_thread_mutex_lock(&tp->mutex);
     if (tp->head == NULL)
     {
-        ztl_thread_cond_wait(&tp->workcond, &tp->lock);
-        if (tp->head == NULL)
-        {
-            goto GET_TASK_END;
-        }
+        ztl_thread_cond_wait(&tp->workcond, &tp->mutex);
     }
-
     task = _get_head_task(tp);
-
-GET_TASK_END:
-    ztl_thread_mutex_unlock(&tp->lock);
+    ztl_thread_mutex_unlock(&tp->mutex);
     return task;
 }
 
@@ -134,7 +142,10 @@ static void _release_task(ztl_thrpool_t* tp, ztl_task_t* task)
     if (task->afree2)
         task->afree2(tp, task->arg2);
 
-    ztl_mp_free(tp->task_pool, task);
+    if (lfqueue_push(tp->idle_tasks, &task) != 0)
+    {
+        fprintf(stderr, "push tasks to free queue failed!\n");
+    }
 }
 
 static ztl_thread_result_t ZTL_THREAD_CALL _thrpool_worker_thread(void* arg)
@@ -173,13 +184,22 @@ static int _create_thrpool_worker_thread(ztl_thrpool_t* tp)
 
 ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size)
 {
+    uint32_t        nbytes;
+    ztl_pool_t*     pool;
+    ztl_thrpool_t*  tp;
+
     if (threads_num <= 0 || max_queue_size <= 0)
         return NULL;
     if (threads_num > ZTL_MAX_THR_IN_POOL)
         threads_num = ZTL_MAX_THR_IN_POOL;
 
-    ztl_thrpool_t* tp;
-    tp = (ztl_thrpool_t*)malloc(sizeof(ztl_thrpool_t));
+    nbytes = sizeof(ztl_thrpool_t) + sizeof(ztl_task_t) * (max_queue_size + 1);
+    pool = ztl_create_pool(nbytes);
+    if (!pool) {
+        return NULL;
+    }
+
+    tp = (ztl_thrpool_t*)ztl_pcalloc(pool, sizeof(ztl_thrpool_t));
     tp->activenum   = 0;
     tp->thrnum      = threads_num;
     tp->maxsize     = max_queue_size;
@@ -188,11 +208,13 @@ ztl_thrpool_t* ztl_thrpool_create(int threads_num, int max_queue_size)
     tp->userdata    = NULL;
     tp->head        = NULL;
     tp->tail        = NULL;
-    tp->task_pool   = ztl_mp_create(sizeof(ztl_task_t), ZTL_DEFAULT_CACHE_NUM, 1);
+    tp->pool        = pool;
+    tp->pool_lock   = 0;
+    tp->idle_tasks  = lfqueue_create(max_queue_size, sizeof(void*));
 
     ztl_thread_cond_init(&tp->workcond, NULL);
     ztl_thread_cond_init(&tp->waitcond, NULL);
-    ztl_thread_mutex_init(&tp->lock, NULL);
+    ztl_thread_mutex_init(&tp->mutex, NULL);
 
     return tp;
 }
@@ -228,15 +250,13 @@ int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func,
 
     task = _new_task(thpool, func, arg1, arg2, afree1, afree2);
 
-    ztl_thread_mutex_lock(&thpool->lock);
+    ztl_thread_mutex_lock(&thpool->mutex);
     _append_task(thpool, task, 0);
     old_taskn = ztl_atomic_add(&thpool->taskn, 1);
-    ztl_thread_mutex_unlock(&thpool->lock);
-
     if (old_taskn == 0) {
         ztl_thread_cond_signal(&thpool->workcond);
     }
-
+    ztl_thread_mutex_unlock(&thpool->mutex);
     return 0;
 }
 
@@ -252,15 +272,13 @@ int ztl_thrpool_dispatch_priority(ztl_thrpool_t* thpool, ztl_dispatch_fn func,
 
     task = _new_task(thpool, func, arg1, arg2, afree1, afree2);
 
-    ztl_thread_mutex_lock(&thpool->lock);
+    ztl_thread_mutex_lock(&thpool->mutex);
     _append_task(thpool, task, 1);
     old_taskn = ztl_atomic_add(&thpool->taskn, 1);
-    ztl_thread_mutex_unlock(&thpool->lock);
-
     if (old_taskn == 0) {
         ztl_thread_cond_signal(&thpool->workcond);
     }
-
+    ztl_thread_mutex_unlock(&thpool->mutex);
     return 0;
 }
 
@@ -270,7 +288,7 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func)
 
     nexttask = NULL;
 
-    ztl_thread_mutex_lock(&thpool->lock);
+    ztl_thread_mutex_lock(&thpool->mutex);
     task = thpool->head;
     if (NULL == task) {
         goto REMOVE_END;
@@ -297,8 +315,9 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func)
     task = NULL;
 
 REMOVE_END:
-    ztl_thread_mutex_unlock(&thpool->lock);
-    if (task) {
+    ztl_thread_mutex_unlock(&thpool->mutex);
+    if (task)
+    {
         _release_task(thpool, task);
         return 0;
     }
@@ -323,9 +342,7 @@ int ztl_thrpool_pending(ztl_thrpool_t* thpool)
 
 int ztl_thrpool_thrnum(ztl_thrpool_t* thpool)
 {
-    if (NULL == thpool)
-        return 0;
-    return thpool->thrnum;
+    return thpool ? thpool->thrnum : 0;
 }
 
 int ztl_thrpool_join(ztl_thrpool_t* thpool, uint32_t timeout_ms)
@@ -369,26 +386,18 @@ int ztl_thrpool_release(ztl_thrpool_t* thpool)
         ztl_thrpool_stop(thpool);
     }
 
+    ztl_pool_t* pool = thpool->pool;
     ztl_task_t* task;
-    ztl_thread_mutex_lock(&thpool->lock);
     while ((task = _get_head_task(thpool)) != NULL)
     {
         if (task->afree1)
             task->afree1(thpool, task->arg1);
         if (task->afree2)
             task->afree2(thpool, task->arg2);
-
-        ztl_mp_free(thpool->task_pool, task);
     }
-    ztl_thread_mutex_unlock(&thpool->lock);
-
-    if (thpool->task_pool) {
-        ztl_mp_release(thpool->task_pool);
-    }
-
-    ztl_thread_mutex_destroy(&thpool->lock);
+    ztl_thread_mutex_destroy(&thpool->mutex);
     ztl_thread_cond_destroy(&thpool->workcond);
 
-    free(thpool);
+    ztl_destroy_pool(pool);
     return 0;
 }
