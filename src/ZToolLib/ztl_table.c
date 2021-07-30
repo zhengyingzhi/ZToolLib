@@ -22,6 +22,7 @@ struct table_st {
     hash_pt         hash;
     free_pt         kfree;
     free_pt         vfree;
+    table_iter_t        default_iter;
     ztl_thread_mutex_t  lock;
     ztl_thread_rwlock_t rwlock;
 };
@@ -111,6 +112,7 @@ table_t table_new(cmp_pt cmp, hash_pt hash, free_pt kfree, free_pt vfree)
     table->hash         = hash;
     table->kfree        = kfree;
     table->vfree        = vfree;
+    table->default_iter = NULL;
 
     ztl_thread_mutexattr_init(&mattr);
     ztl_thread_mutex_init(&table->lock, &mattr);
@@ -125,6 +127,8 @@ void table_free(table_t* tp)
     if (tp == NULL || *tp == NULL)
         return;
 
+    if ((*tp)->default_iter)
+        FREE((*tp)->default_iter);
     ztl_thread_mutex_destroy(&(*tp)->lock);
     ztl_thread_rwlock_destroy(&(*tp)->rwlock);
     table_clear(*tp);
@@ -184,8 +188,13 @@ table_iter_t table_iter_new(table_t table)
 {
     table_iter_t iter;
 
-    if (table == NULL || NEW0(iter) == NULL)
-        return NULL;
+    if (table->default_iter) {
+        iter = table->default_iter;
+        table->default_iter = NULL;
+    }
+    else {
+        iter = (table_iter_t)ALLOC(sizeof(*iter));
+    }
     iter->table = table;
     iter->i = 0;
     iter->index = -1;
@@ -253,11 +262,22 @@ table_node_t table_next(table_iter_t iter)
 
 void table_iter_free(table_iter_t *tip)
 {
+    table_iter_t iter;
     if (tip == NULL || *tip == NULL)
         return;
-    if ((*tip)->safe && !((*tip)->i == 0 && (*tip)->index == -1))
-        --(*tip)->table->iterators;
-    FREE(*tip);
+
+    iter = *tip;
+
+    if (iter->safe && !(iter->i == 0 && iter->index == -1))
+        --iter->table->iterators;
+
+    if (!iter->table->default_iter) {
+        iter->table->default_iter = iter;
+    }
+    else {
+        FREE(iter);
+    }
+    *tip = NULL;
 }
 
 int table_expand(table_t table, unsigned long size)

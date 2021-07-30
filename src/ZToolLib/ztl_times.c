@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 #ifdef _MSC_VER
 #include <Windows.h>
@@ -383,7 +384,7 @@ int ztl_str_to_pdate(ztl_tm_date_t* pd, const char* date_buf, int len)
 int ztl_int_to_pdate(ztl_tm_date_t* pd, int32_t date_int)
 {
     pd->year = date_int / 10000;
-    pd->month = date_int / 10000 % 100;
+    pd->month = date_int / 100 % 100;
     pd->day = date_int % 100;
     return 0;
 }
@@ -395,7 +396,7 @@ int ztl_intdt_to_tm(ztl_tm_dt_t* pdt, int32_t date_int, int32_t time_int, int ha
     return 0;
 }
 
-int ztl_i64_totmdt(ztl_tm_dt_t* pdt, int64_t i64dt)
+int ztl_i64_to_tmdt(ztl_tm_dt_t* pdt, int64_t i64dt)
 {
     ztl_union_dt_t ud;
     ud.i64 = i64dt;
@@ -418,34 +419,51 @@ int ztl_diffday(int startday, int endday, int exclude_weekend)
     struct tm ls, le;
     int res, rem;
 
-    LOCALTIME_S(&t, &ls);
-    LOCALTIME_S(&t, &le);
+    memset(&ls, 0, sizeof(ls));
+    memset(&le, 0, sizeof(le));
 
     ls.tm_mday = startday % 100;
     ls.tm_mon  = startday / 100 % 100 - 1;
     ls.tm_year = startday / 10000 - 1900;
+
     le.tm_mday = endday % 100;
     le.tm_mon  = endday / 100 % 100 - 1;
     le.tm_year = endday / 10000 - 1900;
-    res = (int)difftime(mktime(&le), mktime(&ls)) / (24 * 60 * 60);
+
+    time_t te = mktime(&le);
+    time_t ts = mktime(&ls);
+    res = (int)difftime(te, ts) / (24 * 60 * 60);
+
     if (exclude_weekend)
-        return res / 7 * 5 + ((rem = res % 7) == 6 ? 5 : rem);
+    {
+        LOCALTIME_S(&ts, &ls);
+        LOCALTIME_S(&te, &le);
+
+        if (le.tm_wday == 0)le.tm_wday = 7;
+        if (ls.tm_wday == 0)ls.tm_wday = 7;
+
+        int weknum = (res - le.tm_wday + 1 - (8 - ls.tm_wday)) / 7;
+        return weknum * 5 + (6 - (ls.tm_wday <= 5 ? ls.tm_wday : 6)) + (le.tm_wday > 5 ? 5 : (le.tm_wday - 1));
+    }
+
     return res;
 }
 
 int ztl_diffnow(int endday, int exclude_weekend)
 {
-    int res, rem;
-    struct tm le;
     time_t t;
+    time(&t);
+    int today = ztl_tointdate(t);
 
-    t = time(NULL);
-    LOCALTIME_S(&t, &le);
-    le.tm_mday = endday % 100;
-    le.tm_mon  = endday / 100 % 100 - 1;
-    le.tm_year = endday / 10000 - 1900;
-    res = (int)difftime(mktime(&le), t) / (24 * 60 * 60);
-    if (exclude_weekend)
-        return res / 7 * 5 + ((rem = res % 7) == 6 ? 5 : rem);
-    return res;
+    if (today < endday) 
+    {
+        return ztl_diffday(today, endday, exclude_weekend);
+    }
+    else if(today > endday)
+    {
+        return ztl_diffday(endday, today, exclude_weekend);
+    }
+    else
+        return 0;
+   
 }

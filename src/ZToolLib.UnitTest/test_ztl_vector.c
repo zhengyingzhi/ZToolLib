@@ -54,7 +54,7 @@ void Test_ztl_vector1(ZuTest* zt)
 void Test_ztl_vector2(ZuTest* zt)
 {
     ztl_vector_t lvec;
-    ztl_vector_init(&lvec, 3, sizeof(uint64_t));
+    ztl_vector_init(&lvec, 3, sizeof(uint32_t));
 
     uint32_t    lValue;
 
@@ -64,7 +64,7 @@ void Test_ztl_vector2(ZuTest* zt)
     ZuAssertTrue(zt, 1 == lvec.nelts);
 
     lValue = 2;
-    lvec.push_int(&lvec, lValue);
+    lvec.push_int  (&lvec, lValue);
     ZuAssertTrue(zt, 2 == lvec.nelts);
 
     // access elements
@@ -80,7 +80,7 @@ void Test_ztl_vector2(ZuTest* zt)
     lValue = pv[1];
     ZuAssertTrue(zt, 2 == lValue);
 
-    lvec.clear(&lvec);
+    lvec.clear(&lvec); 
     ZuAssertTrue(zt, 0 == lvec.nelts);
 
     int count = 10;
@@ -154,4 +154,154 @@ void Test_ztl_vector3(ZuTest* zt)
     }
 
     ztl_vector_release(&lvec);
+}
+
+//test of ztl_push_ptr
+void Test_ztl_vector4(ZuTest* zt)
+{
+    ztl_vector_t lvec;
+    ztl_vector_init(&lvec, 3, sizeof(void*));
+
+    int*    lValue;
+    int     arr[] = { 1,2,3 };
+
+    // push n value
+    lvec.push_ptr(&lvec, &arr[0]);
+    ZuAssertTrue(zt, 1 == lvec.nelts);
+
+    lvec.push_ptr(&lvec, &arr[1]);
+    ZuAssertTrue(zt, 2 == lvec.nelts);
+    // access elements
+
+    uint32_t** pv;
+    pv = (uint32_t**)lvec.elts;
+    lValue =pv[0];
+    ZuAssertTrue(zt, 1 == *lValue);
+
+    lValue = pv[1];
+    ZuAssertTrue(zt, 2 == *lValue);
+
+    lvec.reserve(&lvec, 5);
+    pv = (uint32_t**)lvec.elts;
+    lValue = pv[1];
+    ZuAssertTrue(zt, 2 == *lValue);
+
+    lvec.clear(&lvec);
+    ZuAssertTrue(zt, 0 == lvec.nelts);
+
+    int count = 10;
+    uint32_t num = 4294967290;
+    for (int i = 0; i < count; ++i)
+    {
+        int32_t* lValue = (int*)malloc(sizeof(int32_t));
+        *lValue = num++;
+        lvec.push_ptr(&lvec, lValue);
+    }
+    ZuAssertTrue(zt, (uint32_t)count == lvec.nelts);
+
+    num = 4294967290;
+    int** pv2 = (int**)lvec.elts;
+    for (int i = 0; i < count; ++i)
+    {
+        lValue = pv2[i];
+        ZuAssertIntEquals(zt, num++, *lValue);
+    }
+
+    ztl_vector_release(&lvec);
+}
+
+//test of ztl_push_int64
+void Test_ztl_vector5(ZuTest* zt)
+{
+    ztl_vector_t* lvec;
+    lvec = ztl_vector_create(3, sizeof(uint64_t));
+
+    uint64_t    lValue;
+
+    // push n value
+    lValue = 1;
+    lvec->push_int64(lvec, lValue);
+    ZuAssertTrue(zt, 1 == lvec->nelts);
+
+    lValue = 2;
+    lvec->push_int64(lvec, lValue);
+    ZuAssertTrue(zt, 2 == lvec->nelts);
+
+    // access elements
+    int64_t* pv;
+    pv = (int64_t*)lvec->elts;
+    lValue = pv[0];
+    ZuAssertTrue(zt, 1 == lValue);
+    lValue = pv[1];
+    ZuAssertTrue(zt, 2 == lValue);
+
+    lvec->reserve(lvec, 5);
+    pv = (int64_t*)lvec->elts;
+    lValue = pv[1];
+    ZuAssertTrue(zt, 2 == lValue);
+
+    lvec->clear(lvec);
+    ZuAssertTrue(zt, 0 == lvec->nelts);
+
+    int count = 10;
+    for (int i = 0; i < count; ++i)
+    {
+        lvec->push_int64(lvec, (int64_t)i);
+    }
+    ZuAssertTrue(zt, (int64_t)count == lvec->nelts);
+
+    pv = (int64_t*)lvec->elts;
+    for (int i = 0; i < count; ++i)
+    {
+        ZuAssertTrue(zt, (int64_t)i == pv[i]);
+    }
+
+    ztl_vector_release(lvec);
+}
+
+void Test_ztl_vector6(ZuTest* zt)
+{
+    ztl_vector_t* lvec;
+    lvec = ztl_vector_create(3, sizeof(int));
+
+    int    lValue;
+
+    // push n value
+    lValue = 1;
+    lvec->push_x(lvec, &lValue);
+    ZuAssertTrue(zt, 1 == lvec->nelts);
+
+    lValue = 2;
+    lvec->push_x(lvec, &lValue);
+    ZuAssertTrue(zt, 2 == lvec->nelts);
+
+    // access elements
+    int* pv = (int*)lvec->elts;
+    lValue = pv[0];
+    ZuAssertTrue(zt, 1 == lValue);
+    lValue = pv[1];
+    ZuAssertTrue(zt, 2 == lValue);
+
+    lvec->reserve(lvec, 5);
+    pv = (int*)lvec->elts;
+    lValue = pv[1];
+    ZuAssertTrue(zt, 2 == lValue);
+
+    lvec->clear(lvec);
+    ZuAssertTrue(zt, 0 == lvec->nelts);
+
+    int count = 10;
+    for (int i = 0; i < count; ++i)
+    {
+        lvec->push_x(lvec, &i);
+    }
+    ZuAssertTrue(zt, (uint32_t)count == lvec->nelts);
+
+    pv = (int*)lvec->elts;
+    for (int i = 0; i < count; ++i)
+    {
+        ZuAssertTrue(zt, i == pv[i]);
+    }
+
+    ztl_vector_release(lvec);
 }

@@ -28,7 +28,7 @@ int ztl_getpid()
     return getpid();
 }
 
-unsigned int ztl_gettid()
+int ztl_gettid()
 {
     return syscall(SYS_gettid);
 }

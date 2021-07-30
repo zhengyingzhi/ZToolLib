@@ -11,6 +11,9 @@ extern void Test_ztl_array_more(ZuTest* zt);
 extern void Test_ztl_vector1(ZuTest* zt);
 extern void Test_ztl_vector2(ZuTest* zt);
 extern void Test_ztl_vector3(ZuTest* zt);
+extern void Test_ztl_vector4(ZuTest* zt);
+extern void Test_ztl_vector5(ZuTest* zt);
+extern void Test_ztl_vector6(ZuTest* zt);
 extern void Test_cJSON(ZuTest* zt);
 extern void Test_cJSON2(ZuTest* zt);
 extern void Test_ztl_util(ZuTest*);
@@ -24,6 +27,8 @@ extern void Test_ztl_round(ZuTest* zt);
 
 extern void Test_ztl_buffer(ZuTest* zt);
 extern void Test_ztl_buffer2(ZuTest* zt);
+extern void Test_ztl_buffer3(ZuTest* zt);
+
 #ifdef _MSC_VER // @202005 since linux compile error
 extern void Test_ztl_linklist(ZuTest* zt);
 extern void Test_ztl_dlist(ZuTest* zt);
@@ -49,6 +54,7 @@ extern void Test_ztl_encrypt(ZuTest* zt);
 extern void Test_ztl_dict(ZuTest* zt);
 
 extern void Test_ztl_dstr(ZuTest* zt);
+extern void Test_ztl_dstr1(ZuTest* zt);
 extern void Test_ztl_heap(ZuTest* zt);
 extern void Test_ztl_ring(ZuTest* zt);
 extern void Test_ztl_table(ZuTest* zt);
@@ -77,6 +83,9 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_vector1);
     SUITE_ADD_TEST(suite, Test_ztl_vector2);
     SUITE_ADD_TEST(suite, Test_ztl_vector3);
+    SUITE_ADD_TEST(suite, Test_ztl_vector4);
+    SUITE_ADD_TEST(suite, Test_ztl_vector5);
+    SUITE_ADD_TEST(suite, Test_ztl_vector6);
     SUITE_ADD_TEST(suite, Test_cJSON);
     SUITE_ADD_TEST(suite, Test_cJSON2);
     SUITE_ADD_TEST(suite, Test_ztl_util);
@@ -90,6 +99,7 @@ void RunAllTests(void)
 
     SUITE_ADD_TEST(suite, Test_ztl_buffer);
     SUITE_ADD_TEST(suite, Test_ztl_buffer2);
+    SUITE_ADD_TEST(suite, Test_ztl_buffer3);
 #ifdef _MSC_VER
     SUITE_ADD_TEST(suite, Test_ztl_linklist);
     SUITE_ADD_TEST(suite, Test_ztl_dlist);
@@ -114,6 +124,7 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_dict);
 
     SUITE_ADD_TEST(suite, Test_ztl_dstr);
+    SUITE_ADD_TEST(suite, Test_ztl_dstr1);
     SUITE_ADD_TEST(suite, Test_ztl_heap);
     SUITE_ADD_TEST(suite, Test_ztl_ring);
     SUITE_ADD_TEST(suite, Test_ztl_table);

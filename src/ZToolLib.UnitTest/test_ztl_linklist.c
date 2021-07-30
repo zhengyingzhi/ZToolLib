@@ -82,6 +82,8 @@ void Test_ztl_dlist(ZuTest* zt)
     // search
     ZuAssertTrue(zt, ztl_dlist_have(dl, (void*)0x01));
     ZuAssertTrue(zt, ztl_dlist_have(dl, (void*)0x04));
+    ZuAssertTrue(zt, ztl_dlist_search(dl, (void*)0x04));
+    ZuAssertTrue(zt, !ztl_dlist_search(dl, (void*)0x09));
 
     // pop front and back
     head = ztl_dlist_pop(dl);

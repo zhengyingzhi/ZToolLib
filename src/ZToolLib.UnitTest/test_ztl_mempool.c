@@ -48,6 +48,7 @@ void Test_ztl_mempool(ZuTest* zt)
 
     // free
     ztl_mp_free(mp, lptest2);
+    ZuAssertTrue(zt, 2 == ztl_mp_exposed(mp));
     ztl_mp_free(mp, lptest3);
     ZuAssertTrue(zt, 1 == ztl_mp_exposed(mp));
 

@@ -550,7 +550,6 @@ char* zpassword_change(char* apdata)
 	return apdata;
 }
 
-
 uint32_t ztl_randseed()
 {
     uint32_t lSeed;

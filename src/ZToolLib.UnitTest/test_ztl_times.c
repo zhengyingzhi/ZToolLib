@@ -18,6 +18,7 @@ void Test_ztl_times(ZuTest* zt)
 
     sprintf(expect_date1, "%04d-%02d-%02d", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
     sprintf(expect_date2, "%04d%02d%02d", ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
+    printf("time = %s\n", expect_date1);
     expect_date_int = atoi(expect_date2);
     expect_time_int = ptm->tm_hour * 10000 + ptm->tm_min * 100 + ptm->tm_sec;
 
@@ -90,6 +91,59 @@ void Test_ztl_times(ZuTest* zt)
     dt2 = ztl_intdatetimef();
     ZuAssertTrue(zt, dt2 > 10000000000000000ULL);
 
-    ZuAssertIntEquals(zt, 4, ztl_diffday(20210311, 20210315));
+    ZuAssertIntEquals(zt, 4, ztl_diffday(20210311, 20210315, 0));
     // ztl_diffnow(int endday);
+
+    
+    // ztl_str_to_ptime
+    ztl_tm_time_t pt;
+
+    ztl_str_to_ptime(&pt, "14:50:05.050", 12);
+    ZuAssertIntEquals(zt, 14, pt.hour);    
+    ZuAssertIntEquals(zt, 50, pt.minute);
+    ZuAssertIntEquals(zt, 05, pt.second);
+
+    //ztl_int_to_ptime
+    
+    memset(&pt, 0, sizeof(pt));
+    ztl_int_to_ptime(&pt,145005,0);
+    ZuAssertIntEquals(zt, 14, pt.hour);
+    ZuAssertIntEquals(zt, 50, pt.minute);
+    ZuAssertIntEquals(zt, 05, pt.second);
+
+    memset(&pt, 0, sizeof(pt));
+    ztl_int_to_ptime(&pt, 145005007, 1);
+    ZuAssertIntEquals(zt, 14, pt.hour);
+    ZuAssertIntEquals(zt, 50, pt.minute);
+    ZuAssertIntEquals(zt, 05, pt.second);
+    //ztl_str_to_pdate
+    ztl_tm_date_t pd;
+
+    ztl_int_to_pdate(&pd, 20210725);
+    ZuAssertIntEquals(zt, 2021, pd.year);
+    ZuAssertIntEquals(zt, 07, pd.month);
+    ZuAssertIntEquals(zt, 25, pd.day); 
+
+    //ztl_tmdt_to_i64
+    ztl_tm_dt_t pdt, pdt2;
+    pdt.date = pd;
+    pdt.time = pt;
+    int64_t r = ztl_tmdt_to_i64(&pdt);
+    ztl_i64_to_tmdt(&pdt2, r);
+    printf("data = %d\n", pdt2.date.year * 10000 + pdt2.date.month * 100 + pdt2.date.day);
+    ZuAssertIntEquals(zt, 20210725, pdt2.date.year*10000+ pdt2.date.month*100+ pdt2.date.day);
+    ZuAssertIntEquals(zt, 145005, pdt2.time.hour * 10000 + pdt2.time.minute * 100 + pdt2.time.second);
+
+    //ztl_diffday  
+    ZuAssertIntEquals(zt, 10, ztl_diffday(20210719, 20210731, 1));
+    ZuAssertIntEquals(zt, 7, ztl_diffday(20210718, 20210728, 1));
+    ZuAssertIntEquals(zt, 11, ztl_diffday(20210717, 20210728, 0));
+    ZuAssertIntEquals(zt, 10, ztl_diffday(20210717, 20210801, 1));
+
+    //ztl_diffnow
+    /*ZuAssertIntEquals(zt, 11, ztl_diffnow(20210717,  0));
+    ZuAssertIntEquals(zt, 3, ztl_diffnow(20210801, 1));
+    ZuAssertIntEquals(zt, 19, ztl_diffnow(20210701, 1));
+    ZuAssertIntEquals(zt, 27, ztl_diffnow(20210701, 0));*/
+
 }

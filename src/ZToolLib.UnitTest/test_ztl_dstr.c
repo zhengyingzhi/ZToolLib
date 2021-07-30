@@ -52,3 +52,26 @@ void Test_ztl_dstr(ZuTest* zt)
     ZuAssertTrue(zt, 0 == strcmp(s, "world!!!"));
     ZuAssertIntEquals(zt, 8, (int)dstr_length(s3));
 }
+
+void Test_ztl_dstr1(ZuTest* zt)
+{
+    dstr s1, s2, s3;
+    size_t cap1, cap2, cap3;
+
+    s1 = dstr_new("hello");
+    dstr_incr_len(s1, 1);
+    ZuAssertIntEquals(zt, 5, (int)dstr_length(s1));
+    ZuAssertIntEquals(zt, 5, (int)dstr_length(dstr_remove_avail(s1)));
+
+    //ZuAssertIntEquals(zt, 8+1+sizeof(dstr_head_t), (int)dstr_alloced_size(s1));
+    int cnt = 1;
+    dstr* str1 = dstr_split_len("haddldldl", 8, "d", 1, &cnt);
+    ZuAssertIntEquals(zt, 5, cnt);
+    ZuAssertTrue(zt, 0 == strncmp("ha", *str1, 2));
+
+    dstr_free_tokens(str1, cnt);
+    dstr* str2 = dstr_split_args("hello world ÄãºÃ ÊÀ½ç", &cnt);
+    ZuAssertTrue(zt, 0 == strncmp("hello", *str2, 5));
+    ZuAssertIntEquals(zt, 4, cnt);
+
+}

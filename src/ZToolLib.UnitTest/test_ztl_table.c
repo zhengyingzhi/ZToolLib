@@ -38,5 +38,39 @@ void Test_ztl_table(ZuTest* zt)
     p = table_get_value(tbl, "config", -1);
     ZuAssertTrue(zt, 0 == strcmp("c", (char*)p));
 
+    table_node_t tnode = table_find(tbl, "show", sizeof("show"));
+    char* ch = (char*)table_node_value(tnode);
+    ZuAssertTrue(zt, 0 == strcmp("s", ch));
+
+   
+
+    table_remove(tbl, "config", sizeof("config"));
+    ZuAssertIntEquals(zt, (int)(ncmds-1), table_length(tbl));
+
+    table_iter_t itr = table_iter_new(tbl);
+
+    for (int i = 0; i < table_length(tbl); ++i)
+    {
+        tnode = table_next(itr);
+        char* ch = (char*)table_node_value(tnode);
+        printf("val = %s\n", ch);
+    }
+
+    table_iter_rewind(itr);
+    tnode = table_next(itr);
+    ch = (char*)table_node_value(tnode);
+    printf("val = %s\n", ch);
+
+    table_set_int(tnode, 1);
+    ZuAssertTrue(zt, 1 == table_node_int(tnode));
+
+    table_clear(tbl);
+    ZuAssertIntEquals(zt, 0, table_length(tbl));
+
+    /*int size = table_size(tbl) + 10000;
+    table_expand(tbl, 10000);
+    ZuAssertIntEquals(zt, size, table_size(tbl));*/
+
+    table_iter_free(itr);
     table_free(&tbl);
 }

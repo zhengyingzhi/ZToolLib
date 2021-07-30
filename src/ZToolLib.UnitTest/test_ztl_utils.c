@@ -20,6 +20,27 @@ void Test_ztl_util(ZuTest* zt)
     int a = 1, b = 2;
     ZuAssertIntEquals(zt, 1, ztl_min(a, b));
     ZuAssertIntEquals(zt, 2, ztl_max(a, b));
+
+    ZuAssertIntEquals(zt, 5, digits10(10000));
+    ZuAssertIntEquals(zt, 7, digits10(1000000));
+    ZuAssertIntEquals(zt, 9, digits10(100000000));
+    ZuAssertIntEquals(zt, 6, digits10(100000));
+
+    /*ZuAssertIntEquals(zt, 4, read_number_from_file("file.txt"));
+    char buf[100] = "";
+
+    read_file_content("file.txt", buf, 100);
+    printf("%s\n", buf);*/
+
+    char arr[10] = "12345";
+    print_mem(arr, 10, 4);
+
+    int nums[10] = { 0,1,2,3,4,5,6,7,8,9, };
+    ZuAssertIntEquals(zt, 5, binary_search(nums, 10, 5));
+    ZuAssertIntEquals(zt, 0, binary_search(nums, 10, 0));
+    ZuAssertIntEquals(zt, 1, binary_search(nums, 10, 1));
+
+    
 }
 
 void Test_ztl_ll2string(ZuTest* zt)
