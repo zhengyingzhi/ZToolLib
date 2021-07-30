@@ -71,6 +71,6 @@ void Test_ztl_table(ZuTest* zt)
     table_expand(tbl, 10000);
     ZuAssertIntEquals(zt, size, table_size(tbl));*/
 
-    table_iter_free(itr);
+    table_iter_free(&itr);
     table_free(&tbl);
 }

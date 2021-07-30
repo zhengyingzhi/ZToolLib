@@ -199,6 +199,8 @@ table_iter_t table_iter_new(table_t table)
     iter->i = 0;
     iter->index = -1;
     iter->safe = 0;
+    iter->curr = NULL;
+    iter->next = NULL;
     return iter;
 }
 

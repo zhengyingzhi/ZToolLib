@@ -55,8 +55,7 @@ void Test_ztl_dstr(ZuTest* zt)
 
 void Test_ztl_dstr1(ZuTest* zt)
 {
-    dstr s1, s2, s3;
-    size_t cap1, cap2, cap3;
+    dstr s1;
 
     s1 = dstr_new("hello");
     dstr_incr_len(s1, 1);
@@ -70,7 +69,7 @@ void Test_ztl_dstr1(ZuTest* zt)
     ZuAssertTrue(zt, 0 == strncmp("ha", *str1, 2));
 
     dstr_free_tokens(str1, cnt);
-    dstr* str2 = dstr_split_args("hello world ÄãºÃ ÊÀ½ç", &cnt);
+    dstr* str2 = dstr_split_args("hello world this test", &cnt);
     ZuAssertTrue(zt, 0 == strncmp("hello", *str2, 5));
     ZuAssertIntEquals(zt, 4, cnt);
 
