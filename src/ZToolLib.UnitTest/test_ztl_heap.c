@@ -6,38 +6,12 @@
 #include <ZToolLib/ztl_heap.h>
 
 
-#if 0
-static int _int_cmp(const void *x, const void *y)
-{
-    union_dtype_t dx, dy;
-    dx.ptr = x;
-    dy.ptr = y;
-    if (dx.i64 == dy.i64)
-        return 0;
-    else if (dx.i64 < dy.i64)
-        return -1;
-    else
-        return 1;
-}
-#else
-static int _int_cmp(const void *x, const void *y)
-{
-    if (x == y)
-        return 0;
-    else if (x < y)
-        return -1;
-    else
-        return 1;
-}
-#endif
-
-
 void Test_ztl_heap(ZuTest* zt)
 {
     heap_t* hp;
     void* p;
 
-    hp = heap_new(5, -1, _int_cmp);
+    hp = heap_new(5, -1, heap_cmp_least_int);
     ZuAssertIntEquals(zt, 0, heap_length(hp));
 
     heap_push(hp, (void*)0x01);
@@ -50,17 +24,35 @@ void Test_ztl_heap(ZuTest* zt)
     ZuAssertIntEquals(zt, 3, heap_length(hp));
 
     p = heap_pop(hp);
-    // ZuAssertPtrEquals(zt, (void*)0x01, p);
-    ZuAssertPtrEquals(zt, (void*)0x03, p);
+    ZuAssertPtrEquals(zt, (void*)0x01, p);
     ZuAssertIntEquals(zt, 2, heap_length(hp));
 
     p = heap_pop(hp);
-    // ZuAssertTrue(zt, p == (void*)2);  // ERROR ?
+    ZuAssertPtrEquals(zt, (void*)0x02, p);
     ZuAssertIntEquals(zt, 1, heap_length(hp));
 
+    heap_push(hp, (void*)0x04);
+    heap_push(hp, (void*)0x05);
+    heap_push(hp, (void*)0x06);
     p = heap_pop(hp);
-    // ZuAssertTrue(zt, p == (void*)3);  // ERROR ?
-    ZuAssertIntEquals(zt, 0, heap_length(hp));
+    ZuAssertPtrEquals(zt, (void*)0x03, p);
+    p = heap_pop(hp);
+    ZuAssertPtrEquals(zt, (void*)0x04, p);
+    ZuAssertIntEquals(zt, 2, heap_length(hp));
+
+    // push same elem
+    heap_push(hp, (void*)0x05);
+    heap_push(hp, (void*)0x05);
+    p = heap_pop(hp);
+    ZuAssertPtrEquals(zt, (void*)0x05, p);
+    p = heap_pop(hp);
+    ZuAssertPtrEquals(zt, (void*)0x05, p);
+    p = heap_pop(hp);
+    ZuAssertPtrEquals(zt, (void*)0x05, p);
+    ZuAssertIntEquals(zt, 1, heap_length(hp));
+
+    p = heap_peek(hp, 1);
+    ZuAssertPtrEquals(zt, (void*)0x06, p);
 
     heap_free(hp);
 }

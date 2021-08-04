@@ -1,27 +1,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if _MSC_VER
-#include <WinSock2.h>
-#define HAVE_PTHREAD    0
-#else
-#include <pthread.h>
-#define HAVE_PTHREAD    1
-#endif//_MSC_VER
+#define HAVE_MUTEX      1
 
 #include "ztl_common.h"
 #include "ztl_mem.h"
 #include "ztl_heap.h"
+#include "ztl_threads.h"
 
-struct heap_st {
+struct heap_st
+{
     uint32_t    avail, curr;
     void**      h;
     size_t      offset;
     int       (*cmp)(const void* x, const void* y);
-#if HAVE_PTHREAD
-    pthread_mutex_t	lock;
-#else
-    CRITICAL_SECTION lock;
+    
+#if HAVE_MUTEX
+    ztl_thread_mutex_t  lock;
 #endif
 };
 
@@ -128,9 +123,6 @@ static void* _heap_remove(heap_t* hp, uint32_t i)
 heap_t* heap_new(int height, size_t offset, int cmp(const void* x, const void* y))
 {
     heap_t* hp;
-#if HAVE_PTHREAD
-    pthread_mutexattr_t attr;
-#endif//HAVE_PTHREAD
 
     if (height <= 0)
         height = 8;
@@ -148,14 +140,13 @@ heap_t* heap_new(int height, size_t offset, int cmp(const void* x, const void* y
     hp->offset = offset;
     hp->cmp = cmp;
 
-#if HAVE_PTHREAD
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ADAPTIVE_NP);
-    pthread_mutex_init(&hp->lock, &attr);
-    pthread_mutexattr_destroy(&attr);
-#else
-    InitializeCriticalSection(&hp->lock);
-#endif//HAVE_PTHREAD
+#if HAVE_MUTEX
+    ztl_thread_mutexattr_t attr;
+    ztl_thread_mutexattr_init(&attr);
+    ztl_thread_mutexattr_settype(&attr, ZTL_THREAD_MUTEX_ADAPTIVE_NP);
+    ztl_thread_mutex_init(&hp->lock, &attr);
+    ztl_thread_mutexattr_destroy(&attr);
+#endif//HAVE_MUTEX
     return hp;
 }
 
@@ -163,10 +154,8 @@ void heap_free(heap_t* hp)
 {
     if (hp == NULL)
         return;
-#if HAVE_PTHREAD
-    pthread_mutex_destroy(&hp->lock);
-#else
-    DeleteCriticalSection(&hp->lock);
+#if HAVE_MUTEX
+    ztl_thread_mutex_destroy(&hp->lock);
 #endif
     FREE(hp->h);
     FREE(hp);
@@ -174,9 +163,7 @@ void heap_free(heap_t* hp)
 
 int heap_length(heap_t* hp)
 {
-    if (hp == NULL)
-        return 0;
-    return (int)hp->curr;
+    return hp ? (int)hp->curr : 0;
 }
 
 /* Return 0 if success, otherwise -1 is returned */
@@ -193,9 +180,7 @@ int heap_push(heap_t* hp, void* elem)
 
 void* heap_pop(heap_t* hp)
 {
-    if (hp == NULL)
-        return NULL;
-    return _heap_remove(hp, 1);
+    return hp ? _heap_remove(hp, 1) : NULL;
 }
 
 void* heap_remove(heap_t* hp, void* elem)
@@ -220,23 +205,53 @@ void* heap_peek(heap_t* hp, uint32_t index)
 
 void heap_lock(heap_t* hp)
 {
-    if (hp == NULL)
-        return;
-#if HAVE_PTHREAD
-    pthread_mutex_lock(&hp->lock);
-#else
-    EnterCriticalSection(&hp->lock);
+#if HAVE_MUTEX
+    ztl_thread_mutex_lock(&hp->lock);
 #endif
 }
 
 void heap_unlock(heap_t* hp)
 {
-    if (hp == NULL)
-        return;
-#if HAVE_PTHREAD
-    pthread_mutex_unlock(&hp->lock);
-#else
-    LeaveCriticalSection(&hp->lock);
+#if HAVE_MUTEX
+    ztl_thread_mutex_unlock(&hp->lock);
 #endif
 }
 
+//////////////////////////////////////////////////////////////////////////
+int heap_cmp_least_int(const void *x, const void *y)
+{
+    return (x == y) ? 0 : (x < y ? 1 : -1);
+}
+
+int heap_cmp_large_int(const void *x, const void *y)
+{
+    return (x == y) ? 0 : (x < y ? -1 : 1);
+}
+
+int heap_cmp_least_pint32(const void *x, const void *y)
+{
+    int32_t* px = (int32_t*)x;
+    int32_t* py = (int32_t*)y;
+    return (*px == *py) ? 0 : (*px < *py ? 1 : -1);
+}
+
+int heap_cmp_large_pint32(const void *x, const void *y)
+{
+    int32_t* px = (int32_t*)x;
+    int32_t* py = (int32_t*)y;
+    return (*px == *py) ? 0 : (*px < *py ? -1 : 1);
+}
+
+int heap_cmp_least_pint64(const void *x, const void *y)
+{
+    int64_t* px = (int64_t*)x;
+    int64_t* py = (int64_t*)y;
+    return (*px == *py) ? 0 : (*px < *py ? 1 : -1);
+}
+
+int heap_cmp_large_pint64(const void *x, const void *y)
+{
+    int64_t* px = (int64_t*)x;
+    int64_t* py = (int64_t*)y;
+    return (*px == *py) ? 0 : (*px < *py ? -1 : 1);
+}

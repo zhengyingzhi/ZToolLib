@@ -335,6 +335,31 @@ int64_t ztl_intdatetimef()
     return ldtf;
 }
 
+time_t ztl_to_time(int date, int time)
+{
+    struct tm ltm = { 0 };
+
+    if (date > 0)
+    {
+        ztl_tm_date_t zd;
+        ztl_int_to_pdate(&zd, date);
+        ltm.tm_year = zd.year - 1900;
+        ltm.tm_mon = zd.month - 1;
+        ltm.tm_mday = zd.day;
+    }
+
+    if (time > 0)
+    {
+        ztl_tm_time_t zt;
+        ztl_int_to_ptime(&zt, time, 0);
+        ltm.tm_hour = zt.hour;
+        ltm.tm_min = zt.minute;
+        ltm.tm_sec = zt.second;
+    }
+
+    return mktime(&ltm);
+}
+
 int ztl_str_to_ptime(ztl_tm_time_t* pt, const char* time_buf, int len)
 {
     (void)len;
@@ -345,9 +370,12 @@ int ztl_str_to_ptime(ztl_tm_time_t* pt, const char* time_buf, int len)
     ptm->tm_sec = atoi(buf + 6);
     // ptm->ms = atoi(buf + 9);
 #else
-    pt->hour= (time_buf[0] - '0') * 10 + (time_buf[1] - '0');
+    pt->hour   = (time_buf[0] - '0') * 10 + (time_buf[1] - '0');
     pt->minute = (time_buf[3] - '0') * 10 + (time_buf[4] - '0');
     pt->second = (time_buf[6] - '0') * 10 + (time_buf[7] - '0');
+
+    if (len >= 10)
+        return atoi(time_buf + 8);
 #endif
     return 0;
 }
@@ -356,12 +384,15 @@ int ztl_int_to_ptime(ztl_tm_time_t* pt, int time_int, int have_millisec)
 {
     int hhmmss = time_int;
     if (have_millisec)
+    {
         hhmmss /= 1000;
+        have_millisec = time_int % 1000;
+    }
 
     pt->hour = hhmmss / 10000;
     pt->minute = (hhmmss / 100) % 100;
     pt->second = hhmmss % 100;
-    return 0;
+    return have_millisec;
 }
 
 int ztl_str_to_pdate(ztl_tm_date_t* pd, const char* date_buf, int len)
@@ -413,11 +444,253 @@ int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt)
     return ud.i64;
 }
 
-int ztl_diffday(int startday, int endday, int exclude_weekend)
+int ztl_get_wday(int date)
+{
+    struct tm ltm = { 0 };
+    time_t t = ztl_to_time(date, 0);
+    LOCALTIME_S(&t, &ltm);
+    return ltm.tm_wday;
+}
+
+int ztl_get_distance_date(int date, int offset)
+{
+    struct tm ltm = { 0 };
+    if (offset == 0) {
+        return date;
+    }
+
+    time_t t = ztl_to_time(date, 0);
+    t += offset * SECONDS_PER_DATE;
+    LOCALTIME_S(&t, &ltm);
+    return (ltm.tm_year + 1900) * 10000 + (ltm.tm_mon + 1) * 100 + ltm.tm_mday;
+}
+
+int ztl_get_prev_date(int date)
+{
+    struct tm ltm = { 0 };
+    ltm.tm_year = date / 10000 - 1900;
+    ltm.tm_mon  = date / 100 % 100 - 1;
+    ltm.tm_mday = date % 100;
+
+    ltm.tm_mday -= 1;
+    if (ltm.tm_mday > 0) {
+        return date - 1;
+    }
+
+    switch (ltm.tm_mon + 1)
+    {
+    case 1:
+    {
+        ltm.tm_year -= 1;
+        ltm.tm_mon  = 12 - 1;
+        ltm.tm_mday = 31;
+        break;
+    }
+    case 3:
+    {
+        ltm.tm_mday += 1;
+        time_t t = mktime(&ltm) - SECONDS_PER_DATE;
+        LOCALTIME_S(&t, &ltm);
+        break;
+        // 
+    }
+    case 2:
+    case 4:
+    case 6:
+    case 7:
+    case 9:
+    case 11:
+    case 12:
+    {
+        ltm.tm_mon -= 1;
+        ltm.tm_mday = 31;
+        break;
+    }
+    default:
+    {
+        ltm.tm_mon -= 1;
+        ltm.tm_mday = 30;
+        break;
+    }
+    }//switch
+
+    return (ltm.tm_year + 1900) * 10000 + (ltm.tm_mon + 1) * 100 + ltm.tm_mday;
+}
+
+int ztl_get_next_date(int date)
+{
+    struct tm ltm = { 0 };
+    ltm.tm_year = date / 10000 - 1900;
+    ltm.tm_mon  = date / 100 % 100 - 1;
+    ltm.tm_mday = date % 100;
+
+    ltm.tm_mday += 1;
+    if (ltm.tm_mday < 28) {
+        return date + 1;
+    }
+
+    switch (ltm.tm_mon + 1)
+    {
+    case 1:
+    case 3:
+    case 5:
+    case 7:
+    case 8:
+    case 10:
+    case 12:
+    {
+        if (ltm.tm_mday < 31)
+            return date + 1;
+        if (ltm.tm_mon == 11)
+        {
+            ltm.tm_year += 1;
+            ltm.tm_mon = 0;
+            ltm.tm_mday = 1;
+        }
+        else
+        {
+            ltm.tm_mon += 1;
+            ltm.tm_mday = 1;
+        }
+        break;
+    }
+    case 4:
+    case 6:
+    case 9:
+    case 11:
+    {
+        if (ltm.tm_mday < 30)
+        {
+            return date + 1;
+        }
+        else
+        {
+            ltm.tm_mon += 1;
+            ltm.tm_mday = 1;
+        }
+        break;
+    }
+    case 2:
+    {
+        ltm.tm_mday -= 1;
+        time_t t = mktime(&ltm) + SECONDS_PER_DATE;
+        LOCALTIME_S(&t, &ltm);
+        break;
+    }
+    }//switch
+
+    return (ltm.tm_year + 1900) * 10000 + (ltm.tm_mon + 1) * 100 + ltm.tm_mday;
+}
+
+int ztl_date_range(int dates[], int size, int start_date, int end_date, bool exclude_weekend)
+{
+    int i, n = 0, wday = 0;
+    for (i = 0; i < size && start_date <= end_date; ++i)
+    {
+        if (exclude_weekend)
+        {
+            wday = ztl_get_wday(start_date);
+            if (wday == 0 || wday == 6)
+            {
+                start_date = ztl_get_distance_date(start_date, 1);
+                continue;
+            }
+        }
+
+        dates[n++] = start_date;
+        start_date = ztl_get_distance_date(start_date, 1);
+    }
+    return n;
+}
+
+int ztl_get_distance_time(int time, int offset)
+{
+    ztl_tm_time_t tm;
+    ztl_int_to_ptime(&tm, time, 0);
+    int hour = tm.hour;
+    int minute = tm.minute;
+    int second = tm.second;
+
+    second += offset;
+    if (second > 60)
+    {
+        minute += second / 60;
+        second = second % 60;
+
+        if (minute > 60)
+        {
+            hour += minute / 60;
+            minute = minute % 60;
+
+            if (hour > 24)
+                hour = hour % 24;
+        }
+    }
+    else if (second < 0)
+    {
+        // error
+        minute += second / 60 - 1;
+        second = 60 + second % 60;
+
+        if (minute < 0)
+        {
+            hour += minute / 60 - 1;
+            minute = 60 + minute % 60;
+
+            if (hour < 0)
+                hour = -hour % 24;
+        }
+    }
+    return hour * 10000 + minute * 100 + second;
+}
+
+int ztl_minute_range(int minutes[], int size, int start_time, int end_time)
+{
+    int i, n = 0;
+    time_t t;
+    struct tm ltm = { 0 };
+
+    ltm.tm_hour = start_time / 10000;
+    ltm.tm_min = (start_time / 100) % 100;
+    ltm.tm_sec = start_time % 100;
+
+    t = mktime(&ltm);
+    for (i = 0; i < size && start_time <= end_time; ++i)
+    {
+        LOCALTIME_S(&t, &ltm);
+        minutes[n++] = ltm.tm_hour * 10000 + ltm.tm_min * 100 + ltm.tm_sec;
+        t += 60;
+    }
+    return n;
+}
+
+int ztl_difftime(int t1, int t2, int have_millisec)
+{
+    if (t1 == t2) {
+        return 0;
+    }
+
+    ztl_tm_time_t tm1, tm2;
+    int millisec1 = ztl_int_to_ptime(&tm1, t1, have_millisec);
+    int millisec2 = ztl_int_to_ptime(&tm2, t2, have_millisec);
+
+    int sec_diff = tm1.second - tm2.second;
+    int min_diff = tm1.minute - tm2.minute;
+    int hour_diff = tm1.hour - tm2.hour;
+
+    int diff = hour_diff * 3600 + min_diff * 60 + sec_diff;
+    if (have_millisec)
+    {
+        return diff * 1000 + (millisec1 - millisec2);
+    }
+    return diff;
+}
+
+int ztl_diffday(int startday, int endday, bool exclude_weekend)
 {
     time_t t = time(NULL);
     struct tm ls, le;
-    int res, rem;
+    int res;
 
     memset(&ls, 0, sizeof(ls));
     memset(&le, 0, sizeof(le));
@@ -432,7 +705,7 @@ int ztl_diffday(int startday, int endday, int exclude_weekend)
 
     time_t te = mktime(&le);
     time_t ts = mktime(&ls);
-    res = (int)difftime(te, ts) / (24 * 60 * 60);
+    res = (int)difftime(te, ts) / SECONDS_PER_DATE;
 
     if (exclude_weekend)
     {
@@ -449,7 +722,7 @@ int ztl_diffday(int startday, int endday, int exclude_weekend)
     return res;
 }
 
-int ztl_diffnow(int endday, int exclude_weekend)
+int ztl_diffnow(int endday, bool exclude_weekend)
 {
     time_t t;
     time(&t);

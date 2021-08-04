@@ -23,6 +23,9 @@ extern "C" {
 #define DATE_TIME_FORMAT        "%Y-%m-%d %H:%M:%S"
 #define DATE_TIME_FORMAT_CLEAN  "%4d-%02d-%02d %02d:%02d:%02d"
 
+#define SECONDS_PER_DATE        (24 * 60 * 60)  // 86400
+#define SECONDS_PER_HOUR        (60 * 60)       // 3600
+
 #define TIMEZONE_STRING(s)      #s
 #define BJ_TZ_OFFSET           +08
 
@@ -150,6 +153,7 @@ int64_t ztl_intdatetime();
 // got 20180102201346500 within millisecond
 int64_t ztl_intdatetimef();
 
+time_t ztl_to_time(int date, int time);
 
 // 10:35:22 -->> pt
 int ztl_str_to_ptime(ztl_tm_time_t* pt, const char* time_buf, int len);
@@ -165,9 +169,26 @@ int ztl_intdt_to_tm(ztl_tm_dt_t* pdt, int32_t date_int, int32_t time_int, int ha
 int ztl_i64_to_tmdt(ztl_tm_dt_t* pdt, int64_t i64dt);
 int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt);
 
+// get weekday (tm_wday 0-Sunday, 6-Saturday)
+int ztl_get_wday(int date);
+
+// get previous(offset < 0) or next(offset > 0) date by offset date
+int ztl_get_distance_date(int date, int offset);
+int ztl_get_prev_date(int date);
+int ztl_get_next_date(int date);
+int ztl_date_range(int dates[], int size, int start_date, int end_date, bool exclude_weekend);
+
+// get preivous(offset < 0) or next(offset > 0) time by offset seconds
+int ztl_get_distance_time(int time, int offset);
+int ztl_minute_range(int minutes[], int size, int start_time, int end_time);
+
+// calc time distance, return t1-t2 total seconds or milliseconds
+int ztl_difftime(int t1, int t2, int have_millisec);
+
 // calc day distance
-int ztl_diffday(int startday, int endday, int exclude_weekend);
-int ztl_diffnow(int endday, int exclude_weekend);
+int ztl_diffday(int startday, int endday, bool exclude_weekend);
+int ztl_diffnow(int endday, bool exclude_weekend);
+
 
 #ifdef __cplusplus
 }
