@@ -23,6 +23,8 @@
 #define ztl_min(a,b)            (a) < (b) ? (a) : (b)
 #define ztl_max(a,b)            (a) > (b) ? (a) : (b)
 #define ztl_new_val(p,type,val) {(p) = (type*)malloc(sizeof(type)); *((type*)(p))=val;}
+#define _atoi_2(d)              (((d)[0] - '0') * 10 + (d)[1] - '0')
+
 
 
 #ifdef __cplusplus
@@ -87,8 +89,10 @@ void print_mem(void* pm, unsigned int size, int nperline);
 void random_string(char* buf, int size, bool onlyhexchar);
 
 /// trim left/right blank chars
-void lefttrim(char* buf);
-void righttrim(char* buf);
+void  lefttrim(char* buf);
+void  righttrim(char* buf);
+char* remove_char(char* buf, char ch);
+char* replace_char(char* buf, char old_ch, char new_ch);
 
 /// parse string within k,K,m,M to numeric, 2K ->> 2048
 int64_t parse_size(const char* str, int len);

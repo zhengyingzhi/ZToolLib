@@ -16,7 +16,6 @@ void Test_ztl_util(ZuTest* zt)
     lValue = ztl_align(lValue, 4096);
     ZuAssertIntEquals(zt, 4096, lValue);
 
-
     int a = 1, b = 2;
     ZuAssertIntEquals(zt, 1, ztl_min(a, b));
     ZuAssertIntEquals(zt, 2, ztl_max(a, b));
@@ -102,6 +101,12 @@ void Test_ztl_trim(ZuTest* zt)
 
     righttrim(lBuffer);
     ZuAssertStrEquals(zt, "hello", lBuffer);
+
+    remove_char(lBuffer, 'l');
+    ZuAssertStrEquals(zt, "heo", lBuffer);
+
+    replace_char(lBuffer, 'e', 'E');
+    ZuAssertStrEquals(zt, "hE", lBuffer);
 }
 
 void Test_ztl_parse_size(ZuTest* zt)

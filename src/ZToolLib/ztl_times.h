@@ -24,6 +24,7 @@ extern "C" {
 #define DATE_TIME_FORMAT_CLEAN  "%4d-%02d-%02d %02d:%02d:%02d"
 
 #define SECONDS_PER_DATE        (24 * 60 * 60)  // 86400
+#define SECONDS_HALF_DATE       (12 * 60 * 60)  // 43200
 #define SECONDS_PER_HOUR        (60 * 60)       // 3600
 
 #define TIMEZONE_STRING(s)      #s
@@ -127,42 +128,44 @@ int ztl_ymdhmsf(char* buf);
 int ztl_ymdhmsu(char* buf);
 
 // hmsf 20:13:46 -->> 201346
-int ztl_hms2inttime(const char* hms);
+int ztl_hms2int(const char* hms);
 
 // 20:13:46.500 -->> 201346500
-int ztl_hmsf2inttime(const char* hmsf);
+int ztl_hmsf2int(const char* hmsf);
 
 // 201346 -->> 20:13:46
-int ztl_inttime2hms(char* hms, int len, int atime);
+int ztl_int2hms(char* hms, int len, int atime);
 
 // 201346500 -->> 20:13:46.500
-int ztl_inttime2hmsf(char* hmsf, int len, int atime);
+int ztl_int2hmsf(char* hmsf, int len, int atime);
 
 // got 20180102
-int ztl_tointdate(time_t atime);
+int ztl_ymd_int(time_t atime);
 
 // got 201346
-int ztl_tointtime(time_t atime);
+int ztl_hms_int(time_t atime);
 
 // got 201346500
-int ztl_tointtimef();
+int ztl_hmsf_int(time_t atime, int millisec);
 
 // got 20180102201346
-int64_t ztl_intdatetime();
+int64_t ztl_ymdhms_int(time_t atime);
 
 // got 20180102201346500 within millisecond
-int64_t ztl_intdatetimef();
+int64_t ztl_ymdhmsf_int(time_t atime, int millisec);
 
-time_t ztl_to_time(int date, int time);
+// got time_t by 20180102 & 201346
+time_t ztl_int_to_time(int date, int time);
+time_t ztl_str_to_time(const char* date, const char* time);
 
 // 10:35:22 -->> pt
-int ztl_str_to_ptime(ztl_tm_time_t* pt, const char* time_buf, int len);
+int ztl_str_ptime(ztl_tm_time_t* pt, const char* time_buf, int len);
 // 103522 -->> pt
-int ztl_int_to_ptime(ztl_tm_time_t* pt, int time_int, int have_millisec);
+int ztl_int_ptime(ztl_tm_time_t* pt, int time_int, int have_millisec);
 
 // 20200315 or 2020-03-15 -->> pd
-int ztl_str_to_pdate(ztl_tm_date_t* pd, const char* date_buf, int len);
-int ztl_int_to_pdate(ztl_tm_date_t* pd, int32_t date_int);
+int ztl_str_pdate(ztl_tm_date_t* pd, const char* date_buf, int len);
+int ztl_int_pdate(ztl_tm_date_t* pd, int32_t date_int);
 
 // convert to i64 dt, which could be easily extract to ztl_tm_dt_t
 int ztl_intdt_to_tm(ztl_tm_dt_t* pdt, int32_t date_int, int32_t time_int, int have_millisec);
@@ -170,7 +173,10 @@ int ztl_i64_to_tmdt(ztl_tm_dt_t* pdt, int64_t i64dt);
 int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt);
 
 // get weekday (tm_wday 0-Sunday, 6-Saturday)
-int ztl_get_wday(int date);
+int  ztl_get_wday(int date);
+bool ztl_is_weekend(int date);
+int  ztl_time_wday(time_t t);
+bool ztl_time_is_weekend(time_t t);
 
 // get previous(offset < 0) or next(offset > 0) date by offset date
 int ztl_get_distance_date(int date, int offset);

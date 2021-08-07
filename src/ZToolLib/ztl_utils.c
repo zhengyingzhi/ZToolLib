@@ -304,6 +304,33 @@ void righttrim(char* buf)
     return;
 }
 
+char* remove_char(char* buf, char ch)
+{
+    char* pcur = buf;
+    int w = 0, r = 0;
+    for (; buf[r]; ++r)
+    {
+        if (buf[r] != ch) {
+            buf[w++] = buf[r];
+        }
+    }
+    buf[w] = '\0';
+    return buf;
+}
+
+char* replace_char(char* buf, char old_ch, char new_ch)
+{
+    char* pcur = buf;
+    int w;
+    for (w = 0; buf[w]; ++w)
+    {
+        if (buf[w] == old_ch) {
+            buf[w] = new_ch;
+        }
+    }
+    return buf;
+}
+
 int64_t parse_size(const char* str, int len)
 {
     uint8_t  unit;
@@ -462,7 +489,6 @@ int str_delimiter_ex(const char* src, int length, zditem_t* ret_arr, int arr_siz
     return index;
 }
 
-
 int read_number_from_file(const char* filename)
 {
     int lValue = -1;
@@ -474,7 +500,6 @@ int read_number_from_file(const char* filename)
     }
     return lValue;
 }
-
 
 int read_file_content(const char* filename, char buf[], int size)
 {

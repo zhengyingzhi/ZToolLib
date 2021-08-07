@@ -249,7 +249,7 @@ static int _ztl_log_createfile(ztl_log_t* log)
         char lRealFileName[512] = "";
         char lDate[32] = "";
         time_t lNow = time(0);
-        sprintf(lDate, "%d", ztl_tointdate(lNow));
+        ztl_ymd0(lDate, lNow);
 
         if (!strstr(log->filename, "_YYYYMMDD"))
         {

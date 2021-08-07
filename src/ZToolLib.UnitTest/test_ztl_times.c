@@ -55,50 +55,49 @@ void Test_ztl_times(ZuTest* zt)
 
 
     // hmsf 20:13:46 -->> 201346
-    dt = ztl_hms2inttime("20:13:46");
+    dt = ztl_hms2int("20:13:46");
     ZuAssertIntEquals(zt, 201346, dt);
 
     // 20:13:46.500 -->> 201346500
-    dt = ztl_hmsf2inttime("20:13:46.500");
+    dt = ztl_hmsf2int("20:13:46.500");
     ZuAssertIntEquals(zt, 201346500, dt);
 
     // 201346 -->> 20:13:46
-    len = ztl_inttime2hms(buf, sizeof(buf), 201346);
+    len = ztl_int2hms(buf, sizeof(buf), 201346);
     ZuAssertTrue(zt, 0 == strncmp(buf, "20:13:46", 8));
     ZuAssertIntEquals(zt, 8, len);
 
     // 201346500 -->> 20:13:46.500
-    len = ztl_inttime2hmsf(buf, sizeof(buf), 201346500);
+    len = ztl_int2hmsf(buf, sizeof(buf), 201346500);
     ZuAssertTrue(zt, 0 == strncmp(buf, "20:13:46.500", 12));
     ZuAssertIntEquals(zt, 12, len);
 
-    dt = ztl_tointdate(lTime);
+    dt = ztl_ymd_int(lTime);
     ZuAssertIntEquals(zt, expect_date_int, dt);
 
-    dt = ztl_tointtime(lTime);
+    dt = ztl_hms_int(lTime);
     ZuAssertIntEquals(zt, expect_time_int, dt);
 
     // got 201346500
-    dt = ztl_tointtimef(lTime);
+    dt = ztl_hmsf_int(lTime, 0);
     //ZuAssertTrue(zt, dt > 10000000);
 
     // got 20180102201346
     uint64_t dt2;
-    dt2 = ztl_intdatetime();
+    dt2 = ztl_ymdhms_int(0);
     ZuAssertTrue(zt, dt2 > 10000000000000ULL);
 
     // got 20180102201346500 within millisecond
-    dt2 = ztl_intdatetimef();
+    dt2 = ztl_ymdhmsf_int(0, 0);
     ZuAssertTrue(zt, dt2 > 10000000000000000ULL);
 
     ZuAssertIntEquals(zt, 4, ztl_diffday(20210311, 20210315, 0));
     // ztl_diffnow(int endday);
 
-    
     // ztl_str_to_ptime
     ztl_tm_time_t pt;
 
-    ztl_str_to_ptime(&pt, "14:50:05.050", 12);
+    ztl_str_ptime(&pt, "14:50:05.050", 12);
     ZuAssertIntEquals(zt, 14, pt.hour);    
     ZuAssertIntEquals(zt, 50, pt.minute);
     ZuAssertIntEquals(zt, 05, pt.second);
@@ -106,20 +105,20 @@ void Test_ztl_times(ZuTest* zt)
     //ztl_int_to_ptime
     
     memset(&pt, 0, sizeof(pt));
-    ztl_int_to_ptime(&pt,145005,0);
+    ztl_int_ptime(&pt,145005,0);
     ZuAssertIntEquals(zt, 14, pt.hour);
     ZuAssertIntEquals(zt, 50, pt.minute);
     ZuAssertIntEquals(zt, 05, pt.second);
 
     memset(&pt, 0, sizeof(pt));
-    ztl_int_to_ptime(&pt, 145005007, 1);
+    ztl_int_ptime(&pt, 145005007, 1);
     ZuAssertIntEquals(zt, 14, pt.hour);
     ZuAssertIntEquals(zt, 50, pt.minute);
     ZuAssertIntEquals(zt, 05, pt.second);
     //ztl_str_to_pdate
     ztl_tm_date_t pd;
 
-    ztl_int_to_pdate(&pd, 20210725);
+    ztl_int_pdate(&pd, 20210725);
     ZuAssertIntEquals(zt, 2021, pd.year);
     ZuAssertIntEquals(zt, 07, pd.month);
     ZuAssertIntEquals(zt, 25, pd.day); 

@@ -246,20 +246,20 @@ int ztl_ymdhmsu(char* buf)
     return len;
 }
 
-int ztl_hms2inttime(const char* hms)
+int ztl_hms2int(const char* hms)
 {
     // hmsf 20:13:46 -->> 201346
     return atoi(hms) * 10000 + atoi(hms + 3) * 100 + atoi(hms + 6);
 }
 
-int ztl_hmsf2inttime(const char* hmsf)
+int ztl_hmsf2int(const char* hmsf)
 {
     // hmsf 20:13:46.500 -->> 201346500
     return atoi(hmsf) * 10000000 + atoi(hmsf + 3) * 100000 + 
         atoi(hmsf + 6) * 1000 + atoi(hmsf + 9);
 }
 
-int ztl_inttime2hms(char* hms, int len, int atime)
+int ztl_int2hms(char* hms, int len, int atime)
 {
     // hms 201346 -->> 20:13:46
     len = snprintf(hms, len, "%02d:%02d:%02d", atime / 10000,
@@ -267,7 +267,7 @@ int ztl_inttime2hms(char* hms, int len, int atime)
     return len;
 }
 
-int ztl_inttime2hmsf(char* hmsf, int len, int atime)
+int ztl_int2hmsf(char* hmsf, int len, int atime)
 {
     // FIXME hms 201346500 -->> 20:13:46.500
     len = snprintf(hmsf, len, "%02d:%02d:%02d.%03d", atime / 10000000,
@@ -275,7 +275,7 @@ int ztl_inttime2hmsf(char* hmsf, int len, int atime)
     return len;
 }
 
-int ztl_tointdate(time_t atime)
+int ztl_ymd_int(time_t atime)
 {
     if (atime == 0)
         atime = time(0);
@@ -287,7 +287,7 @@ int ztl_tointdate(time_t atime)
     return ((ltm.tm_year + 1900) * 10000) + ((ltm.tm_mon + 1) * 100) + ltm.tm_mday;
 }
 
-int ztl_tointtime(time_t atime)
+int ztl_hms_int(time_t atime)
 {
     if (atime == 0)
         atime = time(0);
@@ -299,50 +299,46 @@ int ztl_tointtime(time_t atime)
     return (ltm.tm_hour * 10000) + (ltm.tm_min * 100) + ltm.tm_sec;
 }
 
-int ztl_tointtimef()
+int ztl_hmsf_int(time_t atime, int millisec)
 {
     // got 201346500
-    ztl_tm ltm;
-    ztl_now(&ltm);
-
-    return (ltm.tm_hour * 10000000) + (ltm.tm_min * 100000) + ltm.tm_sec * 1000 + ltm.tm_usec;
+    return ztl_hms_int(atime) * 1000 + millisec;
 }
 
-int64_t ztl_intdatetime()
+int64_t ztl_ymdhms_int(time_t atime)
 {
-    // got 20180102201346
-    int64_t ldt;
-    ztl_tm ltm;
-    ztl_now(&ltm);
+    if (atime == 0)
+        atime = time(0);
+
+    struct tm ltm;
+    LOCALTIME_S(&atime, &ltm);
 
     int64_t ldate = (ltm.tm_year + 1900) * 10000 + (ltm.tm_mon + 1) * 100 + ltm.tm_mday;
     int64_t ltime = (ltm.tm_hour * 10000) + (ltm.tm_min * 100) + ltm.tm_sec;
-    ldt = ldate * 1000000 + ltime;
-    return ldt;
+    return ldate * 1000000 + ltime;
 }
 
-int64_t ztl_intdatetimef()
+int64_t ztl_ymdhmsf_int(time_t atime, int millisec)
 {
-    // got 20180102201346500
-    int64_t ldtf;
-    ztl_tm ltm;
-    ztl_now(&ltm);
+    if (atime == 0)
+        atime = time(0);
+
+    struct tm ltm;
+    LOCALTIME_S(&atime, &ltm);
 
     int64_t ldate = (ltm.tm_year + 1900) * 10000 + (ltm.tm_mon + 1) * 100 + ltm.tm_mday;
-    int64_t ltimef = (ltm.tm_hour * 10000000) + (ltm.tm_min * 100000) + ltm.tm_sec * 1000
-        + ltm.tm_usec / 1000;
-    ldtf = ldate * 1000000000ULL + ltimef;
-    return ldtf;
+    int64_t ltime = (ltm.tm_hour * 10000) + (ltm.tm_min * 100) + ltm.tm_sec;
+    return ldate * 1000000000 + ltime * 1000 + millisec;
 }
 
-time_t ztl_to_time(int date, int time)
+time_t ztl_int_to_time(int date, int time)
 {
     struct tm ltm = { 0 };
 
     if (date > 0)
     {
         ztl_tm_date_t zd;
-        ztl_int_to_pdate(&zd, date);
+        ztl_int_pdate(&zd, date);
         ltm.tm_year = zd.year - 1900;
         ltm.tm_mon = zd.month - 1;
         ltm.tm_mday = zd.day;
@@ -351,7 +347,7 @@ time_t ztl_to_time(int date, int time)
     if (time > 0)
     {
         ztl_tm_time_t zt;
-        ztl_int_to_ptime(&zt, time, 0);
+        ztl_int_ptime(&zt, time, 0);
         ltm.tm_hour = zt.hour;
         ltm.tm_min = zt.minute;
         ltm.tm_sec = zt.second;
@@ -360,7 +356,30 @@ time_t ztl_to_time(int date, int time)
     return mktime(&ltm);
 }
 
-int ztl_str_to_ptime(ztl_tm_time_t* pt, const char* time_buf, int len)
+time_t ztl_str_to_time(const char* date, const char* time)
+{
+    struct tm ltm = { 0 };
+
+    if (date && date[0])
+    {
+        ztl_tm_date_t td = { 0 };
+        ztl_str_pdate(&td, date, (int)strlen(date));
+        ltm.tm_year = td.year - 1900;
+        ltm.tm_mon  = td.month - 1;
+        ltm.tm_mday = td.day;
+    }
+    if (time && time[0])
+    {
+        ztl_tm_time_t tm = { 0 };
+        ztl_str_ptime(&tm, time, (int)strlen(time));
+        ltm.tm_hour = tm.hour;
+        ltm.tm_min = tm.minute;
+        ltm.tm_sec = tm.second;
+    }
+    return mktime(&ltm);
+}
+
+int ztl_str_ptime(ztl_tm_time_t* pt, const char* time_buf, int len)
 {
     (void)len;
 #if 0
@@ -380,7 +399,7 @@ int ztl_str_to_ptime(ztl_tm_time_t* pt, const char* time_buf, int len)
     return 0;
 }
 
-int ztl_int_to_ptime(ztl_tm_time_t* pt, int time_int, int have_millisec)
+int ztl_int_ptime(ztl_tm_time_t* pt, int time_int, int have_millisec)
 {
     int hhmmss = time_int;
     if (have_millisec)
@@ -395,7 +414,7 @@ int ztl_int_to_ptime(ztl_tm_time_t* pt, int time_int, int have_millisec)
     return have_millisec;
 }
 
-int ztl_str_to_pdate(ztl_tm_date_t* pd, const char* date_buf, int len)
+int ztl_str_pdate(ztl_tm_date_t* pd, const char* date_buf, int len)
 {
     pd->year = (uint16_t)atoi_n(date_buf, 4);
     if (len == 8) {
@@ -412,7 +431,7 @@ int ztl_str_to_pdate(ztl_tm_date_t* pd, const char* date_buf, int len)
     return 0;
 }
 
-int ztl_int_to_pdate(ztl_tm_date_t* pd, int32_t date_int)
+int ztl_int_pdate(ztl_tm_date_t* pd, int32_t date_int)
 {
     pd->year = date_int / 10000;
     pd->month = date_int / 100 % 100;
@@ -422,8 +441,8 @@ int ztl_int_to_pdate(ztl_tm_date_t* pd, int32_t date_int)
 
 int ztl_intdt_to_tm(ztl_tm_dt_t* pdt, int32_t date_int, int32_t time_int, int have_millisec)
 {
-    ztl_int_to_pdate(&pdt->date, date_int);
-    ztl_int_to_ptime(&pdt->time, time_int, have_millisec);
+    ztl_int_pdate(&pdt->date, date_int);
+    ztl_int_ptime(&pdt->time, time_int, have_millisec);
     return 0;
 }
 
@@ -447,9 +466,28 @@ int64_t ztl_tmdt_to_i64(const ztl_tm_dt_t* pdt)
 int ztl_get_wday(int date)
 {
     struct tm ltm = { 0 };
-    time_t t = ztl_to_time(date, 0);
+    time_t t = ztl_int_to_time(date, 0);
     LOCALTIME_S(&t, &ltm);
     return ltm.tm_wday;
+}
+
+bool ztl_is_weekend(int date)
+{
+    int wday = ztl_get_wday(date);
+    return wday == 0 || wday == 6;
+}
+
+int ztl_time_wday(time_t t)
+{
+    struct tm ltm;
+    LOCALTIME_S(&t, &ltm);
+    return ltm.tm_wday;
+}
+
+bool ztl_time_is_weekend(time_t t)
+{
+    int wday = ztl_time_wday(t);
+    return wday == 0 || wday == 6;
 }
 
 int ztl_get_distance_date(int date, int offset)
@@ -459,7 +497,7 @@ int ztl_get_distance_date(int date, int offset)
         return date;
     }
 
-    time_t t = ztl_to_time(date, 0);
+    time_t t = ztl_int_to_time(date, 0);
     t += offset * SECONDS_PER_DATE;
     LOCALTIME_S(&t, &ltm);
     return (ltm.tm_year + 1900) * 10000 + (ltm.tm_mon + 1) * 100 + ltm.tm_mday;
@@ -606,7 +644,7 @@ int ztl_date_range(int dates[], int size, int start_date, int end_date, bool exc
 int ztl_get_distance_time(int time, int offset)
 {
     ztl_tm_time_t tm;
-    ztl_int_to_ptime(&tm, time, 0);
+    ztl_int_ptime(&tm, time, 0);
     int hour = tm.hour;
     int minute = tm.minute;
     int second = tm.second;
@@ -646,16 +684,27 @@ int ztl_get_distance_time(int time, int offset)
 
 int ztl_minute_range(int minutes[], int size, int start_time, int end_time)
 {
-    int i, n = 0;
+    int i = 0, n = 0;
     time_t t;
     struct tm ltm = { 0 };
 
-    ltm.tm_hour = start_time / 10000;
-    ltm.tm_min = (start_time / 100) % 100;
-    ltm.tm_sec = start_time % 100;
+    t = ztl_int_to_time(0, start_time);
 
-    t = mktime(&ltm);
-    for (i = 0; i < size && start_time <= end_time; ++i)
+    if (start_time > end_time)
+    {
+        int end_time_temp = 235900;
+        for (;i < size && start_time <= end_time_temp; ++i)
+        {
+            LOCALTIME_S(&t, &ltm);
+            minutes[n++] = ltm.tm_hour * 10000 + ltm.tm_min * 100 + ltm.tm_sec;
+            t += 60;
+        }
+
+        start_time = 0;
+        t = ztl_int_to_time(0, start_time);
+    }
+
+    for (;i < size && start_time <= end_time; ++i)
     {
         LOCALTIME_S(&t, &ltm);
         minutes[n++] = ltm.tm_hour * 10000 + ltm.tm_min * 100 + ltm.tm_sec;
@@ -671,8 +720,8 @@ int ztl_difftime(int t1, int t2, int have_millisec)
     }
 
     ztl_tm_time_t tm1, tm2;
-    int millisec1 = ztl_int_to_ptime(&tm1, t1, have_millisec);
-    int millisec2 = ztl_int_to_ptime(&tm2, t2, have_millisec);
+    int millisec1 = ztl_int_ptime(&tm1, t1, have_millisec);
+    int millisec2 = ztl_int_ptime(&tm2, t2, have_millisec);
 
     int sec_diff = tm1.second - tm2.second;
     int min_diff = tm1.minute - tm2.minute;
@@ -726,7 +775,7 @@ int ztl_diffnow(int endday, bool exclude_weekend)
 {
     time_t t;
     time(&t);
-    int today = ztl_tointdate(t);
+    int today = ztl_ymd_int(t);
 
     if (today < endday) 
     {
