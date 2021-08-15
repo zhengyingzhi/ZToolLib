@@ -56,7 +56,9 @@ extern "C" {
 
 #if defined(_WIN64) || defined(__x86_64__)
 #define ZTL_X64 1
+#define ZTL_X86 0
 #else
+#define ZTL_X64 0
 #define ZTL_X86 1
 #endif//X64
 
@@ -103,6 +105,10 @@ int get_cpu_number();
 /// get file size
 uint32_t get_file_length(const char* filename);
 
+/// get basename and dirname
+const char* ztl_basename(const char* filepath);
+int ztl_dirname(char dirname[], int size, const char* filepath);
+
 /// parse the string ptr into the array by the delemiter charactor like '|', return array size 
 int str_delimiter(char* src, char** arr, int arr_size, char delimiter);
 int str_delimiters(char* src, char** arr, int arr_size, const char* sep);
@@ -122,9 +128,11 @@ int read_file_content(const char* filename, char buf[], int size);
 
 /// binary search, return the index, return -1 if not find
 int binary_search(int arr[], int size, int val);
+int binary_search_i64(int64_t arr[], int size, int64_t val);
+int binary_search_dbl(double arr[], int size, double val);
 
-/// a simple password change algorithm
-char* zpassword_change(char* apdata);
+/// a simple data change algorithm
+char* zdata_change(char* apdata);
 
 /// random related
 uint32_t ztl_randseed();

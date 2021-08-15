@@ -154,9 +154,20 @@ int64_t ztl_ymdhms_int(time_t atime);
 // got 20180102201346500 within millisecond
 int64_t ztl_ymdhmsf_int(time_t atime, int millisec);
 
+// got 20180102 & 201346
+void ztl_time_to_ymd_hhmmss(time_t t, int* pdate, int* ptime);
+
 // got time_t by 20180102 & 201346
 time_t ztl_int_to_time(int date, int time);
 time_t ztl_str_to_time(const char* date, const char* time);
+
+// batch convert int date to time_t
+int ztl_times_to_dates(int dates[], int dsize, time_t times[], int tsize);
+time_t ztl_dates_to_times(time_t times[], int tsize, int dates[], int dsize);
+
+// combine date and time to time_t
+time_t ztl_int_dt_combine(int date, int time);
+time_t ztl_time_dt_combine(time_t tday, time_t ttime);
 
 // 10:35:22 -->> pt
 int ztl_str_ptime(ztl_tm_time_t* pt, const char* time_buf, int len);
@@ -188,7 +199,7 @@ int ztl_date_range(int dates[], int size, int start_date, int end_date, bool exc
 int ztl_get_distance_time(int time, int offset);
 int ztl_minute_range(int minutes[], int size, int start_time, int end_time);
 
-// calc time distance, return t1-t2 total seconds or milliseconds
+// calc time distance, return t1-t2 (like 103520-103110) total seconds or milliseconds
 int ztl_difftime(int t1, int t2, int have_millisec);
 
 // calc day distance

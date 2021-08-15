@@ -39,7 +39,45 @@ void Test_ztl_util(ZuTest* zt)
     ZuAssertIntEquals(zt, 0, binary_search(nums, 10, 0));
     ZuAssertIntEquals(zt, 1, binary_search(nums, 10, 1));
 
-    
+    const char* basename;
+    char filename[1024] = "";
+    char dirname[1024] = "";
+
+    strcpy(filename, "/home/work/abc.txt");
+    basename = ztl_basename(filename);
+    ztl_dirname(dirname, 1000, filename);
+    ZuAssertStrEquals(zt, "abc.txt", basename);
+    ZuAssertStrEquals(zt, "/home/work", dirname);
+
+    strcpy(filename, "/home/work//abd.txt");
+    basename = ztl_basename(filename);
+    ztl_dirname(dirname, 1000, filename);
+    ZuAssertStrEquals(zt, "abd.txt", basename);
+    ZuAssertStrEquals(zt, "/home/work", dirname);
+
+    strcpy(filename, "../abe.txt");
+    basename = ztl_basename(filename);
+    ztl_dirname(dirname, 1000, filename);
+    ZuAssertStrEquals(zt, "abe.txt", basename);
+    ZuAssertStrEquals(zt, "..", dirname);
+
+    strcpy(filename, "..//abf.txt");
+    basename = ztl_basename(filename);
+    ztl_dirname(dirname, 1000, filename);
+    ZuAssertStrEquals(zt, "abf.txt", basename);
+    ZuAssertStrEquals(zt, "..", dirname);
+
+    strcpy(filename, "./abg.txt");
+    basename = ztl_basename(filename);
+    ztl_dirname(dirname, 1000, filename);
+    ZuAssertStrEquals(zt, "abg.txt", basename);
+    ZuAssertStrEquals(zt, ".", dirname);
+
+    strcpy(filename, "aaa.txt");
+    basename = ztl_basename(filename);
+    ztl_dirname(dirname, 1000, filename);
+    ZuAssertStrEquals(zt, "aaa.txt", basename);
+    ZuAssertStrEquals(zt, "", dirname);
 }
 
 void Test_ztl_ll2string(ZuTest* zt)
@@ -91,7 +129,6 @@ void Test_ztl_atoin(ZuTest* zt)
     ZuAssertIntEquals(zt, -110, (int32_t)lValue);
 }
 
-
 void Test_ztl_trim(ZuTest* zt)
 {
     char lBuffer[128] = "";
@@ -106,7 +143,7 @@ void Test_ztl_trim(ZuTest* zt)
     ZuAssertStrEquals(zt, "heo", lBuffer);
 
     replace_char(lBuffer, 'e', 'E');
-    ZuAssertStrEquals(zt, "hE", lBuffer);
+    ZuAssertStrEquals(zt, "hEo", lBuffer);
 }
 
 void Test_ztl_parse_size(ZuTest* zt)

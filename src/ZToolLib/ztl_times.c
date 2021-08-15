@@ -331,6 +331,19 @@ int64_t ztl_ymdhmsf_int(time_t atime, int millisec)
     return ldate * 1000000000 + ltime * 1000 + millisec;
 }
 
+void ztl_time_to_ymd_hhmmss(time_t t, int* pdate, int* ptime)
+{
+    if (t == 0)
+        t = time(NULL);
+
+    struct tm ltm;
+    LOCALTIME_S(&t, &ltm);
+    if (pdate)
+        *pdate = (ltm.tm_year + 1900) * 10000 + (ltm.tm_mon + 1) * 100 + ltm.tm_mday;
+    if (ptime)
+        *ptime = ltm.tm_hour * 10000 + ltm.tm_min * 100 + ltm.tm_sec;
+}
+
 time_t ztl_int_to_time(int date, int time)
 {
     struct tm ltm = { 0 };
@@ -377,6 +390,50 @@ time_t ztl_str_to_time(const char* date, const char* time)
         ltm.tm_sec = tm.second;
     }
     return mktime(&ltm);
+}
+
+int ztl_times_to_dates(int dates[], int dsize, time_t times[], int tsize)
+{
+    int d = 0, t = 0;
+    for (; d < dsize && t < tsize;)
+    {
+        dates[d++] = ztl_ymd_int(times[t++]);
+    }
+    return d;
+}
+
+time_t ztl_dates_to_times(time_t times[], int tsize, int dates[], int dsize)
+{
+    int d = 0, t = 0;
+    for (; d < dsize && t < tsize;)
+    {
+        times[d++] = ztl_int_to_time(dates[t++], 0);
+    }
+    return d;
+}
+
+time_t ztl_int_dt_combine(int date, int time)
+{
+    struct tm ltm = { 0 };
+    ltm.tm_year = date / 10000;
+    ltm.tm_mon  = date / 100 % 100;
+    ltm.tm_mday = date % 100;
+    ltm.tm_hour = time / 10000;
+    ltm.tm_min  = (time / 100) % 100;
+    ltm.tm_sec  = time % 100;
+    return mktime(&ltm);
+}
+
+time_t ztl_time_dt_combine(time_t tday, time_t ttime)
+{
+    struct tm dtm = { 0 };
+    struct tm ttm = { 0 };
+    LOCALTIME_S(&tday, &dtm);
+    LOCALTIME_S(&tday, &ttm);
+    dtm.tm_hour = ttm.tm_hour;
+    dtm.tm_min = ttm.tm_min;
+    dtm.tm_sec = ttm.tm_sec;
+    return mktime(&dtm);
 }
 
 int ztl_str_ptime(ztl_tm_time_t* pt, const char* time_buf, int len)

@@ -400,6 +400,54 @@ uint32_t get_file_length(const char* filename)
     return sz;
 }
 
+const char* ztl_basename(const char* filepath)
+{
+    if (!filepath || !filepath[0])
+        return NULL;
+
+    int len0 = (int)strlen(filepath);
+    int len = len0;
+    while (len > 0)
+    {
+        char ch = filepath[len - 1];
+        if (ch == '/' || ch == '\\')
+            break;
+        len -= 1;
+    }
+    return filepath + len;
+}
+
+int ztl_dirname(char dirname[], int size, const char* filepath)
+{
+    if (!dirname || size <= 0 || !filepath || !filepath[0])
+        return -1;
+
+    int len = (int)strlen(filepath);
+    while (len > 0)
+    {
+        char ch = filepath[len - 1];
+        if (ch == '/' || ch == '\\')
+        {
+            len -= 1;
+            while (len > 0)
+            {
+                ch = filepath[len - 1];
+                if (ch == '/' || ch == '\\')
+                    len -= 1;
+                else
+                    break;
+            }
+            break;
+        }
+        len -= 1;
+    }
+
+    size = ztl_min(size, len);
+    strncpy(dirname, filepath, size);
+    dirname[size] = '\0';
+    return size;
+}
+
 static void print_array(int arr[], int size)
 {
     for (int i = 0; i < size; ++i)
@@ -521,16 +569,51 @@ int binary_search(int arr[], int size, int val)
     while (low < high)
     {
         middle = (low + high) >> 1;
-        if (val == arr[middle])
-        {
+        if (val == arr[middle]) {
             return middle;
         }
-        else if (val < arr[middle])
-        {
+        else if (val < arr[middle]) {
             high = middle;
         }
-        else
-        {
+        else {
+            low = middle + 1;
+        }
+    }
+    return -1;
+}
+
+int binary_search_i64(int64_t arr[], int size, int64_t val)
+{
+    int low = 0, middle = 0, high = size;
+    while (low < high)
+    {
+        middle = (low + high) >> 1;
+        if (val == arr[middle]) {
+            return middle;
+        }
+        else if (val < arr[middle]) {
+            high = middle;
+        }
+        else {
+            low = middle + 1;
+        }
+    }
+    return -1;
+}
+
+int binary_search_dbl(double arr[], int size, double val)
+{
+    int low = 0, middle = 0, high = size;
+    while (low < high)
+    {
+        middle = (low + high) >> 1;
+        if (DBL_EQ(val, arr[middle], DBL_EPSILON_E6)) {
+            return middle;
+        }
+        else if (val < arr[middle]) {
+            high = middle;
+        }
+        else {
             low = middle + 1;
         }
     }
@@ -557,7 +640,7 @@ int binary_search2(int arr[], int low, int high, int val)
 }
 #endif
 
-char* zpassword_change(char* apdata)
+char* zdata_change(char* apdata)
 {
 	unsigned char *p;
 	unsigned char uch, umask, index = 0;
