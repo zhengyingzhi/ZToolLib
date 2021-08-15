@@ -45,6 +45,7 @@ int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock);
 #define ZTL_THREAD_CREATE_DETACHED      PTHREAD_CREATE_DETACHED
 #define ztl_thread_attr_setstacksize    pthread_attr_setstacksize
 
+int ztl_getpid();
 int ztl_gettid();
 #define ztl_thread_self                 pthread_self
 #define ztl_thread_create               pthread_create
