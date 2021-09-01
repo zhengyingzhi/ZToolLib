@@ -14,10 +14,12 @@ typedef struct table_intl_t {
     table_node_t*   buckets;
 } table_intl_t;
 
-struct table_st {
+struct table_st
+{
     table_intl_t    ti[2];
     int64_t         rehashidx;
     int             iterators;
+    int             can_resize;
     cmp_pt          cmp;
     hash_pt         hash;
     free_pt         kfree;
@@ -48,7 +50,6 @@ struct table_iter_st {
     table_node_t    next;
 };
 
-static int          table_can_resize = 1;
 static unsigned int table_force_resize_ratio = 5;
 
 static void table_reset(table_intl_t* tip)
@@ -78,7 +79,7 @@ static int table_expand_if_needed(table_t table)
     if (table->ti[0].size == 0)
         return table_expand(table, ZTL_TABLE_INIT_SIZE);
     if (table->ti[0].used >= table->ti[0].size &&
-        (table_can_resize || table->ti[0].used / table->ti[0].size > table_force_resize_ratio))
+        (table->can_resize || table->ti[0].used / table->ti[0].size > table_force_resize_ratio))
         return table_expand(table, table->ti[0].used << 1);
     return 0;
 }
@@ -108,6 +109,7 @@ table_t table_new(cmp_pt cmp, hash_pt hash, free_pt kfree, free_pt vfree)
     table_reset(&table->ti[1]);
     table->rehashidx    = -1;
     table->iterators    = 0;
+    table->can_resize   = 1;
     table->cmp          = cmp;
     table->hash         = hash;
     table->kfree        = kfree;
@@ -115,6 +117,7 @@ table_t table_new(cmp_pt cmp, hash_pt hash, free_pt kfree, free_pt vfree)
     table->default_iter = NULL;
 
     ztl_thread_mutexattr_init(&mattr);
+    ztl_thread_mutexattr_settype(&mattr, ZTL_THREAD_MUTEX_RECURSIVE_NP);
     ztl_thread_mutex_init(&table->lock, &mattr);
     ztl_thread_mutexattr_destroy(&mattr);
     ztl_thread_rwlock_init(&table->rwlock);
@@ -311,21 +314,21 @@ int table_resize(table_t table)
 {
     unsigned long size;
 
-    if (table == NULL || !table_can_resize || table->rehashidx != -1)
+    if (table == NULL || !table->can_resize || table->rehashidx != -1)
         return -1;
     if ((size = table->ti[0].used) < ZTL_TABLE_INIT_SIZE)
         size = ZTL_TABLE_INIT_SIZE;
     return table_expand(table, size);
 }
 
-inline void table_resize_enable(void)
+inline void table_resize_enable(table_t table)
 {
-    table_can_resize = 1;
+    table->can_resize = 1;
 }
 
-inline void table_resize_disable(void)
+inline void table_resize_disable(table_t table)
 {
-    table_can_resize = 0;
+    table->can_resize = 0;
 }
 
 table_node_t table_insert_raw(table_t table, const void* key, int keysz)

@@ -68,6 +68,7 @@ extern void Test_ztl_threadpool(ZuTest* zt);
 
 extern void Test_ztl_blocking_queue(ZuTest* zt);
 extern void Test_ztl_msg_buffer(ZuTest* zt);
+extern void Test_ztl_bufcat(ZuTest* zt);
 
 
 void RunAllTests(void)
@@ -138,6 +139,7 @@ void RunAllTests(void)
     SUITE_ADD_TEST(suite, Test_ztl_threadpool);
     SUITE_ADD_TEST(suite, Test_ztl_blocking_queue);
     SUITE_ADD_TEST(suite, Test_ztl_msg_buffer);
+    SUITE_ADD_TEST(suite, Test_ztl_bufcat);
 
     ZuSuiteRun(suite);
     ZuSuiteDetails(suite, output);

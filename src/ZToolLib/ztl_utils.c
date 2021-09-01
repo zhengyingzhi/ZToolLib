@@ -368,6 +368,18 @@ int64_t parse_size(const char* str, int len)
     return size;
 }
 
+uint64_t get_next_power(uint64_t n)
+{
+    uint64_t i = 2;
+    for (;;)
+    {
+        if (i >= n)
+            return i;
+        i *= 2;
+    }
+    return i;
+}
+
 int get_cpu_number()
 {
     static int ncpu = -1;
@@ -639,24 +651,6 @@ int binary_search2(int arr[], int low, int high, int val)
     }
 }
 #endif
-
-char* zdata_change(char* apdata)
-{
-	unsigned char *p;
-	unsigned char uch, umask, index = 0;
-	p = (unsigned char *)apdata;
-	while ((uch = *p))
-	{
-		umask = 0xFF - index;
-		*p++ = uch  ^ umask;
-		index++;
-
-		if (index > 8)
-			index = 0;
-	}
-
-	return apdata;
-}
 
 uint32_t ztl_randseed()
 {

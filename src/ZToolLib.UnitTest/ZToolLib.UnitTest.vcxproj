@@ -302,6 +302,7 @@
     <ClCompile Include="test_cJSON.c" />
     <ClCompile Include="test_lfqueue.c" />
     <ClCompile Include="test_ztl_blocking_queue.c" />
+    <ClCompile Include="test_ztl_bufcat.c" />
     <ClCompile Include="test_ztl_dict.c" />
     <ClCompile Include="test_ztl_crypt.c" />
     <ClCompile Include="test_ztl_dstr.c" />

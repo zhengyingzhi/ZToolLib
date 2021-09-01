@@ -90,6 +90,9 @@
     <ClCompile Include="test_ztl_blocking_queue.c">
       <Filter>TestCases</Filter>
     </ClCompile>
+    <ClCompile Include="test_ztl_bufcat.c">
+      <Filter>TestCases</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ZToolUnitTest.h">

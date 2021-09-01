@@ -405,7 +405,7 @@ sockhandle_t tcp_accept2(sockhandle_t listenfd, char ip[], int sz, uint16_t* por
 }
 
 #define _POLL_ONCE_MAX_N    8
-int poll_reads(sockhandle_t sockfds[], int nfds, int timeout_ms)
+static int poll_events(sockhandle_t sockfds[], int nfds, int ev, int timeout_ms)
 {
     if (nfds > _POLL_ONCE_MAX_N) {
         return -2;
@@ -416,7 +416,7 @@ int poll_reads(sockhandle_t sockfds[], int nfds, int timeout_ms)
     for (int i = 0; i < nfds; ++i)
     {
         fds[i].fd = sockfds[i];
-        fds[i].events = POLLIN;
+        fds[i].events = ev;
         fds[i].revents = 0;
     }
 
@@ -441,6 +441,11 @@ int poll_reads(sockhandle_t sockfds[], int nfds, int timeout_ms)
     return n;
 }
 
+int poll_reads(sockhandle_t sockfds[], int nfds, int timeout_ms)
+{
+    return poll_events(sockfds, nfds, POLLIN, timeout_ms);
+}
+
 int poll_read(sockhandle_t sockfd, int timeout_ms)
 {
     int n = 0;
@@ -458,6 +463,16 @@ int poll_read(sockhandle_t sockfd, int timeout_ms)
     if (n > 0)
         return fds.revents > 0 ? 1 : 0;
     return n;
+}
+
+int poll_writes(sockhandle_t sockfds[], int nfds, int timeout_ms)
+{
+    return poll_events(sockfds, nfds, POLLOUT, timeout_ms);
+}
+
+int poll_write(sockhandle_t sockfd, int timeout_ms)
+{
+    return poll_events(&sockfd, 1, POLLOUT, timeout_ms);
 }
 
 int send_iov(sockhandle_t sockfd, EIOVEC* iovec, int iovec_cnt)

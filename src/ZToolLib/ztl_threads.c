@@ -209,3 +209,27 @@ int ztl_thread_join(ztl_thread_t thr, void **retval)
 
 
 #endif//_MSC_VER
+
+
+struct _thread_args_s
+{
+    void (*thread_routine)(void* arg);
+    void* args;
+};
+
+static ztl_thread_result_t ZTL_THREAD_CALL _ztl_thread_routine(void* args)
+{
+    struct _thread_args_s* thr_args;
+    thr_args = (struct _thread_args_s*)args;
+    thr_args->thread_routine(thr_args->args);
+    free(thr_args);
+    return 0;
+}
+
+int ztl_thread_create2(ztl_thread_t* thr, void(*thread_routine)(void* args), void* args)
+{
+    struct _thread_args_s* thr_args;
+    thr_args = (struct _thread_args_s*)malloc(sizeof(struct _thread_args_s));
+    ztl_thread_create(thr, NULL, _ztl_thread_routine, thr_args);
+    return 0;
+}

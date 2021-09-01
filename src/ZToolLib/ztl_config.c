@@ -14,11 +14,6 @@ typedef struct
     uint8_t val;        // 0 or 1
 }ztl_bool_value_t;
 
-typedef struct 
-{
-    char*   key;
-    char*   value;
-}ztl_pair_value_t;
 
 static ztl_bool_value_t zbooltable[] = {
     { "1",      1 },
@@ -144,6 +139,18 @@ bool ztl_config_set_item(ztl_config_t* zconf, const char* key, const char* val, 
     memcpy(lpitem->value, val, vallen);
 
     return true;
+}
+
+int ztl_config_all_items(ztl_config_t* zconf, ztl_pair_value_t* pair_values[], uint32_t size)
+{
+    uint32_t n;
+    for (n = 0; n < zconf->count; ++n)
+    {
+        if (n >= size)
+            break;
+        pair_values[n] = &zconf->items[n];
+    }
+    return n;
 }
 
 bool ztl_config_read_str(ztl_config_t* zconf, const char* key, char** poutval, int* outlen)

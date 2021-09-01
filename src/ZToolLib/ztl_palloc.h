@@ -75,6 +75,7 @@ void *ztl_pcalloc(ztl_pool_t *pool, size_t size);
 void *ztl_pmemalign(ztl_pool_t *pool, size_t size, size_t alignment);
 uint32_t ztl_pfree(ztl_pool_t *pool, void *p);
 
+char* ztl_palloc_dup(ztl_pool_t *pool, void* s, size_t size);
 
 ztl_pool_cleanup_t *ztl_pool_cleanup_add(ztl_pool_t *p, size_t size);
 

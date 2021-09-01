@@ -26,6 +26,9 @@ void Test_ztl_table(ZuTest* zt)
     tbl = table_new(str_cmp, _hashpjw, NULL, NULL);
     ZuAssertIntEquals(zt, 0, table_length(tbl));
 
+    table_expand(tbl, 4);
+    ZuAssertIntEquals(zt, 0, table_length(tbl));
+
     const char* cmds[] = { "help", "config", "show", "module", "quit" };
     const char* cmds_val[] = { "h", "c", "s", "m", "q" };
     ncmds = sizeof(cmds) / sizeof(cmds[0]);
@@ -42,13 +45,10 @@ void Test_ztl_table(ZuTest* zt)
     char* ch = (char*)table_node_value(tnode);
     ZuAssertTrue(zt, 0 == strcmp("s", ch));
 
-   
-
     table_remove(tbl, "config", sizeof("config"));
     ZuAssertIntEquals(zt, (int)(ncmds-1), table_length(tbl));
 
     table_iter_t itr = table_iter_new(tbl);
-
     for (int i = 0; i < table_length(tbl); ++i)
     {
         tnode = table_next(itr);

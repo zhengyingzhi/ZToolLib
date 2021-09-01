@@ -1,6 +1,10 @@
 #ifndef _ZTL_THREADS_H_
 #define _ZTL_THREADS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _MSC_VER
 
 /// linux pthread
@@ -32,6 +36,7 @@ int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock);
 #define ztl_thread_mutexattr_settype    pthread_mutexattr_settype
 #define ztl_thread_mutexattr_destroy    pthread_mutexattr_destroy
 #define ZTL_THREAD_MUTEX_ADAPTIVE_NP    PTHREAD_MUTEX_ADAPTIVE_NP
+#define ZTL_THREAD_MUTEX_RECURSIVE_NP   PTHREAD_MUTEX_RECURSIVE_NP
 
 #define ztl_thread_cond_init            pthread_cond_init
 #define ztl_thread_cond_destroy         pthread_cond_destroy
@@ -59,10 +64,6 @@ typedef ztl_thread_result_t (ZTL_THREAD_CALL* ztl_thread_func_t)(void* args);
 /// windows thread
 #include <windows.h>
 #include <process.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef void*               ztl_thread_t;
 typedef unsigned            ztl_thread_result_t;
@@ -100,7 +101,8 @@ int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock);
 int ztl_thread_mutexattr_init(ztl_thread_mutexattr_t* mattr);
 int ztl_thread_mutexattr_settype(ztl_thread_mutexattr_t* mattr, int type);
 int ztl_thread_mutexattr_destroy(ztl_thread_mutexattr_t* mattr);
-#define ZTL_THREAD_MUTEX_ADAPTIVE_NP 0
+#define ZTL_THREAD_MUTEX_ADAPTIVE_NP    0
+#define ZTL_THREAD_MUTEX_RECURSIVE_NP   1
 
 int ztl_thread_cond_init(ztl_thread_cond_t * cond, void * attr );
 int ztl_thread_cond_destroy(ztl_thread_cond_t * cond );
@@ -114,7 +116,7 @@ int ztl_thread_attr_setdetachstate(ztl_thread_attr_t * attr, int detachstate );
 int ztl_thread_attr_setstacksize(ztl_thread_attr_t * attr, size_t stacksize );
 
 /// create a new thread, return 0 if success
-int ztl_thread_create(ztl_thread_t * thr, ztl_thread_attr_t * attr, ztl_thread_func_t myfunc, void * args );
+int ztl_thread_create(ztl_thread_t * thr, ztl_thread_attr_t * attr, ztl_thread_func_t myfunc, void * args);
 
 int ztl_thread_join(ztl_thread_t thr, void **retval);
 
@@ -123,11 +125,12 @@ int ztl_getpid();
 int ztl_gettid();
 int ztl_thread_self();
 
+#endif//_MSC_VER
+
+int ztl_thread_create2(ztl_thread_t* thr, void(*thread_routine)(void* args), void* args);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif//_MSC_VER
 
 #endif//_ZTL_THREADS_H_

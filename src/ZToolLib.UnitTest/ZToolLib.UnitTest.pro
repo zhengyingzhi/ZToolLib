@@ -49,6 +49,7 @@ SOURCES += ZToolUnitTests.c \
     test_lfqueue.c \
     test_ztl_array.c \
     test_ztl_blocking_queue.c \
+    test_ztl_bufcat.c \
     test_ztl_buffer.c \
     test_ztl_crypt.c \
     test_ztl_dict.c \

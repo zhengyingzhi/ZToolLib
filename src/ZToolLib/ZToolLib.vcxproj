@@ -278,6 +278,7 @@
     <ClInclude Include="cJSON.h" />
     <ClInclude Include="ztl_aes.h" />
     <ClInclude Include="ztl_blocking_queue.h" />
+    <ClInclude Include="ztl_bufcat.h" />
     <ClInclude Include="ztl_crc.h" />
     <ClInclude Include="ztl_crypt.h" />
     <ClInclude Include="ztl_array.h" />
@@ -337,6 +338,7 @@
     <ClCompile Include="siphash.c" />
     <ClCompile Include="ztl_aes.c" />
     <ClCompile Include="ztl_blocking_queue.c" />
+    <ClCompile Include="ztl_bufcat.c" />
     <ClCompile Include="ztl_crc.c" />
     <ClCompile Include="ztl_crypt.c" />
     <ClCompile Include="ztl_array.c" />

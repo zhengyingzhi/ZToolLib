@@ -207,6 +207,9 @@
     <ClInclude Include="ztl_errors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ztl_bufcat.h">
+      <Filter>Containers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lockfreequeue.c">
@@ -373,6 +376,9 @@
     </ClCompile>
     <ClCompile Include="ztl_tcp_client.c">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ztl_bufcat.c">
+      <Filter>Containers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

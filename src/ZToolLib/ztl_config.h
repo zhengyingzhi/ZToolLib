@@ -11,7 +11,15 @@
 
 /* a simple configure reading & process
  */
-typedef struct ztl_config_s ztl_config_t;
+typedef struct ztl_config_s     ztl_config_t;
+typedef struct ztl_pair_value_s ztl_pair_value_t;
+
+struct ztl_pair_value_s
+{
+    char*   key;
+    char*   value;
+};
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,6 +38,10 @@ void ztl_config_close(ztl_config_t* zconf);
 /* manual set key-value to configs
  */
 bool ztl_config_set_item(ztl_config_t* zconf, const char* key, const char* val, bool overwrite);
+
+/* get all config items, return array count
+ */
+int ztl_config_all_items(ztl_config_t* zconf, ztl_pair_value_t* pair_values[], uint32_t size);
 
 /* read configure items
  * if return false (read failed), the outval will not be changed

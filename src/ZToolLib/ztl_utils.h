@@ -99,6 +99,9 @@ char* replace_char(char* buf, char old_ch, char new_ch);
 /// parse string within k,K,m,M to numeric, 2K ->> 2048
 int64_t parse_size(const char* str, int len);
 
+/// get next power number of 2
+uint64_t get_next_power(uint64_t n);
+
 /// get cpu core number
 int get_cpu_number();
 
@@ -130,9 +133,6 @@ int read_file_content(const char* filename, char buf[], int size);
 int binary_search(int arr[], int size, int val);
 int binary_search_i64(int64_t arr[], int size, int64_t val);
 int binary_search_dbl(double arr[], int size, double val);
-
-/// a simple data change algorithm
-char* zdata_change(char* apdata);
 
 /// random related
 uint32_t ztl_randseed();

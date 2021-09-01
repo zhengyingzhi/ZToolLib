@@ -141,6 +141,9 @@ sockhandle_t tcp_accept2(sockhandle_t listenfd, char fromip[], int sz, uint16_t*
 int poll_reads(sockhandle_t sockfds[], int nfds, int timeout_ms);
 int poll_read(sockhandle_t sockfd, int timeout_ms);
 
+int poll_writes(sockhandle_t sockfds[], int nfds, int timeout_ms);
+int poll_write(sockhandle_t sockfd, int timeout_ms);
+
 /// send iovec, return send count
 int send_iov(sockhandle_t sockfd, EIOVEC* iovec, int iovec_cnt);
 

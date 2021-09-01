@@ -79,6 +79,7 @@ ztl_dlist_t* ztl_dlist_create(int reserve_nodes,
     dl->vfree   = vfree;
 
     ztl_thread_mutexattr_init(&mattr);
+    ztl_thread_mutexattr_settype(&mattr, ZTL_THREAD_MUTEX_RECURSIVE_NP);
     ztl_thread_mutex_init(&dl->lock, &mattr);
     ztl_thread_mutexattr_destroy(&mattr);
     ztl_thread_rwlock_init(&dl->rwlock);
