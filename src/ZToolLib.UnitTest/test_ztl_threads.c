@@ -13,12 +13,11 @@
 #include <ZToolLib/ztl_unit_test.h>
 
 
-ztl_thread_result_t _test_thread_func(void * args)
+void _test_thread_func(void* args)
 {
     int* p1 = (int*)args;
     (void)p1;
     assert(*p1 == 1);
-    return 0;
 }
 
 void Test_ztl_thread(ZuTest* zt)
@@ -39,7 +38,7 @@ void Test_ztl_thread(ZuTest* zt)
 
     int* p1;
     ztl_new_val(p1, int, 1);
-    ztl_thread_create(&thr, NULL, _test_thread_func, p1);
+    ztl_thread_create2(&thr, _test_thread_func, p1);
     ztl_sleepms(10);
 
     ztl_thread_join(thr, &rval);

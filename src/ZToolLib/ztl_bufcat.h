@@ -17,18 +17,19 @@ extern "C" {
 /* exported types */
 typedef struct bufcat_s
 {
-    char*   buf;
-    size_t  len;
-    size_t  capicity;
+    char*   buf;        // data buffer
+    size_t  len;        // data length
+    size_t  capicity;   // data space
     int     alloced;
     int     sep_len;
-    const char* sep;
+    const char* sep;    // the seperator like '|' if you need
 }bufcat_t;
 
 /* Init sc by buf & capicity */
 void bufcat_init(bufcat_t* bc, char buf[], int capicity, const char* sep);
 void bufcat_free(bufcat_t* bc);
 
+int  bufcat_append_sep(bufcat_t* bc);
 int  bufcat_str_len(bufcat_t* bc, const char* str, int len);
 int  bufcat_str(bufcat_t* bc, const char* str);
 int  bufcat_int(bufcat_t* bc, int val);

@@ -39,8 +39,7 @@ static ztl_bool_value_t zbooltable[] = {
 
 struct ztl_config_s
 {
-    char                filename[256];
-    FILE*               fp;
+    char                filename[512];
     char                comment;
     char                delimiter;
     uint32_t            count;
@@ -55,26 +54,32 @@ static int ztl_read_file_content(ztl_config_t* zconf);
 
 ztl_config_t* ztl_config_open(const char* filename, char comment, char delimiter)
 {
-    ztl_config_t* zconf;
+    ztl_config_t*   zconf;
+    ztl_pool_t*     pool;
 
     if (comment == 0)
         comment = '#';
     if (delimiter == 0)
         delimiter = ' ';
 
-    zconf = (ztl_config_t*)malloc(sizeof(ztl_config_t));
-    memset(zconf, 0, sizeof(ztl_config_t));
+    pool = ztl_create_pool(ZTL_DEFAULT_POOL_SIZE);
+    if (!pool) 
+    {
+        return NULL;
+    }
 
+    zconf = (ztl_config_t*)ztl_pcalloc(pool, sizeof(ztl_config_t));
     strncpy(zconf->filename, filename, sizeof(zconf->filename) - 1);
     zconf->comment   = comment;
     zconf->delimiter = delimiter;
     zconf->count     = 0;
     zconf->nalloc    = ZTL_CONFIG_DEFAULT_ITEMS;
-    zconf->items     = calloc(1, zconf->nalloc * sizeof(ztl_pair_value_t));
-    zconf->pool      = ztl_create_pool(4096);
+    zconf->items     = ztl_pcalloc(pool, zconf->nalloc * sizeof(ztl_pair_value_t));
+    zconf->pool      = pool;
 
     // open the file and read content
-    if (ztl_read_file_content(zconf) != 0) {
+    if (ztl_read_file_content(zconf) != 0)
+    {
         ztl_config_close(zconf);
         return NULL;
     }
@@ -88,20 +93,10 @@ void ztl_config_close(ztl_config_t* zconf)
         return;
     }
 
-    if (zconf->fp) {
-        fclose(zconf->fp);
-        zconf->fp = NULL;
+    ztl_pool_t* pool = zconf->pool;
+    if (pool) {
+        ztl_destroy_pool(pool);
     }
-
-    if (zconf->pool) {
-        ztl_destroy_pool(zconf->pool);
-    }
-
-    if (zconf->items) {
-        free(zconf->items);
-    }
-
-    free(zconf);
 }
 
 bool ztl_config_set_item(ztl_config_t* zconf, const char* key, const char* val, bool overwrite)
@@ -116,8 +111,10 @@ bool ztl_config_set_item(ztl_config_t* zconf, const char* key, const char* val, 
 
     for (uint32_t i = 0; i < zconf->count; ++i)
     {
-        if (strcmp(zconf->items[i].key, key) == 0) {
-            if (overwrite) {
+        if (strcmp(zconf->items[i].key, key) == 0)
+        {
+            if (overwrite)
+            {
                 char* lpcopy = (char*)ztl_pcalloc(zconf->pool, strlen(val) + 1);
                 memcpy(lpcopy, val, strlen(val));
                 zconf->items[i].value = lpcopy;
@@ -133,10 +130,12 @@ bool ztl_config_set_item(ztl_config_t* zconf, const char* key, const char* val, 
     }
     lpitem = &zconf->items[zconf->count++];
 
-    lpitem->key = (char*)ztl_pcalloc(zconf->pool, keylen + 1);
-    lpitem->value = (char*)ztl_pcalloc(zconf->pool, vallen + 1);
+    lpitem->key = (char*)ztl_palloc(zconf->pool, keylen + 1);
+    lpitem->value = (char*)ztl_palloc(zconf->pool, vallen + 1);
     memcpy(lpitem->key, key, keylen);
     memcpy(lpitem->value, val, vallen);
+    lpitem->key[keylen] = 0;
+    lpitem->value[vallen] = 0;
 
     return true;
 }
@@ -276,8 +275,6 @@ static int ztl_read_file_content(ztl_config_t* zconf)
         return -1;
     }
 
-    zconf->fp = fp;
-
     // parse the file content
     while (!feof(fp))
     {
@@ -285,6 +282,7 @@ static int ztl_read_file_content(ztl_config_t* zconf)
         (void)fgets(buffer, sizeof(buffer) - 1, fp);
 
         lefttrim(buffer);
+        replace_char(buffer, '\t', ' ');
         if (buffer[0] == zconf->comment) {
             continue;
         }
@@ -305,6 +303,7 @@ static int ztl_read_file_content(ztl_config_t* zconf)
 
         ztl_config_set_item(zconf, lpkey, lpval, true);
     }
+    fclose(fp);
 
     return 0;
 }

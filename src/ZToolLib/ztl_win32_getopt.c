@@ -58,7 +58,7 @@
 #ifdef _MSC_VER
 #include <windows.h>
 
-#include "ztl_win32_getopt.h"
+#include "ztl_getopt.h"
 
 #define	REPLACE_GETOPT		/* use this getopt as the system getopt(3) */
 

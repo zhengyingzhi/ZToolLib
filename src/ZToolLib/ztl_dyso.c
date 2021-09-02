@@ -49,33 +49,29 @@ static void* symbol_lib(ztl_hlib_t hlib, const char* symname)
 #endif//_MSC_VER
 
 
-int ztl_dso_load(ztl_dso_handle_t* dso, const char* libpath, int flags)
+ztl_hlib_t ztl_dyso_load(const char* libpath, int flags)
 {
-    dso->hlib = load_lib(libpath, flags);
-    strncpy(dso->path, libpath, sizeof(dso->path) - 1);
-    return 0;
+    ztl_hlib_t self = load_lib(libpath, flags);
+    return self;
 }
 
-void ztl_dso_unload(ztl_dso_handle_t* dso)
+void ztl_dyso_unload(ztl_hlib_t* self)
 {
-    if (dso->hlib) {
-        unload_lib(dso->hlib);
-        dso->hlib = NULL;
-    }
-}
-
-void* ztl_dso_symbol(ztl_dso_handle_t* dso, const char* symname)
-{
-    if (dso != NULL && dso->hlib != NULL)
+    if (self && *self)
     {
-        return symbol_lib(dso->hlib, symname);
+        unload_lib(*self);
+        *self = NULL;
     }
-    return NULL;
 }
 
-int ztl_dso_error(ztl_dso_handle_t* dso, char* buf, int bufsize)
+void* ztl_dyso_symbol(ztl_hlib_t self, const char* symname)
 {
-    if (dso)
+    return self ? symbol_lib(self, symname) : NULL;
+}
+
+int ztl_dyso_error(ztl_hlib_t self, char* buf, int bufsize)
+{
+    if (self)
     {
 #if defined(WINDOWS) || defined(WIN32)
         LPVOID lpMsgBuf;
@@ -98,4 +94,3 @@ int ztl_dso_error(ztl_dso_handle_t* dso, char* buf, int bufsize)
     }
     return -1;
 }
-

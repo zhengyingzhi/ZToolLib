@@ -30,31 +30,6 @@ static int bufcat_expand_if_needed(bufcat_t* bc, size_t len)
     return 0;
 }
 
-static void bufcat_append_sep(bufcat_t* bc)
-{
-    if (bc->len == 0)
-        return;
-
-    switch (bc->sep_len)
-    {
-    case 1:
-        bc->buf[bc->len++] = *bc->sep;
-        break;
-    case 2:
-    {
-        bc->buf[bc->len++] = *bc->sep;
-        bc->buf[bc->len++] = *(bc->sep + 1);
-        break;
-    }
-    default:
-    {
-        memcpy(bc->buf, bc->sep, bc->sep_len);
-        bc->len += bc->sep_len;
-        break;
-    }
-    }
-}
-
 
 void bufcat_init(bufcat_t* bc, char buf[], int capicity, const char* sep)
 {
@@ -75,6 +50,32 @@ void bufcat_free(bufcat_t* bc)
 {
     if (bc->alloced)
         free(bc->buf);
+}
+
+int bufcat_append_sep(bufcat_t* bc)
+{
+    if (bc->len == 0)
+        return -1;
+
+    switch (bc->sep_len)
+    {
+    case 1:
+        bc->buf[bc->len++] = *bc->sep;
+        break;
+    case 2:
+    {
+        bc->buf[bc->len++] = *bc->sep;
+        bc->buf[bc->len++] = *(bc->sep + 1);
+        break;
+    }
+    default:
+    {
+        memcpy(bc->buf, bc->sep, bc->sep_len);
+        bc->len += bc->sep_len;
+        break;
+    }
+    }
+    return 0;
 }
 
 int bufcat_str_len(bufcat_t* bc, const char* str, int len)

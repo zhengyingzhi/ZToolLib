@@ -20,7 +20,6 @@ struct ztl_dlist_st
     ztl_queue_t             que;
     ztl_mempool_t*          mp;
     uint32_t                size;
-    ztl_dlist_iterator_t*   iter;
     int                    (*cmp)(const void* expect, const void* actual);
     int                    (*vfree)(void* val);
 
@@ -74,7 +73,6 @@ ztl_dlist_t* ztl_dlist_create(int reserve_nodes,
     ztl_queue_init(&dl->que);
     dl->mp      = ztl_mp_create(sizeof(ztl_dlnode_t), reserve_nodes, true);
     dl->size    = 0;
-    dl->iter    = (ztl_dlist_iterator_t*)malloc(sizeof(ztl_dlist_iterator_t));
     dl->cmp     = cmp ? cmp : _ztl_dlist_cmp;
     dl->vfree   = vfree;
 
@@ -103,10 +101,6 @@ void ztl_dlist_release(ztl_dlist_t* dl)
     }
 
     ztl_mp_release(dl->mp);
-
-    if (dl->iter) {
-        free(dl->iter);
-    }
     free(dl);
 }
 
@@ -237,13 +231,7 @@ void* ztl_dlist_remove(ztl_dlist_t* dl, void* expect)
 ztl_dlist_iterator_t* ztl_dlist_iter_new(ztl_dlist_t* dl, int direction)
 {
     ztl_dlist_iterator_t* iter;
-    if (dl->iter) {
-        iter = dl->iter;
-        dl->iter = NULL;
-    }
-    else {
-        iter = (ztl_dlist_iterator_t*)malloc(sizeof(ztl_dlist_iterator_t));
-    }
+    iter = (ztl_dlist_iterator_t*)malloc(sizeof(ztl_dlist_iterator_t));
 
     iter->direction = direction;
     if (direction == ZTL_DLSTART_HEAD)
@@ -255,11 +243,9 @@ ztl_dlist_iterator_t* ztl_dlist_iter_new(ztl_dlist_t* dl, int direction)
 
 void ztl_dlist_iter_del(ztl_dlist_t* dl, ztl_dlist_iterator_t* iter)
 {
-    if (dl->iter) {
+    (void)dl;
+    if (iter) {
         free(iter);
-    }
-    else {
-        dl->iter = iter;
     }
 }
 

@@ -11,31 +11,23 @@
 
 
 /// exported types
-typedef struct  ztl_dso_handle_st ztl_dso_handle_t;
-typedef void*   ztl_hlib_t;
-
-struct ztl_dso_handle_st
-{
-    ztl_hlib_t hlib;
-    char path[1000];
-};
-
+typedef void* ztl_hlib_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /// load a DSO library.
-int ztl_dso_load(ztl_dso_handle_t* dso, const char* libpath, int flags);
+ztl_hlib_t ztl_dyso_load(const char* libpath, int flags);
 
 /// close the DSO library.
-void ztl_dso_unload(ztl_dso_handle_t* dso);
+void ztl_dyso_unload(ztl_hlib_t* self);
 
 /// load a symbol from a DSO handle.
-void* ztl_dso_symbol(ztl_dso_handle_t* dso, const char* symname);
+void* ztl_dyso_symbol(ztl_hlib_t self, const char* symname);
 
 /// report more information when a DSO function fails.
-int ztl_dso_error(ztl_dso_handle_t* dso, char* buf, int bufsize);
+int ztl_dyso_error(ztl_hlib_t self, char* buf, int bufsize);
 
 #ifdef __cplusplus
 }

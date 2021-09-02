@@ -74,10 +74,9 @@ int ztl_bq_pop(ztl_blocking_queue_t* zbq, void* datap, int timeout_ms)
         if ((rv = lfqueue_pop(zbq->queue, (void**)datap)) == 0)
             break;
 
-        ztl_simevent_timedwait(zbq->event, 1);
-
-        --timeout_ms;
-    } while (timeout_ms > 0);
+        ztl_simevent_timedwait(zbq->event, timeout_ms);
+        rv = lfqueue_pop(zbq->queue, (void**)datap);
+    } while (0);
 
     ztl_atomic_dec(&zbq->waitors, 1);
 

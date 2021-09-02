@@ -75,18 +75,19 @@
 #endif
 
 
-void* ztl_malloc(uint32_t size);
-void* ztl_calloc(uint32_t size);
-void* ztl_realloc(void* ptr, uint32_t size);
+void* ztl_malloc(size_t size);
+void* ztl_calloc(size_t size);
+void* ztl_realloc(void* ptr, size_t size);
 void  ztl_free(void* ptr);
 char* ztl_strdup(const char* str);
+char* ztl_strndup(const void* str, size_t size);
 
-uint32_t ztl_malloc_used_memory(void);
+size_t ztl_malloc_used_memory(void);
 void ztl_malloc_enable_thread_safeness(void);
-void ztl_malloc_set_oom_handler(void (*oom_handler)(uint32_t));
+void ztl_malloc_set_oom_handler(void (*oom_handler)(size_t));
 
 #ifndef ZTL_HAVE_MALLOC_SIZE
-uint32_t ztl_malloc_size(void *ptr);
+size_t ztl_malloc_size(void *ptr);
 #endif
 
 #endif /* _ZTL_MALLOC_H_INCLUDE_ */

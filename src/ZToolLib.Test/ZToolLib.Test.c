@@ -148,28 +148,8 @@ void test_base64()
     char lRawString[256] = "";
     uint32_t lBase64Length, lRawLength;
 
-#if 0
-    lpChanged = zpassword_change(lString);
-    lpRaw = zpassword_change(lpChanged);
-
-    assert(strcmp(lpRaw, lString) == 0);
-
-    char lBase64String[256] = "";
-    uint32_t lBase64Length = sizeof(lBase64String) - 1;
-    ztl_base64_encode(lpRaw, strlen(lpRaw), lBase64String, &lBase64Length);
-
-    char lRawString[256] = "";
-    uint32_t lRawLength = sizeof(lRawString) - 1;
-    ztl_base64_decode(lBase64String, lBase64Length, lRawString, &lRawLength);
-
-    assert(strcmp(lRawString, lString) == 0);
-
-    printf("%s\n", lRawString);
-
-#endif
-
     // change and encode
-    lpChanged = zpassword_change(lString);
+    lpChanged = lString;
     lBase64Length = sizeof(lBase64String) - 1;
     ztl_base64_encode(lpChanged, (uint32_t)strlen(lpChanged), lBase64String, &lBase64Length);
 
@@ -178,7 +158,7 @@ void test_base64()
     strcpy(lTemp, lBase64String);
     lRawLength = sizeof(lRawString) - 1;
     ztl_base64_decode(lTemp, lBase64Length, lRawString, &lRawLength);
-    lpRaw = zpassword_change(lRawString);
+    lpRaw = lRawString;
 
     assert(strcmp(lpRaw, "111111") == 0);
 }

@@ -296,6 +296,7 @@
     <ClInclude Include="ztl_evloop_private.h" />
     <ClInclude Include="ztl_evtimer.h" />
     <ClInclude Include="ztl_fixapi.h" />
+    <ClInclude Include="ztl_getopt.h" />
     <ClInclude Include="ztl_hash.h" />
     <ClInclude Include="ztl_heap.h" />
     <ClInclude Include="ztl_linklist.h" />
@@ -330,7 +331,6 @@
     <ClInclude Include="ztl_rbtree.h" />
     <ClInclude Include="ztl_map.h" />
     <ClInclude Include="ztl_vector.h" />
-    <ClInclude Include="ztl_win32_getopt.h" />
     <ClInclude Include="ztl_win32_stacktrace.h" />
   </ItemGroup>
   <ItemGroup>

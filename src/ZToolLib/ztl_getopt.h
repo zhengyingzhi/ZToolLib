@@ -12,6 +12,10 @@
 
 #define __GETOPT_H__
 
+#if defined(__linux__)
+#include "getopt.h"
+#else
+
 /* All the headers include this file. */
 #include <crtdefs.h>
 
@@ -101,5 +105,7 @@ extern int getopt_long_only(int nargc, char * const *nargv, const char *options,
 #ifdef __cplusplus
 }
 #endif
+
+#endif//__linux__
 
 #endif /* !defined(__UNISTD_H_SOURCED__) && !defined(__GETOPT_LONG_H__) */
