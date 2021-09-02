@@ -230,6 +230,8 @@ int ztl_thread_create2(ztl_thread_t* thr, void(*thread_routine)(void* args), voi
 {
     struct _thread_args_s* thr_args;
     thr_args = (struct _thread_args_s*)malloc(sizeof(struct _thread_args_s));
+    thr_args->thread_routine = thread_routine;
+    thr_args->args = args;
     ztl_thread_create(thr, NULL, _ztl_thread_routine, thr_args);
     return 0;
 }
