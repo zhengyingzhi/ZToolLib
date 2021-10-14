@@ -90,7 +90,7 @@ void* ztl_palloc(ztl_pool_t *pool, size_t size)
 {
 #if !(ZTL_DEBUG_PALLOC)
     if (size <= pool->max) {
-        return ztl_palloc_small(pool, size, 1);
+        return ztl_palloc_small(pool, size, sizeof(void*));
     }
 #endif
 
@@ -268,8 +268,7 @@ void* ztl_pcalloc(ztl_pool_t *pool, size_t size)
 char* ztl_palloc_dup(ztl_pool_t *pool, void* s, size_t size)
 {
     char* p = ztl_palloc(pool, size);
-    if (!p)
-    {
+    if (p) {
         memcpy(p, s, size);
     }
     return p;

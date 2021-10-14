@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
 #include <sys/types.h>
 
 int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock)
@@ -20,6 +21,24 @@ int ztl_thread_rwlock_init(ztl_thread_rwlock_t* rwlock)
 int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock)
 {
     pthread_rwlock_destroy((pthread_rwlock_t*)rwlock);
+    return 0;
+}
+
+int ztl_thread_cond_timedwait(ztl_thread_cond_t* cond, ztl_thread_mutex_t* mutex, int timeoutms)
+{
+    struct timespec abstime;
+    struct timeval  now;
+    gettimeofday(&now, NULL);
+
+    int64_t t;
+    t = now.tv_sec * 1000000 + now.tv_usec;
+    t += timeoutms * 1000;
+    abstime.tv_sec = t / 1000000;
+    abstime.tv_nsec = (t % 1000000) * 1000;
+
+    pthread_mutex_lock(mutex);
+    pthread_cond_timedwait(cond, mutex, &abstime);
+    pthread_mutex_unlock(mutex);
     return 0;
 }
 
@@ -123,6 +142,15 @@ int ztl_thread_cond_wait(ztl_thread_cond_t * cond, ztl_thread_mutex_t * mutex)
     int rv = 0;
     ztl_thread_mutex_unlock(mutex);
     rv = WaitForSingleObject(*cond, INFINITE);
+    ztl_thread_mutex_lock(mutex);
+    return WAIT_OBJECT_0 == rv ? 0 : GetLastError();
+}
+
+int ztl_thread_cond_timedwait(ztl_thread_cond_t* cond, ztl_thread_mutex_t* mutex, int timeoutms)
+{
+    int rv = 0;
+    ztl_thread_mutex_unlock(mutex);
+    rv = WaitForSingleObject(*cond, timeoutms);
     ztl_thread_mutex_lock(mutex);
     return WAIT_OBJECT_0 == rv ? 0 : GetLastError();
 }

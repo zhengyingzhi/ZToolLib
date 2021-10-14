@@ -760,9 +760,8 @@ int udp_recv(sockhandle_t sockfd, char* buf, int size, struct sockaddr_in* froma
     struct timeval tv;
     if (timeoutms >= 0)
     {
-        tv.tv_sec = timeoutms / 1000000;
-        tv.tv_usec = timeoutms % 1000000;
         ptv = &tv;
+        to_timeval(ptv, timeoutms);
     }
 
     fd_set readfds;

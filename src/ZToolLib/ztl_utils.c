@@ -338,7 +338,8 @@ int64_t parse_size(const char* str, int len)
 
     unit = str[len - 1];
 
-    switch (unit) {
+    switch (unit)
+    {
     case 'K':
     case 'k':
         len--;
@@ -351,6 +352,13 @@ int64_t parse_size(const char* str, int len)
         len--;
         max = INT64_MAX / (1024 * 1024);
         scale = 1024 * 1024;
+        break;
+
+    case 'G':
+    case 'g':
+        len--;
+        max = INT64_MAX / (1024 * 1024 * 1024);
+        scale = 1024 * 1024 * 1024;
         break;
 
     default:
@@ -459,6 +467,52 @@ int ztl_dirname(char dirname[], int size, const char* filepath)
     dirname[size] = '\0';
     return size;
 }
+
+
+bool ztl_startwith(const char* str, const char* needle)
+{
+    return strncmp(str, needle, strlen(needle)) == 0 ? true : false;
+}
+
+bool ztl_endwith(const char* str, const char* needle)
+{
+    size_t len0 = strlen(str);
+    size_t len1 = strlen(needle);
+    if (len0 < len1)
+        return false;
+    return strncmp(str + len0 - len1, needle, len1) == 0 ? true : false;
+}
+
+bool ztl_startswith(const char* str, char* needles[], int count)
+{
+    for (int i = 0; i < count; ++i)
+    {
+        if (!needles[i])
+            break;
+        if (strncmp(str, needles[i], strlen(needles[i])) == 0)
+            return true;
+    }
+    return false;
+}
+
+bool ztl_endswith(const char* str, char* needles[], int count)
+{
+    size_t len0 = strlen(str);
+    for (int i = 0; i < count; ++i)
+    {
+        if (!needles[i])
+            break;
+
+        size_t len1 = strlen(needles[i]);
+        if (len1 > len0)
+            continue;
+
+        if (strncmp(str + len0 - len1, needles[i], len1) == 0)
+            return true;
+    }
+    return false;
+}
+
 
 static void print_array(int arr[], int size)
 {

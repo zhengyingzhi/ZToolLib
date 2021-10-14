@@ -112,6 +112,12 @@ uint32_t get_file_length(const char* filename);
 const char* ztl_basename(const char* filepath);
 int ztl_dirname(char dirname[], int size, const char* filepath);
 
+/// return starts or ends with
+bool ztl_startwith(const char* str, const char* needle);
+bool ztl_endwith(const char* str, const char* needle);
+bool ztl_startswith(const char* str, char* needles[], int count);
+bool ztl_endswith(const char* str, char* needles[], int count);
+
 /// parse the string ptr into the array by the delemiter charactor like '|', return array size 
 int str_delimiter(char* src, char** arr, int arr_size, char delimiter);
 int str_delimiters(char* src, char** arr, int arr_size, const char* sep);

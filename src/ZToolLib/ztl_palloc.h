@@ -22,7 +22,7 @@ extern "C" {
 
 #define ZTL_ALIGNMENT            sizeof(void*) 
 
-#define ZTL_POOL_ALIGNMENT       16
+#define ZTL_POOL_ALIGNMENT       64
 #define ZTL_MIN_POOL_SIZE                                                   \
     ztl_align((sizeof(ztl_pool_t) + 2 * sizeof(ztl_pool_large_t)),          \
               ZTL_POOL_ALIGNMENT)

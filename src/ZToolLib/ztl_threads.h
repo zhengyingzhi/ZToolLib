@@ -41,6 +41,7 @@ int ztl_thread_rwlock_destroy(ztl_thread_rwlock_t* rwlock);
 #define ztl_thread_cond_init            pthread_cond_init
 #define ztl_thread_cond_destroy         pthread_cond_destroy
 #define ztl_thread_cond_wait            pthread_cond_wait
+int ztl_thread_cond_timedwait(ztl_thread_cond_t* cond, ztl_thread_mutex_t* mutex, int timeoutms);
 #define ztl_thread_cond_signal          pthread_cond_signal
 #define ztl_thread_cond_broadcast       pthread_cond_broadcast
 
@@ -106,7 +107,8 @@ int ztl_thread_mutexattr_destroy(ztl_thread_mutexattr_t* mattr);
 
 int ztl_thread_cond_init(ztl_thread_cond_t * cond, void * attr );
 int ztl_thread_cond_destroy(ztl_thread_cond_t * cond );
-int ztl_thread_cond_wait(ztl_thread_cond_t * cond, ztl_thread_mutex_t * mutex );
+int ztl_thread_cond_wait(ztl_thread_cond_t * cond, ztl_thread_mutex_t * mutex);
+int ztl_thread_cond_timedwait(ztl_thread_cond_t* cond, ztl_thread_mutex_t* mutex, int timeoutms);
 int ztl_thread_cond_signal(ztl_thread_cond_t * cond );
 int ztl_thread_cond_broadcast(ztl_thread_cond_t * cond );
 
