@@ -2,28 +2,34 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ztl_mempool.h"
+#include "ztl_palloc.h"
 #include "ztl_rbtree.h"
 #include "ztl_map.h"
 #include "ztl_utils.h"
 
 
-struct ztl_map_st
+struct cmap_st
 {
-    ztl_rbtree_t        rbtree;
-    ztl_rbtree_node_t   sentinel;
-    ztl_mempool_t*      mp;
-    int64_t             invalid_value;
-    int32_t             size;
-    uint32_t            reserve;
-    int32_t             access_index;
+    rbtree_t        rbtree;
+    rbtree_node_t   sentinel;
+    rbtree_node_t*  idles;
+    ztl_pool_t*     pool;
+    int64_t         invalid_value;
+    int32_t         size;
+    uint32_t        reserve;
+    int32_t         access_index;
 };
 
 
-static ztl_rbtree_node_t* _ztl_rbtree_find(ztl_rbtree_t *tree,
-    ztl_rbtree_key_t key)
+static inline rbtree_node_t* _rbtree_peek(rbtree_t* tree)
 {
-    ztl_rbtree_node_t   *root, *sentinel;
+    return tree->root != tree->sentinel ? tree->root : NULL;
+}
+
+static rbtree_node_t* _rbtree_find(rbtree_t *tree,
+    rbtree_key_t key)
+{
+    rbtree_node_t   *root, *sentinel;
 
     /* a binary tree search */
 
@@ -47,249 +53,256 @@ static ztl_rbtree_node_t* _ztl_rbtree_find(ztl_rbtree_t *tree,
     return NULL;
 }
 
-static ztl_mempool_t* _ztl_map_create_pool(ztl_map_t* pmap)
+static void _rbtree_traverse(cmap_t* cmap, rbtree_t *tree, rbtree_node_t* cur,
+    cmap_access_pt func, void* context1, int context2)
 {
-    return ztl_mp_create(sizeof(ztl_rbtree_node_t), pmap->reserve, true);
+    if (cur && cur != tree->sentinel)
+    {
+        if (func)
+        {
+            union_dtype_t d;
+            d.ptr = cur->udata;
+            func(cmap, context1, context2, cur->key, d.i64);
+        }
+
+        if (cur->left)
+            _rbtree_traverse(cmap, tree, cur->left, func, context1, context2);
+        if (cur->right)
+            _rbtree_traverse(cmap, tree, cur->right, func, context1, context2);
+    }
 }
 
-ztl_map_t* ztl_map_create(uint32_t reserve)
+static void _cmap_array_push(cmap_t* cmap, void* context1, int context2, uint64_t key, int64_t value)
 {
-    ztl_map_t* lmap;
-    lmap = (ztl_map_t*)malloc(sizeof(ztl_map_t));
-    memset(lmap, 0, sizeof(ztl_map_t));
+    if (cmap->access_index >= context2) {
+        return;
+    }
+    cmap_pair_t* kv_arr, *pkv;
+    kv_arr = (cmap_pair_t*)context1;
+    pkv = &(kv_arr[cmap->access_index++]);
+    pkv->Key = key;
+    pkv->Value = value;
+}
+
+//////////////////////////////////////////////////////////////////////////
+cmap_t* cmap_create(uint32_t reserve)
+{
+    ztl_pool_t* pool;
+    cmap_t*     lmap;
+
+    pool = ztl_create_pool(8192);
+    if (!pool) {
+        return NULL;
+    }
+
+    lmap = (cmap_t*)ztl_pcalloc(pool, sizeof(cmap_t));
+    lmap->pool = pool;
 
     lmap->invalid_value = ZTL_MAP_INVALID_VALUE;
-
     lmap->reserve = reserve;
-    if (reserve > 0) {
-        lmap->mp = _ztl_map_create_pool(lmap);
-    }
-    else {
-        lmap->mp = NULL;
+    lmap->idles = NULL;
+    for (uint32_t i = 0; i < reserve; ++i)
+    {
+        rbtree_node_t* rbnode;
+        rbnode = (rbtree_node_t*)ztl_pcalloc(pool, sizeof(rbtree_node_t));
+        rbnode->right = lmap->idles;
+        lmap->idles = rbnode;
     }
 
-    ztl_map_clear(lmap);
+    rbtree_init(&lmap->rbtree, &lmap->sentinel, rbtree_insert_value);
+    cmap_clear(lmap);
 
     return lmap;
 }
 
-void ztl_map_release(ztl_map_t* pmap)
+void cmap_release(cmap_t* cmap)
 {
-    if (pmap->mp) {
-        ztl_mp_release(pmap->mp);
+    ztl_pool_t* pool;
+    if (!cmap || !cmap->pool) {
+        return;
     }
-    free(pmap);
+
+    pool = cmap->pool;
+    ztl_destroy_pool(pool);
 }
 
-void ztl_map_clear(ztl_map_t* pmap)
+void cmap_clear(cmap_t* cmap)
 {
-    ztl_rbtree_init(&pmap->rbtree, &pmap->sentinel, ztl_rbtree_insert_value);
-    if (pmap->mp)
+    rbtree_node_t* rbnode;
+    while ((rbnode = _rbtree_peek(&cmap->rbtree)) != NULL)
     {
-        ztl_mp_release(pmap->mp);
-        pmap->mp = _ztl_map_create_pool(pmap);
+        rbtree_delete(&cmap->rbtree, rbnode);
     }
-    pmap->size = 0;
+    cmap->size = 0;
 }
 
-int ztl_map_size(ztl_map_t* pmap)
+int cmap_size(cmap_t* cmap)
 {
-    return pmap->size;
+    return cmap->size;
 }
 
-bool ztl_map_empty(ztl_map_t* pmap)
+bool cmap_empty(cmap_t* cmap)
 {
-    return pmap->size == 0;
+    return cmap->size == 0;
 }
 
-int ztl_map_add(ztl_map_t* pmap, uint64_t key, int64_t value)
+int cmap_add(cmap_t* cmap, uint64_t key, int64_t value)
 {
-    ztl_rbtree_node_t* rbnode;
+    rbtree_node_t* rbnode;
 
-    if (!pmap->mp) {
-        pmap->mp = _ztl_map_create_pool(pmap);
+    if (cmap->idles)
+    {
+        rbnode = cmap->idles;
+        cmap->idles = cmap->idles->right;
+
+        rbnode->left = NULL;
+        rbnode->right = NULL;
+        rbnode->parent = NULL;
     }
-
-    rbnode = (ztl_rbtree_node_t*)ztl_mp_alloc(pmap->mp);
-    memset(rbnode, 0, sizeof(ztl_rbtree_node_t));
+    else
+    {
+        rbnode = (rbtree_node_t*)ztl_pcalloc(cmap->pool, sizeof(rbtree_node_t));
+    }
 
     union_dtype_t d;
     d.i64 = value;
     rbnode->udata = d.ptr;
 
-    return ztl_map_add_ex(pmap, key, rbnode);
+    return cmap_add_ex(cmap, key, rbnode);
 }
 
-int64_t ztl_map_del(ztl_map_t* pmap, uint64_t key)
+int64_t cmap_del(cmap_t* cmap, uint64_t key)
 {
-    int64_t value = pmap->invalid_value;
-    ztl_rbtree_node_t* rbnode;
+    int64_t value = cmap->invalid_value;
+    rbtree_node_t* rbnode;
 
-    rbnode = ztl_map_del_ex(pmap, key);
+    rbnode = cmap_del_ex(cmap, key);
     if (rbnode)
     {
         union_dtype_t d;
         d.ptr = rbnode->udata;
         value = d.i64;
-        ztl_mp_free(pmap->mp, rbnode);
+
+        rbnode->right = cmap->idles;
+        cmap->idles = rbnode;
     }
 
     return value;
 }
 
-bool ztl_map_count(ztl_map_t* pmap, uint64_t key)
+bool cmap_count(cmap_t* cmap, uint64_t key)
 {
-    ztl_rbtree_node_t* rbnode;
-    rbnode = _ztl_rbtree_find(&pmap->rbtree, key);
-    if (rbnode) {
-        return true;
-    }
-
-    return false;
+    rbtree_node_t* rbnode;
+    rbnode = _rbtree_find(&cmap->rbtree, key);
+    return rbnode ? true : false;
 }
 
-int64_t ztl_map_find(ztl_map_t* pmap, uint64_t key)
+int64_t cmap_find(cmap_t* cmap, uint64_t key)
 {
-    ztl_rbtree_node_t* rbnode;
-    rbnode = _ztl_rbtree_find(&pmap->rbtree, key);
-    if (rbnode) {
+    rbtree_node_t* rbnode;
+    rbnode = _rbtree_find(&cmap->rbtree, key);
+    if (rbnode)
+    {
         union_dtype_t d;
         d.ptr = rbnode->udata;
         return d.i64;
     }
 
-    return pmap->invalid_value;
+    return cmap->invalid_value;
 }
 
-static void _ztl_rbtree_traverse(ztl_map_t* pmap, ztl_rbtree_t *tree, ztl_rbtree_node_t* cur, 
-    ztl_map_access_pt func, void* context1, int context2)
+void cmap_traverse(cmap_t* cmap, cmap_access_pt func, void* context1, int context2)
 {
-    if (cur && cur != tree->sentinel)
-    {
-        if (func) {
-            union_dtype_t d;
-            d.ptr = cur->udata;
-            func(pmap, context1, context2, cur->key, d.i64);
-        }
-
-        if (cur->left)
-            _ztl_rbtree_traverse(pmap, tree, cur->left, func, context1, context2);
-        if (cur->right)
-            _ztl_rbtree_traverse(pmap, tree, cur->right, func, context1, context2);
-    }
+    rbtree_node_t* cur = cmap->rbtree.root;
+    _rbtree_traverse(cmap, &cmap->rbtree, cur, func, context1, context2);
 }
 
-void ztl_map_traverse(ztl_map_t* pmap, ztl_map_access_pt func, void* context1, int context2)
+void cmap_to_array(cmap_t* cmap, cmap_pair_t* kv_array, int arr_size)
 {
-    ztl_rbtree_node_t* cur = pmap->rbtree.root;
-    _ztl_rbtree_traverse(pmap, &pmap->rbtree, cur, func, context1, context2);
+    cmap->access_index = 0;
+    // rbtree_node_t* cur = cmap->rbtree.root;
+    cmap_traverse(cmap, _cmap_array_push, kv_array, arr_size);
 }
 
-static void _ztl_map_array_push(ztl_map_t* pmap, void* context1, int context2, uint64_t key, int64_t value)
+int cmap_add_ex(cmap_t* cmap, uint64_t key, rbtree_node_t* nodeval)
 {
-    if (pmap->access_index >= context2) {
-        return;
-    }
-    ztl_map_pair_t* kv_arr, *pkv;
-    kv_arr = (ztl_map_pair_t*)context1;
-    pkv = &(kv_arr[pmap->access_index++]);
-    pkv->Key = key;
-    pkv->Value = value;
-}
-
-void ztl_map_to_array(ztl_map_t* pmap, ztl_map_pair_t* kv_array, int arr_size)
-{
-    pmap->access_index = 0;
-    // ztl_rbtree_node_t* cur = pmap->rbtree.root;
-    ztl_map_traverse(pmap, _ztl_map_array_push, kv_array, arr_size);
-}
-
-
-int ztl_map_add_ex(ztl_map_t* pmap, uint64_t key, ztl_rbtree_node_t* nodeval)
-{
-    ++pmap->size;
+    ++cmap->size;
     nodeval->key = key;
-    ztl_rbtree_insert(&pmap->rbtree, nodeval);
+    rbtree_insert(&cmap->rbtree, nodeval);
     return 0;
 }
 
-ztl_rbtree_node_t* ztl_map_del_ex(ztl_map_t* pmap, uint64_t key)
+rbtree_node_t* cmap_del_ex(cmap_t* cmap, uint64_t key)
 {
-    ztl_rbtree_node_t* rbnode;
-    rbnode = ztl_map_find_ex(pmap, key);
+    rbtree_node_t* rbnode;
+    rbnode = cmap_find_ex(cmap, key);
 
-    if (rbnode) {
-        ztl_rbtree_delete(&pmap->rbtree, rbnode);
-        --pmap->size;
+    if (rbnode)
+    {
+        rbtree_delete(&cmap->rbtree, rbnode);
+        --cmap->size;
     }
     return rbnode;
 }
 
-ztl_rbtree_node_t* ztl_map_find_ex(ztl_map_t* pmap, uint64_t key)
+rbtree_node_t* cmap_find_ex(cmap_t* cmap, uint64_t key)
 {
-    ztl_rbtree_node_t* rbnode;
-    rbnode = _ztl_rbtree_find(&pmap->rbtree, key);
-    if (rbnode) {
-        return rbnode;
-    }
-
-    return NULL;
+    rbtree_node_t* rbnode;
+    rbnode = _rbtree_find(&cmap->rbtree, key);
+    return rbnode;
 }
-
 
 //////////////////////////////////////////////////////////////////////////
-struct ztl_set_st
+struct cset_st
 {
-    ztl_map_t* map;
+    cmap_t* cmap;
 };
 
-ztl_set_t* ztl_set_create(uint32_t reserve)
+cset_t* cset_create(uint32_t reserve)
 {
-    ztl_set_t* pset;
-    pset = (ztl_set_t*)malloc(sizeof(ztl_set_t));
-
-    pset->map = ztl_map_create(reserve);
-
-    return pset;
+    cset_t* cset;
+    cset = (cset_t*)malloc(sizeof(cset_t));
+    cset->cmap = cmap_create(reserve);
+    return cset;
 }
 
-void ztl_set_release(ztl_set_t* pset)
+void cset_release(cset_t* cset)
 {
-    if (pset) 
+    if (cset) 
     {
-        if (pset->map)
-            ztl_map_release(pset->map);
-        free(pset);
+        if (cset->cmap)
+            cmap_release(cset->cmap);
+        free(cset);
     }
 }
 
-void ztl_set_clear(ztl_set_t* pset)
+void cset_clear(cset_t* cset)
 {
-    ztl_map_clear(pset->map);
+    cmap_clear(cset->cmap);
 }
 
-int ztl_set_size(ztl_set_t* pset)
+int cset_size(cset_t* cset)
 {
-    return ztl_map_size(pset->map);
+    return cmap_size(cset->cmap);
 }
 
-bool ztl_set_empty(ztl_set_t* pset)
+bool cset_empty(cset_t* cset)
 {
-    return ztl_map_empty(pset->map);
+    return cmap_empty(cset->cmap);
 }
 
-bool ztl_set_count(ztl_set_t* pset, uint64_t key)
+bool cset_count(cset_t* cset, uint64_t key)
 {
-    return ztl_map_count(pset->map, key);
+    return cmap_count(cset->cmap, key);
 }
 
-int ztl_set_add(ztl_set_t* pset, uint64_t key)
+int cset_add(cset_t* cset, uint64_t key)
 {
-    return ztl_map_add(pset->map, key, 0);
+    return cmap_add(cset->cmap, key, 0);
 }
 
-int ztl_set_del(ztl_set_t* pset, uint64_t key)
+int cset_del(cset_t* cset, uint64_t key)
 {
-    return ztl_map_del(pset->map, key) != pset->map->invalid_value ? 0 : -1;
+    return cmap_del(cset->cmap, key) != cset->cmap->invalid_value ? 0 : -1;
 }
 

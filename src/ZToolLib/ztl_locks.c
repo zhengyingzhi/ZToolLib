@@ -13,22 +13,22 @@ void ztl_spinlock(volatile uint32_t* lock, uint32_t value, uint32_t spincount)
 
     for (;; ) {
 
-        if (*lock == 0 && ztl_atomic_cas(lock, 0, value)) {
+        if (*lock == 0 && atomic_cas(lock, 0, value)) {
             return;
         }
 
             for (n = 1; n < spincount; n <<= 1) {
 
                 for (i = 0; i < n; i++) {
-                    ztl_cpu_pause();
+                    cpu_pause();
                 }
 
-                if (*lock == 0 && ztl_atomic_cas(lock, 0, value)) {
+                if (*lock == 0 && atomic_cas(lock, 0, value)) {
                     return;
                 }
             }
 
-        ztl_sched_yield();
+        sched_yield();
     }
 }
 
@@ -41,7 +41,7 @@ void ztl_rwlock_wlock(volatile uint32_t* lock)
 
     for (;; ) {
 
-        if (*lock == 0 && ztl_atomic_cas(lock, 0, ZTL_RWLOCK_WLOCK)) {
+        if (*lock == 0 && atomic_cas(lock, 0, ZTL_RWLOCK_WLOCK)) {
             return;
         }
 
@@ -49,17 +49,17 @@ void ztl_rwlock_wlock(volatile uint32_t* lock)
         for (n = 1; n < ZTL_LOCK_SPIN; n <<= 1) {
 
             for (i = 0; i < n; i++) {
-                ztl_cpu_pause();
+                cpu_pause();
             }
 
             if (*lock == 0
-                && ztl_atomic_cas(lock, 0, ZTL_RWLOCK_WLOCK))
+                && atomic_cas(lock, 0, ZTL_RWLOCK_WLOCK))
             {
                 return;
             }
         }
 
-        ztl_sched_yield();
+        sched_yield();
     }
 }
 
@@ -72,7 +72,7 @@ void ztl_rwlock_rlock(volatile uint32_t* lock)
         readers = *lock;
 
         if (readers != ZTL_RWLOCK_WLOCK
-            && ztl_atomic_cas(lock, readers, readers + 1))
+            && atomic_cas(lock, readers, readers + 1))
         {
             return;
         }
@@ -81,19 +81,19 @@ void ztl_rwlock_rlock(volatile uint32_t* lock)
         for (n = 1; n < ZTL_LOCK_SPIN; n <<= 1) {
 
             for (i = 0; i < n; i++) {
-                ztl_cpu_pause();
+                cpu_pause();
             }
 
             readers = *lock;
 
             if (readers != ZTL_RWLOCK_WLOCK
-                && ztl_atomic_cas(lock, readers, readers + 1))
+                && atomic_cas(lock, readers, readers + 1))
             {
                 return;
             }
         }
 
-        ztl_sched_yield();
+        sched_yield();
     }
 }
 
@@ -110,7 +110,7 @@ void ztl_rwlock_unlock(volatile uint32_t* lock)
 
     for (;; ) {
 
-        if (ztl_atomic_cas(lock, readers, readers - 1)) {
+        if (atomic_cas(lock, readers, readers - 1)) {
             return;
         }
 

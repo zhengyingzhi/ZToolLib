@@ -423,7 +423,7 @@ static int iocp_poll(ztl_evloop_t* evloop, ztl_fired_event_t* fires, int size, i
 static int iocp_stop(ztl_evloop_t* evloop)
 {
     iocp_ctx_t* lpctx = ZTL_THE_CTX(evloop);
-    ztl_atomic_set(&evloop->running, 0);
+    atomic_set(&evloop->running, 0);
 
     if (lpctx->hIocp)
     {

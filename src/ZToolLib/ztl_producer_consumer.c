@@ -51,7 +51,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _zpc_work_thread(void* arg)
             ztl_simevent_timedwait(zpc->event, 1);
             continue;
         }
-        ztl_atomic_dec(&zpc->count, 1);
+        atomic_dec(&zpc->count, 1);
 
         if (pcdata.handler &&
             !pcdata.handler(zpc, pcdata.type, pcdata.data)) {
@@ -104,7 +104,7 @@ int ztl_pc_post(ztl_producer_consumer_t* zpc, ztl_pc_handler_pt handler, int64_t
         return ZTL_ERR_QueueFull;
     }
 
-    count = ztl_atomic_add(&zpc->count, 1);
+    count = atomic_add(&zpc->count, 1);
     if (count == 0 || count == (uint32_t)-1) {
         ztl_simevent_signal(zpc->event);
     }
@@ -151,7 +151,7 @@ void ztl_pc_release(ztl_producer_consumer_t* zpc)
 
 int ztl_pc_pending(ztl_producer_consumer_t* zpc)
 {
-    return ztl_atomic_add(&zpc->count, 0);
+    return atomic_add(&zpc->count, 0);
 }
 
 void  ztl_pc_set_udata(ztl_producer_consumer_t* zpc, void* udata)

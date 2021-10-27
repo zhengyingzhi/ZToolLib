@@ -288,7 +288,7 @@ void ztl_evloop_set_usedata(ztl_evloop_t* evloop, void* userdata)
 int ztl_connection_free(ztl_connection_t* conn)
 {
     uint32_t refcount;
-    refcount = ztl_atomic_dec(&conn->refcount, 1);
+    refcount = atomic_dec(&conn->refcount, 1);
     if (refcount != 1) {
         return refcount;
     }
@@ -371,7 +371,7 @@ uint64_t ztl_evloop_timestamp_get(ztl_evloop_t* evloop)
 }
 
 //////////////////////////////////////////////////////////////////////////
-static void _timer_event_handler(void* ctx, ztl_rbtree_node_t* node)
+static void _timer_event_handler(void* ctx, rbtree_node_t* node)
 {
     ztl_evloop_t*       evloop;
     ztl_timer_event_t*  timer;
@@ -405,7 +405,7 @@ uint64_t ztl_evloop_addtimer(ztl_evloop_t* evloop, uint32_t timeout_ms,
     timer->handler      = handler;
     timer->finalizer    = finalizer;
     timer->udata        = udata;
-    timer->timer_id     = ztl_atomic_add64(&evloop->timer_id, 1);
+    timer->timer_id     = atomic_add64(&evloop->timer_id, 1);
     timer->timeout_ms   = timeout_ms;
     ztl_timer_node_save(evloop, timer);
 
@@ -464,5 +464,5 @@ int ztl_evloop_expire(ztl_evloop_t* evloop, uint64_t currtime)
 
 uint32_t ztl_evloop_timer_count(ztl_evloop_t* evloop)
 {
-    return ztl_atomic_add(&evloop->timers.count, 0);
+    return atomic_add(&evloop->timers.count, 0);
 }

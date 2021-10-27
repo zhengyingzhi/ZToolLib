@@ -13,8 +13,8 @@ void ztl_evtimer_init(ztl_evtimer_t* et)
 {
     et->last_time = 0;
     et->count = 0;
-    ztl_rbtree_init(&et->event_timers, &et->event_timer_sentinel, 
-                    ztl_rbtree_insert_timer_value);
+    rbtree_init(&et->event_timers, &et->event_timer_sentinel, 
+                rbtree_insert_timer_value);
 }
 
 void ztl_evtimer_update_time(ztl_evtimer_t* et, uint64_t currtime)
@@ -22,11 +22,11 @@ void ztl_evtimer_update_time(ztl_evtimer_t* et, uint64_t currtime)
     et->last_time = currtime;
 }
 
-int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer, 
+int ztl_evtimer_add(ztl_evtimer_t* et, rbtree_node_t* timer, 
     uint32_t timeout_ms, int timerset)
 {
-    ztl_msec_t      key;
-    ztl_msec_int_t  diff;
+    msec_t      key;
+    msec_int_t  diff;
 
     if (timeout_ms == 0) {
         return ZTL_ERR_InvalParam;
@@ -44,8 +44,8 @@ int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer,
         * to minimize the rbtree operations for fast connections.
         */
 
-        diff = (ztl_msec_int_t)(key - timer->key);
-        if ((ztl_msec_t)abs((int)diff) < ZTL_TIMER_LAZY_DELAY) {
+        diff = (msec_int_t)(key - timer->key);
+        if ((msec_t)abs((int)diff) < ZTL_TIMER_LAZY_DELAY) {
             return 1;
         }
 
@@ -53,15 +53,15 @@ int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer,
     }
 
     timer->key = key;
-    ztl_rbtree_insert(&et->event_timers, timer);
-    ztl_atomic_add(&et->count, 1);
+    rbtree_insert(&et->event_timers, timer);
+    atomic_add(&et->count, 1);
     return 0;
 }
 
-int ztl_evtimer_del(ztl_evtimer_t* et, ztl_rbtree_node_t* timer)
+int ztl_evtimer_del(ztl_evtimer_t* et, rbtree_node_t* timer)
 {
-    ztl_rbtree_delete(&et->event_timers, timer);
-    ztl_atomic_dec(&et->count, 1);
+    rbtree_delete(&et->event_timers, timer);
+    atomic_dec(&et->count, 1);
 
 #if defined(ZTL_DEBUG)
     timer->left = 0;
@@ -72,25 +72,25 @@ int ztl_evtimer_del(ztl_evtimer_t* et, ztl_rbtree_node_t* timer)
     return 0;
 }
 
-ztl_rbtree_node_t* ztl_evtimer_min(ztl_evtimer_t* et)
+rbtree_node_t* ztl_evtimer_min(ztl_evtimer_t* et)
 {
-    ztl_rbtree_node_t* root;
+    rbtree_node_t* root;
     root = et->event_timers.root;
     if (root == et->event_timers.sentinel) {
         return NULL;
     }
 
-    return ztl_rbtree_min(root, et->event_timers.sentinel);
+    return rbtree_min(root, et->event_timers.sentinel);
 }
 
-ztl_msec_int_t ztl_evtimer_min_ms(ztl_evtimer_t* et, uint64_t currtime)
+msec_int_t ztl_evtimer_min_ms(ztl_evtimer_t* et, uint64_t currtime)
 {
-    ztl_rbtree_node_t* node;
+    rbtree_node_t* node;
     node = ztl_evtimer_min(et);
     if (node) {
         if (currtime == 0)
             currtime = et->last_time;
-        return (ztl_msec_int_t)(node->key - et->last_time);
+        return (msec_int_t)(node->key - et->last_time);
     }
     return -1;
 }
@@ -98,7 +98,7 @@ ztl_msec_int_t ztl_evtimer_min_ms(ztl_evtimer_t* et, uint64_t currtime)
 int ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime,
     ztl_evt_handler_pt handler, void* ctx)
 {
-    ztl_rbtree_node_t  *node, *root, *sentinel;
+    rbtree_node_t  *node, *root, *sentinel;
 
     sentinel = et->event_timers.sentinel;
 
@@ -111,16 +111,16 @@ int ztl_evtimer_expire(ztl_evtimer_t* et, uint64_t currtime,
             return ZTL_ERR_Empty;
         }
 
-        node = ztl_rbtree_min(root, sentinel);
+        node = rbtree_min(root, sentinel);
 
         /* node->key > current_time means not reached */
-        if ((ztl_msec_int_t)(node->key - et->last_time) > 0) {
+        if ((msec_int_t)(node->key - et->last_time) > 0) {
             return (int)(node->key - et->last_time);
         }
 
         //fprintf(stderr, "ztl_expire_event_timer {}", node->udata);
 
-        ztl_rbtree_delete(&et->event_timers, node);
+        rbtree_delete(&et->event_timers, node);
 
         if (handler)
             handler(ctx, node);

@@ -58,7 +58,7 @@ dstr dstr_new_len(const char* str, size_t length)
     dstr_head_t* dh;
     size_t nbytes;
 
-    nbytes = ztl_align(sizeof(dstr_head_t) + length + 1, 8);
+    nbytes = ztl_align(sizeof(dstr_head_t) + length + 1, 64);
     dh = str ? ALLOC(nbytes) : CALLOC(1, nbytes);
     if (!dh) {
         return NULL;
@@ -152,7 +152,7 @@ dstr dstr_reserve(dstr ds, size_t length)
         newlen *= 2;
     else
         newlen += DSTR_MAX_PER_ALLOC;
-    nbytes = ztl_align(sizeof(*dh) + newlen, 8);
+    nbytes = ztl_align(sizeof(*dh) + newlen, 64);
 
     if (RESIZE(dh, nbytes) == NULL)
         return NULL;

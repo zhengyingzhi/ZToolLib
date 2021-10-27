@@ -159,7 +159,7 @@ int lfqueue_push(lfqueue_t* que, const void* pdata)
         // if queue is full
         if (TO_INDEX(curWriteIndex + 1, que->size) == curReadIndex)
             return ZTL_ERR_QueueFull;
-    } while (!ztl_atomic_cas(que->wtindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size)));
+    } while (!atomic_cas(que->wtindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size)));
 
     // save the data pointer since the current write index is reserved for us
     dstaddr = que->arrdata + que->eltsize * curWriteIndex;
@@ -169,8 +169,8 @@ int lfqueue_push(lfqueue_t* que, const void* pdata)
     // It wouldn't fail if there is only one producer thread intserting data into the queue.
     // It will failed once more than 1 producer threads because
     // the maxReadIndex_ should be done automic as the previous CAS
-    while (!ztl_atomic_cas(que->maxreadindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size))) {
-        ztl_sched_yield();
+    while (!atomic_cas(que->maxreadindex, curWriteIndex, TO_INDEX(curWriteIndex + 1, que->size))) {
+        sched_yield();
     }
     return 0;
 }
@@ -202,12 +202,12 @@ int lfqueue_pop(lfqueue_t* que, void** ppdata)
         ztlncpy(ppdata, srcaddr, que->eltsize);
 
         // we automic increase the readIndex_ using CAS operation
-        if (ztl_atomic_cas(que->rdindex, curReadIndex, TO_INDEX(curReadIndex + 1, que->size)))
+        if (atomic_cas(que->rdindex, curReadIndex, TO_INDEX(curReadIndex + 1, que->size)))
             return 0;
 
         // here, if failed retrieving the element off the queue
         // someone else is reading the element at curReadIndex before we perform CAS operation
-        ztl_sched_yield();
+        sched_yield();
     } while (true); // keep looping to try again
 
     // to avoid compile warning

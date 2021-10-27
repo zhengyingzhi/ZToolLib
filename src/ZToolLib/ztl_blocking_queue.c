@@ -54,33 +54,33 @@ int ztl_bq_push(ztl_blocking_queue_t* zbq, void* datap)
 {
     if (lfqueue_push(zbq->queue, datap) == 0)
     {
-        if (ztl_atomic_add(&zbq->waitors, 0) > 0) {
+        if (atomic_add(&zbq->waitors, 0) > 0) {
             ztl_simevent_signal(zbq->event);
         }
         return 0;
     }
-    return ZTL_ERR_QueueFull;
+    return -1;
 }
 
-int ztl_bq_pop(ztl_blocking_queue_t* zbq, void* datap, int timeout_ms)
+int ztl_bq_pop(ztl_blocking_queue_t* zbq, void* datap, int timeoutms)
 {
     int rv;
-    if (timeout_ms < 0)
-        timeout_ms = INT_MAX;
+    if (timeoutms < 0)
+        timeoutms = INT_MAX;
 
-    ztl_atomic_add(&zbq->waitors, 1);
+    atomic_add(&zbq->waitors, 1);
 
     do {
         if ((rv = lfqueue_pop(zbq->queue, (void**)datap)) == 0)
             break;
 
-        ztl_simevent_timedwait(zbq->event, timeout_ms);
+        ztl_simevent_timedwait(zbq->event, timeoutms);
         rv = lfqueue_pop(zbq->queue, (void**)datap);
     } while (0);
 
-    ztl_atomic_dec(&zbq->waitors, 1);
+    atomic_dec(&zbq->waitors, 1);
 
-    return rv == 0 ? 0 : ZTL_ERR_Timeout;
+    return rv == 0 ? 1 : -1;
 }
 
 uint32_t ztl_bq_size(ztl_blocking_queue_t* zbq)
@@ -91,4 +91,14 @@ uint32_t ztl_bq_size(ztl_blocking_queue_t* zbq)
 bool ztl_bq_empty(ztl_blocking_queue_t* zbq)
 {
     return lfqueue_size(zbq->queue) == 0 ? true : false;
+}
+
+void ztl_bq_set_udata(ztl_blocking_queue_t* zbq, void* udata)
+{
+    zbq->udata = udata;
+}
+
+void* ztl_bq_get_udata(ztl_blocking_queue_t* zbq)
+{
+    return zbq->udata;
 }

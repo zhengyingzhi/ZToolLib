@@ -13,16 +13,16 @@
 extern "C" {
 #endif
     
-typedef void(*ztl_evt_handler_pt)(void* ctx, ztl_rbtree_node_t* node);
+typedef void(*ztl_evt_handler_pt)(void* ctx, rbtree_node_t* node);
 
 typedef struct ztl_evtimer_s ztl_evtimer_t;
 
 struct ztl_evtimer_s
 {
-    ztl_rbtree_t        event_timers;
-    ztl_rbtree_node_t   event_timer_sentinel;
-    uint64_t            last_time;
-    uint32_t            count;
+    rbtree_t        event_timers;
+    rbtree_node_t   event_timer_sentinel;
+    uint64_t        last_time;
+    uint32_t        count;
 };
 
 /* init the timer container
@@ -35,20 +35,20 @@ void ztl_evtimer_update_time(ztl_evtimer_t* et, uint64_t currtime);
  * @timeout_ms is the timedout millisec from now, not the absolute time
  * @timerset the 'timer' flag whether added already
  */
-int ztl_evtimer_add(ztl_evtimer_t* et, ztl_rbtree_node_t* timer,
+int ztl_evtimer_add(ztl_evtimer_t* et, rbtree_node_t* timer,
     uint32_t timeout_ms, int timerset);
 
 /* delete the timer from container */
-int ztl_evtimer_del(ztl_evtimer_t* et, ztl_rbtree_node_t* timer);
+int ztl_evtimer_del(ztl_evtimer_t* et, rbtree_node_t* timer);
 
 /* get the mininum timer node
  */
-ztl_rbtree_node_t* ztl_evtimer_min(ztl_evtimer_t* et);
+rbtree_node_t* ztl_evtimer_min(ztl_evtimer_t* et);
 
 /* get the mininum timer ms remaining
  * @param: currtime could be passed 0 means et.last_time
  */
-ztl_msec_int_t ztl_evtimer_min_ms(ztl_evtimer_t* et, uint64_t currtime);
+msec_int_t ztl_evtimer_min_ms(ztl_evtimer_t* et, uint64_t currtime);
 
 /* expire timedout timers,
  * @return the nearest time ms left, -1 is none

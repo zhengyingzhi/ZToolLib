@@ -148,7 +148,7 @@ static char* _WaitLogMsg(ztl_log_t* log)
             continue;
         }
 
-        ztl_atomic_dec(&log->itemCount, 1);
+        atomic_dec(&log->itemCount, 1);
         break;
     } while (log->running);
 
@@ -516,11 +516,11 @@ void ztl_log(ztl_log_t* log, ztl_log_level_t level, const char* fmt, ...)
     lpHead          = (ztl_log_header_t*)lpBuff;
     lpHead->type    = ZTL_LOG_TYPE_NONE;
     lpHead->size    = (uint16_t)(lLength - ZTL_LOG_HEAD_OFFSET);
-    lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
+    lpHead->sequence= atomic_add(&log->sequence, 1) + 1;
 
     if (log->is_async) {
         lfqueue_push(log->queue, &lpBuff);
-        if (ztl_atomic_add(&log->itemCount, 1) == 0) {
+        if (atomic_add(&log->itemCount, 1) == 0) {
             ztl_thread_cond_signal(&log->cond);
         }
     }
@@ -571,11 +571,11 @@ void ztl_log2(ztl_log_t* log, ztl_log_level_t level, const char* line, int len)
     lpHead          = (ztl_log_header_t*)lpBuff;
     lpHead->type    = ZTL_LOG_TYPE_NONE;
     lpHead->size    = (uint16_t)(lLength - ZTL_LOG_HEAD_OFFSET);
-    lpHead->sequence= ztl_atomic_add(&log->sequence, 1) + 1;
+    lpHead->sequence= atomic_add(&log->sequence, 1) + 1;
 
     if (log->is_async) {
         lfqueue_push(log->queue, &lpBuff);
-        if (ztl_atomic_add(&log->itemCount, 1) == 0) {
+        if (atomic_add(&log->itemCount, 1) == 0) {
             ztl_thread_cond_signal(&log->cond);
         }
     }

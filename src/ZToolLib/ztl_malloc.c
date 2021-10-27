@@ -82,7 +82,7 @@
     size_t _n = (__n); \
     if (_n&(sizeof(ZTL_PORT_LONG)-1)) _n += sizeof(ZTL_PORT_LONG)-(_n&(sizeof(ZTL_PORT_LONG)-1)); \
     if (_zmalloc_thread_safe) { \
-        ztl_atomic_add(&_used_memory, (_n)); \
+        atomic_add(&_used_memory, (_n)); \
     } else { \
         _used_memory += _n; \
     } \
@@ -92,7 +92,7 @@
     size_t _n = (__n); \
     if (_n&(sizeof(ZTL_PORT_LONG)-1)) _n += sizeof(ZTL_PORT_LONG)-(_n&(sizeof(ZTL_PORT_LONG)-1)); \
     if (_zmalloc_thread_safe) { \
-        ztl_atomic_dec(&_used_memory, (_n)); \
+        atomic_dec(&_used_memory, (_n)); \
     } else { \
         _used_memory -= _n; \
     } \
@@ -224,7 +224,7 @@ size_t ztl_malloc_used_memory(void)
     size_t um;
 
     if (_zmalloc_thread_safe) {
-        um = ztl_atomic_add(&_used_memory, 0);
+        um = atomic_add(&_used_memory, 0);
     }
     else {
         um = _used_memory;

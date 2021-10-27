@@ -19,14 +19,14 @@ typedef struct bufcat_s
 {
     char*   buf;        // data buffer
     size_t  len;        // data length
-    size_t  capicity;   // data space
+    size_t  capacity;   // data space
     int     alloced;
     int     sep_len;
     const char* sep;    // the seperator like '|' if you need
 }bufcat_t;
 
-/* Init sc by buf & capicity */
-void bufcat_init(bufcat_t* bc, char buf[], int capicity, const char* sep);
+/* Init sc by buf & capacity */
+void bufcat_init(bufcat_t* bc, char buf[], int capacity, const char* sep);
 void bufcat_free(bufcat_t* bc);
 
 int  bufcat_append_sep(bufcat_t* bc);

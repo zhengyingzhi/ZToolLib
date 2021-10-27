@@ -13,7 +13,7 @@
 static int trigger_count = 0;
 static int trigger_count2 = 0;
 
-static void _test_evt_handler(void* ctx, ztl_rbtree_node_t* node)
+static void _test_evt_handler(void* ctx, rbtree_node_t* node)
 {
     (void)ctx;
     (void)node;
@@ -40,7 +40,7 @@ void Test_ztl_evtimer(ZuTest* zt)
     currtime = get_timestamp();
     ztl_evtimer_update_time(&evt, currtime);
 
-    ztl_rbtree_node_t timer1;
+    rbtree_node_t timer1;
     ztl_evtimer_add(&evt, &timer1, 200, 0);
 
     ztl_sleepms(201);

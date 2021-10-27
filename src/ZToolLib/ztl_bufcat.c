@@ -15,14 +15,14 @@
 
 static int bufcat_expand_if_needed(bufcat_t* bc, size_t len)
 {
-    if (bc->len + bc->sep_len + len >= bc->capicity)
+    if (bc->len + bc->sep_len + len >= bc->capacity)
     {
         if (!bc->alloced) {
             return -1;
         }
 
-        bc->capicity = bc->capicity * 2 + len;
-        bc->buf = realloc(bc->buf, bc->capicity);
+        bc->capacity = bc->capacity * 2 + len;
+        bc->buf = realloc(bc->buf, bc->capacity);
         if (!bc->buf) {
             return ERR_OOM;
         }
@@ -31,18 +31,18 @@ static int bufcat_expand_if_needed(bufcat_t* bc, size_t len)
 }
 
 
-void bufcat_init(bufcat_t* bc, char buf[], int capicity, const char* sep)
+void bufcat_init(bufcat_t* bc, char buf[], int capacity, const char* sep)
 {
     bc->buf         = buf;
     bc->len         = 0;
-    bc->capicity    = capicity;
+    bc->capacity    = capacity;
     bc->alloced     = buf ? 0 : 1;
     bc->sep         = (sep && *sep) ? sep : NULL;
     bc->sep_len     = bc->sep ? (int)strlen(bc->sep) : 0;
 
     if (!buf)
     {
-        bc->buf = (char*)malloc(capicity);
+        bc->buf = (char*)malloc(capacity);
     }
 }
 

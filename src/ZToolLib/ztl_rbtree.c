@@ -9,26 +9,26 @@
  */
 
 
-static void ztl_rbtree_left_rotate(ztl_rbtree_node_t **root,
-    ztl_rbtree_node_t *sentinel, ztl_rbtree_node_t *node);
-static void ztl_rbtree_right_rotate(ztl_rbtree_node_t **root,
-    ztl_rbtree_node_t *sentinel, ztl_rbtree_node_t *node);
+static void rbtree_left_rotate(rbtree_node_t **root,
+    rbtree_node_t *sentinel, rbtree_node_t *node);
+static void rbtree_right_rotate(rbtree_node_t **root,
+    rbtree_node_t *sentinel, rbtree_node_t *node);
 
 
-void ztl_rbtree_insert(ztl_rbtree_t *tree, ztl_rbtree_node_t *node)
+void rbtree_insert(rbtree_t *tree, rbtree_node_t *node)
 {
-    ztl_rbtree_node_t  **root, *temp, *sentinel;
+    rbtree_node_t  **root, *temp, *sentinel;
 
     /* a binary tree insert */
 
-    root = (ztl_rbtree_node_t **) &tree->root;
+    root = (rbtree_node_t **) &tree->root;
     sentinel = tree->sentinel;
 
     if (*root == sentinel) {
         node->parent = NULL;
         node->left = sentinel;
         node->right = sentinel;
-        ztl_rbt_black(node);
+        rbt_black(node);
         *root = node;
 
         return;
@@ -38,59 +38,59 @@ void ztl_rbtree_insert(ztl_rbtree_t *tree, ztl_rbtree_node_t *node)
 
     /* re-balance tree */
 
-    while (node != *root && ztl_rbt_is_red(node->parent)) {
+    while (node != *root && rbt_is_red(node->parent)) {
 
         if (node->parent == node->parent->parent->left) {
             temp = node->parent->parent->right;
 
-            if (ztl_rbt_is_red(temp)) {
-                ztl_rbt_black(node->parent);
-                ztl_rbt_black(temp);
-                ztl_rbt_red(node->parent->parent);
+            if (rbt_is_red(temp)) {
+                rbt_black(node->parent);
+                rbt_black(temp);
+                rbt_red(node->parent->parent);
                 node = node->parent->parent;
 
             } else {
                 if (node == node->parent->right) {
                     node = node->parent;
-                    ztl_rbtree_left_rotate(root, sentinel, node);
+                    rbtree_left_rotate(root, sentinel, node);
                 }
 
-                ztl_rbt_black(node->parent);
-                ztl_rbt_red(node->parent->parent);
-                ztl_rbtree_right_rotate(root, sentinel, node->parent->parent);
+                rbt_black(node->parent);
+                rbt_red(node->parent->parent);
+                rbtree_right_rotate(root, sentinel, node->parent->parent);
             }
 
         } else {
             temp = node->parent->parent->left;
 
-            if (ztl_rbt_is_red(temp)) {
-                ztl_rbt_black(node->parent);
-                ztl_rbt_black(temp);
-                ztl_rbt_red(node->parent->parent);
+            if (rbt_is_red(temp)) {
+                rbt_black(node->parent);
+                rbt_black(temp);
+                rbt_red(node->parent->parent);
                 node = node->parent->parent;
 
             } else {
                 if (node == node->parent->left) {
                     node = node->parent;
-                    ztl_rbtree_right_rotate(root, sentinel, node);
+                    rbtree_right_rotate(root, sentinel, node);
                 }
 
-                ztl_rbt_black(node->parent);
-                ztl_rbt_red(node->parent->parent);
-                ztl_rbtree_left_rotate(root, sentinel, node->parent->parent);
+                rbt_black(node->parent);
+                rbt_red(node->parent->parent);
+                rbtree_left_rotate(root, sentinel, node->parent->parent);
             }
         }
     }
 
-    ztl_rbt_black(*root);
+    rbt_black(*root);
 }
 
 
-void ztl_rbtree_insert_value(ztl_rbtree_node_t *temp, 
-    ztl_rbtree_node_t *node,
-    ztl_rbtree_node_t *sentinel)
+void rbtree_insert_value(rbtree_node_t *temp, 
+    rbtree_node_t *node,
+    rbtree_node_t *sentinel)
 {
-    ztl_rbtree_node_t  **p;
+    rbtree_node_t  **p;
 
     for ( ;; ) {
 
@@ -107,15 +107,15 @@ void ztl_rbtree_insert_value(ztl_rbtree_node_t *temp,
     node->parent = temp;
     node->left = sentinel;
     node->right = sentinel;
-    ztl_rbt_red(node);
+    rbt_red(node);
 }
 
 
-void ztl_rbtree_insert_timer_value(ztl_rbtree_node_t *temp, 
-    ztl_rbtree_node_t *node,
-    ztl_rbtree_node_t *sentinel)
+void rbtree_insert_timer_value(rbtree_node_t *temp, 
+    rbtree_node_t *node,
+    rbtree_node_t *sentinel)
 {
-    ztl_rbtree_node_t  **p;
+    rbtree_node_t  **p;
 
     for ( ;; ) {
 
@@ -128,7 +128,7 @@ void ztl_rbtree_insert_timer_value(ztl_rbtree_node_t *temp,
 
         /*  node->key < temp->key */
 
-        p = ((ztl_rbtree_key_int_t) (node->key - temp->key) < 0)
+        p = ((rbtree_key_int_t) (node->key - temp->key) < 0)
             ? &temp->left : &temp->right;
 
         if (*p == sentinel) {
@@ -142,19 +142,18 @@ void ztl_rbtree_insert_timer_value(ztl_rbtree_node_t *temp,
     node->parent = temp;
     node->left = sentinel;
     node->right = sentinel;
-    ztl_rbt_red(node);
+    rbt_red(node);
 }
 
 
-void
-ztl_rbtree_delete(ztl_rbtree_t *tree, ztl_rbtree_node_t *node)
+void rbtree_delete(rbtree_t *tree, rbtree_node_t *node)
 {
-    uint32_t            red;
-    ztl_rbtree_node_t  **root, *sentinel, *subst, *temp, *w;
+    uint32_t        red;
+    rbtree_node_t   **root, *sentinel, *subst, *temp, *w;
 
     /* a binary tree delete */
 
-    root = (ztl_rbtree_node_t **) &tree->root;
+    root = (rbtree_node_t **) &tree->root;
     sentinel = tree->sentinel;
 
     if (node->left == sentinel) {
@@ -166,7 +165,7 @@ ztl_rbtree_delete(ztl_rbtree_t *tree, ztl_rbtree_node_t *node)
         subst = node;
 
     } else {
-        subst = ztl_rbtree_min(node->right, sentinel);
+        subst = rbtree_min(node->right, sentinel);
 
         if (subst->left != sentinel) {
             temp = subst->left;
@@ -177,7 +176,7 @@ ztl_rbtree_delete(ztl_rbtree_t *tree, ztl_rbtree_node_t *node)
 
     if (subst == *root) {
         *root = temp;
-        ztl_rbt_black(temp);
+        rbt_black(temp);
 
         /* DEBUG stuff */
         node->left = NULL;
@@ -188,7 +187,7 @@ ztl_rbtree_delete(ztl_rbtree_t *tree, ztl_rbtree_node_t *node)
         return;
     }
 
-    red = ztl_rbt_is_red(subst);
+    red = rbt_is_red(subst);
 
     if (subst == subst->parent->left) {
         subst->parent->left = temp;
@@ -213,7 +212,7 @@ ztl_rbtree_delete(ztl_rbtree_t *tree, ztl_rbtree_node_t *node)
         subst->left = node->left;
         subst->right = node->right;
         subst->parent = node->parent;
-        ztl_rbt_copy_color(subst, node);
+        rbt_copy_color(subst, node);
 
         if (node == *root) {
             *root = subst;
@@ -247,73 +246,73 @@ ztl_rbtree_delete(ztl_rbtree_t *tree, ztl_rbtree_node_t *node)
 
     /* a delete fixup */
 
-    while (temp != *root && ztl_rbt_is_black(temp)) {
+    while (temp != *root && rbt_is_black(temp)) {
 
         if (temp == temp->parent->left) {
             w = temp->parent->right;
 
-            if (ztl_rbt_is_red(w)) {
-                ztl_rbt_black(w);
-                ztl_rbt_red(temp->parent);
-                ztl_rbtree_left_rotate(root, sentinel, temp->parent);
+            if (rbt_is_red(w)) {
+                rbt_black(w);
+                rbt_red(temp->parent);
+                rbtree_left_rotate(root, sentinel, temp->parent);
                 w = temp->parent->right;
             }
 
-            if (ztl_rbt_is_black(w->left) && ztl_rbt_is_black(w->right)) {
-                ztl_rbt_red(w);
+            if (rbt_is_black(w->left) && rbt_is_black(w->right)) {
+                rbt_red(w);
                 temp = temp->parent;
 
             } else {
-                if (ztl_rbt_is_black(w->right)) {
-                    ztl_rbt_black(w->left);
-                    ztl_rbt_red(w);
-                    ztl_rbtree_right_rotate(root, sentinel, w);
+                if (rbt_is_black(w->right)) {
+                    rbt_black(w->left);
+                    rbt_red(w);
+                    rbtree_right_rotate(root, sentinel, w);
                     w = temp->parent->right;
                 }
 
-                ztl_rbt_copy_color(w, temp->parent);
-                ztl_rbt_black(temp->parent);
-                ztl_rbt_black(w->right);
-                ztl_rbtree_left_rotate(root, sentinel, temp->parent);
+                rbt_copy_color(w, temp->parent);
+                rbt_black(temp->parent);
+                rbt_black(w->right);
+                rbtree_left_rotate(root, sentinel, temp->parent);
                 temp = *root;
             }
 
         } else {
             w = temp->parent->left;
 
-            if (ztl_rbt_is_red(w)) {
-                ztl_rbt_black(w);
-                ztl_rbt_red(temp->parent);
-                ztl_rbtree_right_rotate(root, sentinel, temp->parent);
+            if (rbt_is_red(w)) {
+                rbt_black(w);
+                rbt_red(temp->parent);
+                rbtree_right_rotate(root, sentinel, temp->parent);
                 w = temp->parent->left;
             }
 
-            if (ztl_rbt_is_black(w->left) && ztl_rbt_is_black(w->right)) {
-                ztl_rbt_red(w);
+            if (rbt_is_black(w->left) && rbt_is_black(w->right)) {
+                rbt_red(w);
                 temp = temp->parent;
 
             } else {
-                if (ztl_rbt_is_black(w->left)) {
-                    ztl_rbt_black(w->right);
-                    ztl_rbt_red(w);
-                    ztl_rbtree_left_rotate(root, sentinel, w);
+                if (rbt_is_black(w->left)) {
+                    rbt_black(w->right);
+                    rbt_red(w);
+                    rbtree_left_rotate(root, sentinel, w);
                     w = temp->parent->left;
                 }
 
-                ztl_rbt_copy_color(w, temp->parent);
-                ztl_rbt_black(temp->parent);
-                ztl_rbt_black(w->left);
-                ztl_rbtree_right_rotate(root, sentinel, temp->parent);
+                rbt_copy_color(w, temp->parent);
+                rbt_black(temp->parent);
+                rbt_black(w->left);
+                rbtree_right_rotate(root, sentinel, temp->parent);
                 temp = *root;
             }
         }
     }
 
-    ztl_rbt_black(temp);
+    rbt_black(temp);
 }
 
 
-ztl_rbtree_node_t* ztl_rbtree_min(ztl_rbtree_node_t *node, ztl_rbtree_node_t *sentinel)
+rbtree_node_t* rbtree_min(rbtree_node_t *node, rbtree_node_t *sentinel)
 {
     while (node->left != sentinel) {
         node = node->left;
@@ -322,12 +321,12 @@ ztl_rbtree_node_t* ztl_rbtree_min(ztl_rbtree_node_t *node, ztl_rbtree_node_t *se
     return node;
 }
 
-static void ztl_rbtree_left_rotate(
-	ztl_rbtree_node_t **root, 
-	ztl_rbtree_node_t *sentinel,
-    ztl_rbtree_node_t *node)
+static void rbtree_left_rotate(
+    rbtree_node_t **root, 
+    rbtree_node_t *sentinel,
+    rbtree_node_t *node)
 {
-    ztl_rbtree_node_t  *temp;
+    rbtree_node_t  *temp;
 
     temp = node->right;
     node->right = temp->left;
@@ -353,12 +352,12 @@ static void ztl_rbtree_left_rotate(
 }
 
 
-static void ztl_rbtree_right_rotate(
-	ztl_rbtree_node_t **root, 
-	ztl_rbtree_node_t *sentinel,
-    ztl_rbtree_node_t *node)
+static void rbtree_right_rotate(
+    rbtree_node_t **root, 
+    rbtree_node_t *sentinel,
+    rbtree_node_t *node)
 {
-    ztl_rbtree_node_t  *temp;
+    rbtree_node_t  *temp;
 
     temp = node->left;
     node->left = temp->right;

@@ -21,17 +21,17 @@ typedef struct table_st*        table_t;
 typedef struct table_node_st*   table_node_t;
 typedef struct table_iter_st*   table_iter_t;
 
-
 typedef int     (*cmp_pt)(const void* x, const void* y);
 typedef uint64_t(*hash_pt)(const void* key, int size);
 typedef void    (*free_pt)(void* p);
+
 
 /* exported functions */
 table_t       table_new(cmp_pt cmp, hash_pt hash, free_pt kfree, free_pt vfree);
 void          table_free(table_t* tp);
 int           table_size(table_t table);
 int           table_length(table_t table);
-const void*   table_node_key(table_node_t node);
+const void*   table_node_key(table_node_t node, int* pkeysz);
 void*         table_node_value(table_node_t node);
 int           table_node_int(table_node_t node);
 float         table_node_float(table_node_t node);
@@ -64,9 +64,12 @@ void          table_rwlock_rdlock(table_t table);
 void          table_rwlock_wrlock(table_t table);
 void          table_rwlock_unlock(table_t table);
 
-
+/* Default key or value free() func */
 void          table_default_kvfree(void* p);
 
+/* Default cmp & hash func for str or int,
+ * return 0 if equals
+ */
 int           table_default_cmpstr(const void* x, const void* y);
 uint64_t      table_default_hashstr(const void* val, int size);
 int           table_default_cmpint(const void* x, const void* y);

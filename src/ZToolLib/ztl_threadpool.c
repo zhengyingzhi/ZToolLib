@@ -114,7 +114,7 @@ static ztl_task_t* _get_head_task(ztl_thrpool_t* tp)
         if (task == tp->tail)
             tp->tail = NULL;
         tp->head = tp->head->next;
-        ztl_atomic_dec(&tp->taskn, 1);
+        atomic_dec(&tp->taskn, 1);
     }
     return task;
 }
@@ -151,7 +151,7 @@ static void _release_task(ztl_thrpool_t* tp, ztl_task_t* task)
 static ztl_thread_result_t ZTL_THREAD_CALL _thrpool_worker_thread(void* arg)
 {
     ztl_thrpool_t* tp = (ztl_thrpool_t*)arg;
-    ztl_atomic_add(&tp->activenum, 1);
+    atomic_add(&tp->activenum, 1);
 
     ztl_task_t* task = NULL;
     while (!tp->stop)
@@ -166,7 +166,7 @@ static ztl_thread_result_t ZTL_THREAD_CALL _thrpool_worker_thread(void* arg)
         task = NULL;
     }
 
-    ztl_atomic_dec(&tp->activenum, 1);
+    atomic_dec(&tp->activenum, 1);
     return 0;
 }
 
@@ -231,7 +231,7 @@ int ztl_thrpool_start(ztl_thrpool_t* thpool)
     }
 
     //int m = 120;
-    //while (ztl_atomic_add(&tp->activenum, 0) < (uint32_t)n || --m > 0) {
+    //while (atomic_add(&tp->activenum, 0) < (uint32_t)n || --m > 0) {
     //    sleepms(1);
     //}
 
@@ -252,7 +252,7 @@ int ztl_thrpool_dispatch(ztl_thrpool_t* thpool, ztl_dispatch_fn func,
 
     ztl_thread_mutex_lock(&thpool->mutex);
     _append_task(thpool, task, 0);
-    old_taskn = ztl_atomic_add(&thpool->taskn, 1);
+    old_taskn = atomic_add(&thpool->taskn, 1);
     if (old_taskn == 0) {
         ztl_thread_cond_signal(&thpool->workcond);
     }
@@ -274,7 +274,7 @@ int ztl_thrpool_dispatch_priority(ztl_thrpool_t* thpool, ztl_dispatch_fn func,
 
     ztl_thread_mutex_lock(&thpool->mutex);
     _append_task(thpool, task, 1);
-    old_taskn = ztl_atomic_add(&thpool->taskn, 1);
+    old_taskn = atomic_add(&thpool->taskn, 1);
     if (old_taskn == 0) {
         ztl_thread_cond_signal(&thpool->workcond);
     }
@@ -299,7 +299,7 @@ int ztl_thrpool_remove(ztl_thrpool_t* thpool, ztl_dispatch_fn func)
     {
         if (func == nexttask->func)
         {
-            ztl_atomic_dec(&thpool->taskn, 1);
+            atomic_dec(&thpool->taskn, 1);
 
             task->next = nexttask->next;
             if (nexttask == thpool->tail)
@@ -337,7 +337,7 @@ void* ztl_thrpool_get_data(ztl_thrpool_t* thpool)
 
 int ztl_thrpool_pending(ztl_thrpool_t* thpool)
 {
-    return ztl_atomic_add(&thpool->taskn, 0);
+    return atomic_add(&thpool->taskn, 0);
 }
 
 int ztl_thrpool_thrnum(ztl_thrpool_t* thpool)
@@ -352,7 +352,7 @@ int ztl_thrpool_join(ztl_thrpool_t* thpool, uint32_t timeout_ms)
         return -1;
 
     curr_time = get_timestamp();
-    while (ztl_atomic_add(&thpool->activenum, 0) > 0)
+    while (atomic_add(&thpool->activenum, 0) > 0)
     {
         ztl_sleepms(1);
         if (get_timestamp() - curr_time >= timeout_ms) {
@@ -367,7 +367,7 @@ int ztl_thrpool_stop(ztl_thrpool_t* thpool)
     if (thpool == NULL)
         return -1;
 
-    ztl_atomic_set(&thpool->stop, 1);
+    atomic_set(&thpool->stop, 1);
     for (uint32_t n = 0; n < thpool->thrnum; ++n)
     {
         ztl_thrpool_dispatch(thpool, _empty_dispatch_fn, NULL, NULL, NULL, NULL);

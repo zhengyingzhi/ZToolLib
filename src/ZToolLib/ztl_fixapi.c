@@ -11,7 +11,7 @@
 
 struct ztl_fixapi_s
 {
-    ztl_map_t*  fixmap;
+    cmap_t*     fixmap;
     ztl_pool_t* pool;
     uint32_t    head_size;
     uint32_t    length;
@@ -28,21 +28,21 @@ struct ztl_fixapi_s
 #if 0 // not used currently
 static ztl_inline void _ztl_insert_item(ztl_fixapi_t* fixapi, fixkey_t id, int64_t value)
 {
-    ztl_rbtree_node_t* pnode;
-    pnode = (ztl_rbtree_node_t*)ztl_palloc(fixapi->pool, sizeof(ztl_rbtree_node_t));
+    rbtree_node_t* pnode;
+    pnode = (rbtree_node_t*)ztl_palloc(fixapi->pool, sizeof(rbtree_node_t));
     pnode->key = id;
 
     union_dtype_t d;
     d.i64 = value;
     pnode->udata = d.ptr;
-    ztl_map_add_ex(fixapi->fixmap, id, pnode);
+    cmap_add_ex(fixapi->fixmap, id, pnode);
 }
 #endif//0
 
 static ztl_inline int64_t _ztl_find_data(ztl_fixapi_t* fixapi, fixkey_t id)
 {
-    ztl_rbtree_node_t* pnode;
-    pnode = ztl_map_find_ex(fixapi->fixmap, id);
+    rbtree_node_t* pnode;
+    pnode = cmap_find_ex(fixapi->fixmap, id);
     if (pnode) {
         union_dtype_t d;
         d.ptr = pnode->udata;
@@ -56,7 +56,7 @@ ztl_fixapi_t* ztl_fixapi_create(uint32_t head_size)
     ztl_fixapi_t* fixapi;
     fixapi = (ztl_fixapi_t*)malloc(ztl_align(sizeof(ztl_fixapi_t), 8));
 
-    fixapi->fixmap = ztl_map_create(32);
+    fixapi->fixmap = cmap_create(32);
     fixapi->pool = ztl_create_pool(4096);
 
     memset(fixapi->buffer, 0, ZTL_FIX_BUF_SIZE);
@@ -82,7 +82,7 @@ void ztl_fixapi_release(ztl_fixapi_t* fixapi)
 void ztl_fixapi_clear(ztl_fixapi_t* fixapi)
 {
     ztl_reset_pool(fixapi->pool);
-    ztl_map_clear(fixapi->fixmap);
+    cmap_clear(fixapi->fixmap);
     fixapi->length = 0;
 }
 
@@ -115,7 +115,7 @@ void ztl_fixapi_setbuffer(ztl_fixapi_t* fixapi, char* buffer, int size)
 
 bool ztl_fixapi_have(ztl_fixapi_t* fixapi, fixkey_t id)
 {
-    if (ztl_map_find(fixapi->fixmap, id)) {
+    if (cmap_find(fixapi->fixmap, id)) {
         return true;
     }
     return false;

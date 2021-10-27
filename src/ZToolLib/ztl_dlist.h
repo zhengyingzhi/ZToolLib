@@ -10,58 +10,60 @@ extern "C" {
 #endif
 
 /* default reserve queue node number when create dlist */
-#define ZTL_DLIST_REVERSE_NODES     1024
+#define DLIST_REVERSE_NODES         1024
 
 /* dlist iterator start direction */
-#define ZTL_DLSTART_HEAD            0
-#define ZTL_DLSTART_TAIL            1
+#define DLSTART_HEAD                0
+#define DLSTART_TAIL                1
 
 /* dlist type */
-typedef struct ztl_dlist_st ztl_dlist_t;
+typedef struct dlist_st         dlist_t;
+typedef struct dlist_iter_st    dlist_iter_t;
 
-typedef struct  
+struct dlist_iter_st
 {
-    void*   nodelink;
-    int     direction;
-}ztl_dlist_iterator_t;
+    void*       nodelink;
+    void*       data;
+    dlist_t*    dlist;
+    int         direction;
+};
 
 
-ztl_dlist_t* ztl_dlist_create(int reserve_nodes,
+dlist_t* dlist_create(int reserve_nodes,
     int (*cmp)(const void* expect, const void* actual),
     int (*vfree)(void* val));
 
-void ztl_dlist_release(ztl_dlist_t* dl);
+void  dlist_release(dlist_t* dl);
+void* dlist_head(dlist_t* dl);
+void* dlist_tail(dlist_t* dl);
+void  dlist_clear(dlist_t* dl);
+int   dlist_size(dlist_t* dl);
 
-void* ztl_dlist_head(ztl_dlist_t* dl);
-void* ztl_dlist_tail(ztl_dlist_t* dl);
+int   dlist_insert_head(dlist_t* dl, void* data);
+int   dlist_insert_tail(dlist_t* dl, void* data);
+void* dlist_pop(dlist_t* dl);
+void* dlist_pop_back(dlist_t* dl);
+bool  dlist_have(dlist_t* dl, void* expect);
 
-int ztl_dlist_size(ztl_dlist_t* dl);
+/* search the expect value in the dlist, by direction DLSTART_HEAD(0)/TAIL(1) */
+void* dlist_search(dlist_t* dl, void* expect, int DLSTART_direction);
 
-int ztl_dlist_insert_head(ztl_dlist_t* dl, void* data);
-int ztl_dlist_insert_tail(ztl_dlist_t* dl, void* data);
+/* try remove the expect value in the dlist */
+void* dlist_remove(dlist_t* dl, void* expect);
 
-void* ztl_dlist_pop(ztl_dlist_t* dl);
-void* ztl_dlist_pop_back(ztl_dlist_t* dl);
-
-bool ztl_dlist_have(ztl_dlist_t* dl, void* expect);
-
-void* ztl_dlist_search(ztl_dlist_t* dl, void* expect);
-
-void* ztl_dlist_remove(ztl_dlist_t* dl, void* expect);
-
-/* get an iterator of the dlist, direction could be ZTL_DLSTART_HEAD/TAIL */
-ztl_dlist_iterator_t* ztl_dlist_iter_new(ztl_dlist_t* dl, int direction);
-void ztl_dlist_iter_del(ztl_dlist_t* dl, ztl_dlist_iterator_t* iter);
-void* ztl_dlist_next(ztl_dlist_t* dl, ztl_dlist_iterator_t* iter);
+/* get an iterator of the dlist, direction could be DLSTART_HEAD(0)/TAIL(1) */
+dlist_iter_t* dlist_iter_new(dlist_t* dl, int DLSTART_direction);
+void dlist_iter_del(dlist_t* dl, dlist_iter_t* iter);
+void* dlist_next(dlist_t* dl, dlist_iter_t* iter);
 
 /* erase the iter data when traverse dlist */
-bool ztl_dlist_erase(ztl_dlist_t* dl, ztl_dlist_iterator_t* iter);
+bool dlist_erase(dlist_t* dl, dlist_iter_t* iter);
 
-void ztl_dlist_lock(ztl_dlist_t* dl);
-void ztl_dlist_unlock(ztl_dlist_t* dl);
-void ztl_dlist_rwlock_rdlock(ztl_dlist_t* dl);
-void ztl_dlist_rwlock_wrlock(ztl_dlist_t* dl);
-void ztl_dlist_rwlock_unlock(ztl_dlist_t* dl);
+void dlist_lock(dlist_t* dl);
+void dlist_unlock(dlist_t* dl);
+void dlist_rwlock_rdlock(dlist_t* dl);
+void dlist_rwlock_wrlock(dlist_t* dl);
+void dlist_rwlock_unlock(dlist_t* dl);
 
 
 #ifdef __cplusplus

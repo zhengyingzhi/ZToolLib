@@ -64,12 +64,12 @@ int ztl_mb_init(ztl_msg_buffer_t* zmb, uint32_t body_size)
 
 uint32_t ztl_mb_addref(ztl_msg_buffer_t* zmb, int delta)
 {
-    return ztl_atomic_add(&zmb->refcount, delta);
+    return atomic_add(&zmb->refcount, delta);
 }
 
 uint32_t ztl_mb_decref_release(ztl_msg_buffer_t* zmb)
 {
-    uint32_t old = ztl_atomic_dec(&zmb->refcount, 1);
+    uint32_t old = atomic_dec(&zmb->refcount, 1);
     if (1 == old) {
         zmb->cleanup(zmb);
     }

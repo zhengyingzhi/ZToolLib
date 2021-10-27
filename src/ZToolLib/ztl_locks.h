@@ -20,7 +20,7 @@ extern "C" {
  * spin lock based on a volatile shared address
  */
 void ztl_spinlock(volatile uint32_t* lock, uint32_t value, uint32_t spincount);
-#define ztl_trylock(lock,val)   (*(lock) == 0 && ztl_atomic_cas(lock, 0, val))
+#define ztl_trylock(lock,val)   (*(lock) == 0 && atomic_cas(lock, 0, val))
 #define ztl_unlock(lock)        *(lock) = 0
 
 

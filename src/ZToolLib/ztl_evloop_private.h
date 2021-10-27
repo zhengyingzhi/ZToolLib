@@ -25,7 +25,7 @@ typedef struct ztl_fired_event_st {
 }ztl_fired_event_t;
 
 struct ztl_timer_event_st {
-    ztl_rbtree_node_t           node;
+    rbtree_node_t               node;
     struct ztl_timer_event_st*  prev;
     struct ztl_timer_event_st*  next;
     ztl_timer_handler_t         handler;

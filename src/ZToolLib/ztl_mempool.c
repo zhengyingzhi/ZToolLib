@@ -135,7 +135,7 @@ char* ztl_mp_alloc(ztl_mempool_t* mp)
     {
         pnode = mp->freenodes;
         mp->freenodes = pnode->nextbuf;
-        ztl_atomic_dec(&mp->nFreeCount, 1);
+        atomic_dec(&mp->nFreeCount, 1);
     }
     else
     {
@@ -153,7 +153,7 @@ char* ztl_mp_alloc(ztl_mempool_t* mp)
     }
     ztl_unlock(&mp->lock);
 
-    ztl_atomic_add(&mp->ExposedCount, 1);
+    atomic_add(&mp->ExposedCount, 1);
     pnode->nextbuf = NULL;
     return pnode->buf;
 }
@@ -170,8 +170,8 @@ void ztl_mp_free(ztl_mempool_t* mp, void* paddr)
     mp->freenodes = pnode;
     ztl_unlock(&mp->lock);
 
-    ztl_atomic_add(&mp->nFreeCount, 1);
-    ztl_atomic_dec(&mp->ExposedCount, 1);
+    atomic_add(&mp->nFreeCount, 1);
+    atomic_dec(&mp->ExposedCount, 1);
 }
 
 int ztl_mp_entity_size(ztl_mempool_t* mp)

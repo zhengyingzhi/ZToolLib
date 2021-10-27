@@ -5,56 +5,72 @@
 
 void Test_ztl_vector1(ZuTest* zt)
 {
-    ztl_vector_t* lvec;
-    lvec = ztl_vector_create(3, sizeof(uint32_t));
+    cvector_t* lvec;
+    lvec = cvector_create(3, sizeof(uint32_t));
 
     uint32_t    lValue;
 
     // push n value
     lValue = 1;
     lvec->push_int(lvec, lValue);
-    ZuAssertTrue(zt, 1 == lvec->nelts);
+    ZuAssertIntEquals(zt, 1, lvec->nelts);
 
     lValue = 2;
     lvec->push_int(lvec, lValue);
-    ZuAssertTrue(zt, 2 == lvec->nelts);
+    ZuAssertIntEquals(zt, 2, lvec->nelts);
 
     // access elements
     int* pv = (int*)lvec->elts;
     lValue = pv[0];
-    ZuAssertTrue(zt, 1 == lValue);
+    ZuAssertIntEquals(zt, 1, lValue);
     lValue = pv[1];
-    ZuAssertTrue(zt, 2 == lValue);
+    ZuAssertIntEquals(zt, 2, lValue);
 
     lvec->reserve(lvec, 5);
     pv = (int*)lvec->elts;
     lValue = pv[1];
-    ZuAssertTrue(zt, 2 == lValue);
+    ZuAssertIntEquals(zt, 2, lValue);
 
     lvec->clear(lvec);
-    ZuAssertTrue(zt, 0 == lvec->nelts);
+    ZuAssertIntEquals(zt, 0, lvec->nelts);
 
     int count = 10;
     for (int i = 0; i < count; ++i)
     {
         lvec->push_int(lvec, i);
     }
-    ZuAssertTrue(zt, (uint32_t)count == lvec->nelts);
+    ZuAssertIntEquals(zt, (uint32_t)count, lvec->nelts);
+
+    int elems[4] = { 0 };
+    elems[0] = 10;
+    elems[1] = 11;
+    elems[2] = 12;
+    elems[3] = 13;
+    lvec->reserve(lvec, 32);
+    cvector_push_batch(lvec, elems, 4, int);
+    count += 4;
 
     pv = (int*)lvec->elts;
     for (int i = 0; i < count; ++i)
     {
-        ZuAssertTrue(zt, i == pv[i]);
+        ZuAssertIntEquals(zt, i, pv[i]);
     }
 
-    ztl_vector_release(lvec);
+    int tmp;
+    lvec->remove(lvec, 11);
+    tmp = 12;
+    ZuAssertIntEquals(zt, 11, lvec->index(lvec, &tmp));
+    tmp = 6;
+    ZuAssertIntEquals(zt, 6, lvec->index(lvec, &tmp));
+
+    cvector_release(lvec);
 }
 
 
 void Test_ztl_vector2(ZuTest* zt)
 {
-    ztl_vector_t lvec;
-    ztl_vector_init(&lvec, 3, sizeof(uint32_t));
+    cvector_t lvec;
+    cvector_init(&lvec, 3, sizeof(uint32_t));
 
     uint32_t    lValue;
 
@@ -96,7 +112,7 @@ void Test_ztl_vector2(ZuTest* zt)
         ZuAssertTrue(zt, i == pv[i]);
     }
 
-    ztl_vector_release(&lvec);
+    cvector_release(&lvec);
 }
 
 typedef struct {
@@ -106,8 +122,8 @@ typedef struct {
 
 void Test_ztl_vector3(ZuTest* zt)
 {
-    ztl_vector_t lvec;
-    ztl_vector_init(&lvec, 3, sizeof(vec_elem_t));
+    cvector_t lvec;
+    cvector_init(&lvec, 3, sizeof(vec_elem_t));
 
     vec_elem_t lValue = { 0 };
 
@@ -153,14 +169,14 @@ void Test_ztl_vector3(ZuTest* zt)
         ZuAssertTrue(zt, i == pv[i].iv);
     }
 
-    ztl_vector_release(&lvec);
+    cvector_release(&lvec);
 }
 
 //test of ztl_push_ptr
 void Test_ztl_vector4(ZuTest* zt)
 {
-    ztl_vector_t lvec;
-    ztl_vector_init(&lvec, 3, sizeof(void*));
+    cvector_t lvec;
+    cvector_init(&lvec, 3, sizeof(void*));
 
     int*    lValue;
     int     arr[] = { 1,2,3 };
@@ -207,14 +223,14 @@ void Test_ztl_vector4(ZuTest* zt)
         ZuAssertIntEquals(zt, num++, *lValue);
     }
 
-    ztl_vector_release(&lvec);
+    cvector_release(&lvec);
 }
 
 //test of ztl_push_int64
 void Test_ztl_vector5(ZuTest* zt)
 {
-    ztl_vector_t* lvec;
-    lvec = ztl_vector_create(3, sizeof(uint64_t));
+    cvector_t* lvec;
+    lvec = cvector_create(3, sizeof(uint64_t));
 
     uint64_t    lValue;
 
@@ -256,13 +272,13 @@ void Test_ztl_vector5(ZuTest* zt)
         ZuAssertTrue(zt, (int64_t)i == pv[i]);
     }
 
-    ztl_vector_release(lvec);
+    cvector_release(lvec);
 }
 
 void Test_ztl_vector6(ZuTest* zt)
 {
-    ztl_vector_t* lvec;
-    lvec = ztl_vector_create(3, sizeof(int));
+    cvector_t* lvec;
+    lvec = cvector_create(3, sizeof(int));
 
     int    lValue;
 
@@ -303,5 +319,5 @@ void Test_ztl_vector6(ZuTest* zt)
         ZuAssertTrue(zt, i == pv[i]);
     }
 
-    ztl_vector_release(lvec);
+    cvector_release(lvec);
 }

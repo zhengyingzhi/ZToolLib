@@ -7,19 +7,22 @@
 
 
 
-void ztl_vector_clear(ztl_vector_t* vec);
-int  ztl_vector_reserve(ztl_vector_t* vec, uint32_t reserve_num);
+void cvector_clear(cvector_t* vec);
+int  cvector_reserve(cvector_t* vec, uint32_t reserve_num);
 
-void ztl_push_char(ztl_vector_t* vec, int8_t val);
-void ztl_push_short(ztl_vector_t* vec, int16_t val);
-void ztl_push_int(ztl_vector_t* vec, int32_t val);
-void ztl_push_int64(ztl_vector_t* vec, int64_t val);
-void ztl_push_float(ztl_vector_t* vec, float val);
-void ztl_push_double(ztl_vector_t* vec, double val);
-void ztl_push_ptr(ztl_vector_t* vec, void* ptr);
-void ztl_push_x(ztl_vector_t* vec, void* elem);
+int  cvector_index(cvector_t* vec, void* pelem);
+int  cvector_remove(cvector_t* vec, int index);
 
-static int _ztl_vector_init(ztl_vector_t* array, uint32_t init_num, size_t eltsize)
+void cvector_push_char(cvector_t* vec, int8_t val);
+void cvector_push_short(cvector_t* vec, int16_t val);
+void cvector_push_int(cvector_t* vec, int32_t val);
+void cvector_push_int64(cvector_t* vec, int64_t val);
+void cvector_push_float(cvector_t* vec, float val);
+void cvector_push_double(cvector_t* vec, double val);
+void cvector_push_ptr(cvector_t* vec, void* ptr);
+void cvector_push_x(cvector_t* vec, void* elem);
+
+static int _cvector_init(cvector_t* vec, uint32_t init_num, size_t eltsize)
 {
     /*
     * set "array->nelts" before "array->elts", otherwise MSVC thinks
@@ -27,60 +30,70 @@ static int _ztl_vector_init(ztl_vector_t* array, uint32_t init_num, size_t eltsi
     */
 
     init_num        = ztl_align(init_num, 4);
-    array->elts     = (char*)malloc(init_num * eltsize);
-    array->nelts    = 0;
-    array->nalloc = init_num;
-    array->eltsize  = (uint32_t)eltsize;
+    vec->elts       = (char*)malloc(ztl_align(init_num * eltsize, 64));
+    vec->nelts      = 0;
+    vec->nalloc     = init_num;
+    vec->eltsize    = (uint32_t)eltsize;
+    vec->flag       = 0;
 
-    array->reserve      = ztl_vector_reserve;
-    array->clear        = ztl_vector_clear;
-    array->push_char    = ztl_push_char;
-    array->push_short   = ztl_push_short;
-    array->push_int     = ztl_push_int;
-    array->push_int64   = ztl_push_int64;
-    array->push_float   = ztl_push_float;
-    array->push_double  = ztl_push_double;
-    array->push_ptr     = ztl_push_ptr;
-    array->push_x       = ztl_push_x;
+    vec->reserve    = cvector_reserve;
+    vec->clear      = cvector_clear;
+    vec->index      = cvector_index;
+    vec->remove     = cvector_remove;
+    vec->push_char  = cvector_push_char;
+    vec->push_short = cvector_push_short;
+    vec->push_int   = cvector_push_int;
+    vec->push_int64 = cvector_push_int64;
+    vec->push_float = cvector_push_float;
+    vec->push_double= cvector_push_double;
+    vec->push_ptr   = cvector_push_ptr;
+    vec->push_x     = cvector_push_x;
     return 0;
 }
 
 
-int ztl_vector_init(ztl_vector_t* array, uint32_t init_num, size_t eltsize)
+int cvector_init(cvector_t* vec, uint32_t init_num, size_t eltsize)
 {
-    return _ztl_vector_init(array, init_num, eltsize);
+    return _cvector_init(vec, init_num, eltsize);
 }
 
-ztl_vector_t* ztl_vector_create(uint32_t init_num, size_t eltsize)
+cvector_t* cvector_create(uint32_t init_num, size_t eltsize)
 {
-    ztl_vector_t* array;
+    cvector_t* vec;
 
-    array = (ztl_vector_t*)calloc(1, sizeof(ztl_vector_t));
-    if (array == NULL) {
+    vec = (cvector_t*)calloc(1, sizeof(cvector_t));
+    if (vec == NULL) {
         return NULL;
     }
 
-    if (_ztl_vector_init(array, init_num, eltsize) != 0) {
-        free(array);
+    if (_cvector_init(vec, init_num, eltsize) != 0)
+    {
+        free(vec);
         return NULL;
     }
+    vec->flag = 1;
 
-    return array;
+    return vec;
 }
 
-void ztl_vector_release(ztl_vector_t* vec)
+void cvector_release(cvector_t* vec)
 {
-    if (vec->elts) {
+    if (!vec) {
+        return;
+    }
+
+    if (vec->elts)
+    {
         free(vec->elts);
+        vec->elts = NULL;
     }
-}
-
-void ztl_vector_clear(ztl_vector_t* vec)
-{
     vec->nelts = 0;
+
+    if (vec->flag)
+        free(vec);
 }
 
-int ztl_vector_reserve(ztl_vector_t* vec, uint32_t reserve_num)
+int cvector_reserve(cvector_t* vec, uint32_t reserve_num)
 {
     void* enew;
     reserve_num = ztl_align(reserve_num, 4);
@@ -102,59 +115,94 @@ int ztl_vector_reserve(ztl_vector_t* vec, uint32_t reserve_num)
     return 0;
 }
 
-
-void ztl_push_char(ztl_vector_t* vec, int8_t val)
+void cvector_clear(cvector_t* vec)
 {
-    ZTL_VEC_CHECK_RESERVE(vec);
+    vec->nelts = 0;
+}
+
+int cvector_index(cvector_t* vec, void* pelem)
+{
+    int index = 0;
+    char* pcur = vec->elts;
+    while (index < (int)vec->nelts)
+    {
+        if (memcmp(pcur, pelem, vec->eltsize) == 0) {
+            return index;
+        }
+        pcur += vec->eltsize;
+        ++index;
+    }
+    return -1;
+}
+
+int cvector_remove(cvector_t* vec, int idx)
+{
+    if(idx < 0 || idx >= (int)vec->nelts) {
+        return -1;
+    }
+
+    vec->nelts -= 1;
+    if (idx < (int)vec->nelts - 1)
+    {
+        memmove(vec->elts + vec->eltsize * idx, vec->elts + vec->eltsize * (idx + 1),
+            vec->nelts * vec->eltsize);
+    }
+    return 0;
+}
+
+
+void cvector_push_char(cvector_t* vec, int8_t val)
+{
+    CVEC_CHECK_RESERVE(vec);
     int8_t* pv = (int8_t*)vec->elts;
     pv[vec->nelts++] = val;
 }
 
-void ztl_push_short(ztl_vector_t* vec, int16_t val)
+void cvector_push_short(cvector_t* vec, int16_t val)
 {
-    ZTL_VEC_CHECK_RESERVE(vec);
+    CVEC_CHECK_RESERVE(vec);
     int16_t* pv = (int16_t*)vec->elts;
     pv[vec->nelts++] = val;
 }
 
-void ztl_push_int(ztl_vector_t* vec, int32_t val)
+void cvector_push_int(cvector_t* vec, int32_t val)
 {
-    ZTL_VEC_CHECK_RESERVE(vec);
+    CVEC_CHECK_RESERVE(vec);
     int32_t* pv = (int32_t*)vec->elts;
     pv[vec->nelts++] = val;
 }
 
-void ztl_push_int64(ztl_vector_t* vec, int64_t val)
+void cvector_push_int64(cvector_t* vec, int64_t val)
 {
-    ZTL_VEC_CHECK_RESERVE(vec);
+    CVEC_CHECK_RESERVE(vec);
     int64_t* pv = (int64_t*)vec->elts;
     pv[vec->nelts++] = val;
 }
 
-void ztl_push_float(ztl_vector_t* vec, float val)
+void cvector_push_float(cvector_t* vec, float val)
 {
-    ZTL_VEC_CHECK_RESERVE(vec);
+    CVEC_CHECK_RESERVE(vec);
     float* pv = (float*)vec->elts;
     pv[vec->nelts++] = val;
 }
 
-void ztl_push_double(ztl_vector_t* vec, double val)
+void cvector_push_double(cvector_t* vec, double val)
 {
-    ZTL_VEC_CHECK_RESERVE(vec);
+    CVEC_CHECK_RESERVE(vec);
     double* pv = (double*)vec->elts;
     pv[vec->nelts++] = val;
 }
 
-void ztl_push_ptr(ztl_vector_t* vec, void* val)
+void cvector_push_ptr(cvector_t* vec, void* val)
 {
-    ZTL_VEC_CHECK_RESERVE(vec);
+    CVEC_CHECK_RESERVE(vec);
     void** pv = (void**)vec->elts;
     pv[vec->nelts++] = val;
 }
 
-void ztl_push_x(ztl_vector_t* vec, void* elem)
+void cvector_push_x(cvector_t* vec, void* elem)
 {
-    ZTL_VEC_CHECK_RESERVE(vec);
+    CVEC_CHECK_RESERVE(vec);
 
     char* lpaddr;
     lpaddr = (char*)vec->elts + vec->nelts * vec->eltsize;
