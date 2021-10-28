@@ -82,21 +82,23 @@ dlist_t* dlist_create(int reserve_nodes,
     int(*cmp)(const void* expect, const void* actual),
     int(*vfree)(void* val))
 {
-    ztl_pool_t*     pool;
+    size_t      nbytes;
+    ztl_pool_t* pool;
     dlist_t*    dl;
     ztl_thread_mutexattr_t mattr;
 
-    pool = ztl_create_pool(ZTL_DEFAULT_POOL_SIZE);
+    if (reserve_nodes <= 0) {
+        reserve_nodes = DLIST_REVERSE_NODES;
+    }
+
+    nbytes = ztl_min(sizeof(dlist_t) + reserve_nodes * sizeof(dlnode_t), 4096);
+    pool = ztl_create_pool(ztl_align(nbytes, 64));
     if (!pool) {
         return NULL;
     }
 
     dl = (dlist_t*)ztl_pcalloc(pool, sizeof(dlist_t));
     dl->pool = pool;
-
-    if (reserve_nodes <= 0) {
-        reserve_nodes = DLIST_REVERSE_NODES;
-    }
 
     ztl_queue_init(&dl->que);
     ztl_queue_init(&dl->idles);

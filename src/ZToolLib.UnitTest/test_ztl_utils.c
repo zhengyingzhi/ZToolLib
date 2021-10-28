@@ -193,10 +193,10 @@ void Test_ztl_ztlncpy(ZuTest* zt)
     int16_t res16 = -1, i16 = 16;
     int32_t res32 = -1, i32 = 32;
     int64_t res64 = -1, i64 = 64;
-    ztlncpy(&res8, &i8, sizeof(int8_t));
-    ztlncpy(&res16, &i16, sizeof(int16_t));
-    ztlncpy(&res32, &i32, sizeof(int32_t));
-    ztlncpy(&res64, &i64, sizeof(int64_t));
+    fastncpy(&res8, &i8, sizeof(int8_t));
+    fastncpy(&res16, &i16, sizeof(int16_t));
+    fastncpy(&res32, &i32, sizeof(int32_t));
+    fastncpy(&res64, &i64, sizeof(int64_t));
 
     ZuAssertIntEquals(zt, i8, res8);
     ZuAssertIntEquals(zt, i16, res16);
@@ -215,7 +215,7 @@ void Test_ztl_ztlncpy(ZuTest* zt)
     struct st_data_6 srcdata_6 = { 0 };
     srcdata_6.i32 = 32;
     srcdata_6.i16 = 16;
-    ztlncpy(&resdata_6, &srcdata_6, sizeof(struct st_data_6));
+    fastncpy(&resdata_6, &srcdata_6, sizeof(struct st_data_6));
     ZuAssertIntEquals(zt, 32, resdata_6.i32);
     ZuAssertIntEquals(zt, 16, resdata_6.i16);
 
@@ -231,7 +231,7 @@ void Test_ztl_ztlncpy(ZuTest* zt)
     srcdata_12.i32_1 = 321;
     srcdata_12.i32_2 = 322;
     srcdata_12.i32_3 = 323;
-    ztlncpy(&resdata_12, &srcdata_12, sizeof(struct st_data_12));
+    fastncpy(&resdata_12, &srcdata_12, sizeof(struct st_data_12));
     ZuAssertIntEquals(zt, 321, resdata_12.i32_1);
     ZuAssertIntEquals(zt, 322, resdata_12.i32_2);
     ZuAssertIntEquals(zt, 323, resdata_12.i32_3);
@@ -246,7 +246,7 @@ void Test_ztl_ztlncpy(ZuTest* zt)
     struct st_data_16 srcdata_16 = { 0 };
     srcdata_16.i64_1 = 641;
     srcdata_16.i64_2 = 642;
-    ztlncpy(&resdata_16, &srcdata_16, sizeof(struct st_data_16));
+    fastncpy(&resdata_16, &srcdata_16, sizeof(struct st_data_16));
     ZuAssertInt64Equals(zt, 641, resdata_16.i64_1);
     ZuAssertInt64Equals(zt, 642, resdata_16.i64_2);
 
@@ -264,7 +264,7 @@ void Test_ztl_ztlncpy(ZuTest* zt)
     srcdata_20.i64_1 = 641;
     srcdata_20.i64_2 = 642;
     srcdata_20.i32   = 32;
-    ztlncpy(&resdata_20, &srcdata_20, sizeof(struct st_data_20));
+    fastncpy(&resdata_20, &srcdata_20, sizeof(struct st_data_20));
     ZuAssertInt64Equals(zt, 641, resdata_20.i64_1);
     ZuAssertInt64Equals(zt, 642, resdata_20.i64_2);
     ZuAssertIntEquals(zt, 32, resdata_20.i32);
@@ -281,7 +281,7 @@ void Test_ztl_ztlncpy(ZuTest* zt)
     srcdata_24.i64_1 = 641;
     srcdata_24.i64_2 = 642;
     srcdata_24.i64_3 = 643;
-    ztlncpy(&resdata_24, &srcdata_24, sizeof(struct st_data_24));
+    fastncpy(&resdata_24, &srcdata_24, sizeof(struct st_data_24));
     ZuAssertInt64Equals(zt, 641, resdata_24.i64_1);
     ZuAssertInt64Equals(zt, 642, resdata_24.i64_2);
     ZuAssertInt64Equals(zt, 643, resdata_24.i64_3);
@@ -289,7 +289,7 @@ void Test_ztl_ztlncpy(ZuTest* zt)
     // multi bytes
     char lpsrc[64] = "hello world, i love this game";
     char lpdst[64] = "";
-    ztlncpy(lpdst, lpsrc, (int)strlen(lpsrc));
+    fastncpy(lpdst, lpsrc, (int)strlen(lpsrc));
     ZuAssertStrEquals(zt, lpsrc, lpdst);
 }
 

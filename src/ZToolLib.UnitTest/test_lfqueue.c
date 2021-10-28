@@ -29,7 +29,7 @@ void Test_lfqueu_int(ZuTest* zt)
     i1 = 1;
     lfqueue_push(que32, &i1);
     ZuAssertIntEquals(zt, 1, lfqueue_size(que32));
-    lfqueue_pop(que32, (void**)&o1);
+    lfqueue_pop(que32, &o1);
     ZuAssertIntEquals(zt, 1, o1);
 
     // again
@@ -40,8 +40,8 @@ void Test_lfqueu_int(ZuTest* zt)
     lfqueue_push(que32, &i2);
     ZuAssertIntEquals(zt, 2, lfqueue_size(que32));
 
-    lfqueue_pop(que32, (void**)&o1);
-    lfqueue_pop(que32, (void**)&o2);
+    lfqueue_pop(que32, &o1);
+    lfqueue_pop(que32, &o2);
     ZuAssertIntEquals(zt, 2, o1);
     ZuAssertIntEquals(zt, 3, o2);
 
@@ -62,7 +62,7 @@ void Test_lfqueu_int64(ZuTest* zt)
     i1 = 1;
     lfqueue_push(que64, &i1);
     ZuAssertIntEquals(zt, 1, lfqueue_size(que64));
-    lfqueue_pop(que64, (void**)&o1);
+    lfqueue_pop(que64, &o1);
     ZuAssertIntEquals(zt, 1, (int)o1);
 
     // again
@@ -73,8 +73,8 @@ void Test_lfqueu_int64(ZuTest* zt)
     lfqueue_push(que64, &i2);
     ZuAssertIntEquals(zt, 2, lfqueue_size(que64));
 
-    lfqueue_pop(que64, (void**)&o1);
-    lfqueue_pop(que64, (void**)&o2);
+    lfqueue_pop(que64, &o1);
+    lfqueue_pop(que64, &o2);
     ZuAssertIntEquals(zt, 2, (int)o1);
     ZuAssertIntEquals(zt, 3, (int)o2);
 
@@ -85,16 +85,16 @@ void Test_lfqueue_ptr(ZuTest* zt)
 {
 #define TEST_QUEUE_SIZE_B 4
     lfqueue_t*  que;
-    void*       addr;
+    void*       mem;
     int64_t     memsize;
     int32_t     eltsize = sizeof(void*);
     char*       lpout;
 
     memsize = lfqueue_memory_size(TEST_QUEUE_SIZE_B, eltsize);
-    addr = calloc(1, (size_t)memsize);
+    mem = calloc(1, (size_t)memsize);
 
     // create a queue by using our memory
-    que = lfqueue_create2(TEST_QUEUE_SIZE_B, eltsize, addr, memsize);
+    que = lfqueue_create_at_mem(TEST_QUEUE_SIZE_B, eltsize, mem);
 
     ZuAssertTrue(zt, lfqueue_empty(que));
 
@@ -106,24 +106,24 @@ void Test_lfqueue_ptr(ZuTest* zt)
     ZuAssertIntEquals(zt, 0, lfqueue_push(que, &lp1));
     ZuAssertIntEquals(zt, 1, lfqueue_size(que));
 
-    ZuAssertTrue(zt, 0 == lfqueue_pop(que, (void**)&lpout));
+    ZuAssertTrue(zt, 0 == lfqueue_pop(que, (void*)&lpout));
     ZuAssertPtrEquals(zt, lp1, lpout);
 
     ZuAssertIntEquals(zt, 0, lfqueue_push(que, &lp2));
     ZuAssertIntEquals(zt, 0, lfqueue_push(que, &lp3));
     ZuAssertIntEquals(zt, 2, lfqueue_size(que));
 
-    ZuAssertIntEquals(zt, 0, lfqueue_pop(que, (void**)&lpout));
+    ZuAssertIntEquals(zt, 0, lfqueue_pop(que, (void*)&lpout));
     ZuAssertPtrEquals(zt, lp2, lpout);
 
-    ZuAssertIntEquals(zt, 0, lfqueue_pop(que, (void**)&lpout));
+    ZuAssertIntEquals(zt, 0, lfqueue_pop(que, (void*)&lpout));
     ZuAssertPtrEquals(zt, lp3, lpout);
 
-    ZuAssertTrue(zt, 0 != lfqueue_pop(que, (void**)&lpout));
+    ZuAssertTrue(zt, 0 != lfqueue_pop(que, (void*)&lpout));
 
     lfqueue_release(que);
 
-    free(addr);
+    free(mem);
 }
 
 void Test_lfqueue_mem0(ZuTest* zt)
@@ -136,16 +136,16 @@ void Test_lfqueue_mem0(ZuTest* zt)
     }test_lfpush_data_t;
 
     lfqueue_t*  que;
-    void*       addr;
+    void*       mem;
     int64_t     memsize;
     int32_t     eltsize = sizeof(void*);
     test_lfpush_data_t *lpdata, *lpdata2;
 
     memsize = lfqueue_memory_size(TEST_QUEUE_SIZE_C, eltsize);
-    addr = calloc(1, (size_t)memsize);
+    mem = calloc(1, (size_t)memsize);
 
     // create a queue by using our memory
-    que = lfqueue_create2(TEST_QUEUE_SIZE_C, eltsize, addr, memsize);
+    que = lfqueue_create_at_mem(TEST_QUEUE_SIZE_C, eltsize, mem);
 
     ZuAssertTrue(zt, lfqueue_empty(que));
 
@@ -172,7 +172,7 @@ void Test_lfqueue_mem0(ZuTest* zt)
         free(lpdata);
     }
 
-    ZuAssertTrue(zt, 0 != lfqueue_pop(que, (void**)&lpdata));
+    ZuAssertTrue(zt, 0 != lfqueue_pop(que, (void*)&lpdata));
     ZuAssertTrue(zt, lfqueue_empty(que));
 
     // push & pop again
@@ -182,13 +182,13 @@ void Test_lfqueue_mem0(ZuTest* zt)
     ZuAssertIntEquals(zt, 0, lfqueue_push(que, &lpdata));
     ZuAssertIntEquals(zt, 1, lfqueue_size(que));
 
-    lfqueue_pop(que, (void**)&lpdata2);
+    lfqueue_pop(que, (void*)&lpdata2);
     ZuAssertPtrEquals(zt, lpdata, lpdata2);
     free(lpdata2);
 
     lfqueue_release(que);
 
-    free(addr);
+    free(mem);
 }
 
 void Test_lfqueue_mem1(ZuTest* zt)
@@ -222,14 +222,14 @@ void Test_lfqueue_mem1(ZuTest* zt)
 
     for (int i = 1; i <= 3; ++i)
     {
-        ZuAssertIntEquals(zt, 0, lfqueue_pop(que, (void**)&ldata));
+        ZuAssertIntEquals(zt, 0, lfqueue_pop(que, &ldata));
         lfque_union_type_t d;
         d.iv = i;
         ZuAssertPtrEquals(zt, d.ptr, ldata.pdata);
         ZuAssertIntEquals(zt, i * 10, (int)ldata.idata);
     }
 
-    ZuAssertTrue(zt, 0 != lfqueue_pop(que, (void**)&ldata2));
+    ZuAssertTrue(zt, 0 != lfqueue_pop(que, &ldata2));
     ZuAssertTrue(zt, lfqueue_empty(que));
 
     // push & pop again
@@ -238,7 +238,7 @@ void Test_lfqueue_mem1(ZuTest* zt)
     ZuAssertIntEquals(zt, 0, lfqueue_push(que, &ldata));
     ZuAssertIntEquals(zt, 1, lfqueue_size(que));
 
-    lfqueue_pop(que, (void**)&ldata2);
+    lfqueue_pop(que, &ldata2);
     ZuAssertPtrEquals(zt, ldata.pdata, ldata2.pdata);
     ZuAssertIntEquals(zt, (int)ldata.idata, (int)ldata2.idata);
 

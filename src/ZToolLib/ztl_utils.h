@@ -167,40 +167,73 @@ union zudi {
 
 /* a fixed size fast memory copy, carefully use!
  */
-#define _UNIT_COPY(type,dst,src)    *((type*)(dst)) = *((type*)(src))
-#define ztlncpy(dst,src,size)                                           \
+#define fastncpy(dst,src,size)                                          \
     {                                                                   \
+        uint8_t* _dstp = (uint8_t*)(dst);                               \
+        uint8_t* _srcp = (uint8_t*)(src);                               \
         switch (size) {                                                 \
-        case 1: _UNIT_COPY(uint8_t,  dst, src);     break;              \
-        case 2: _UNIT_COPY(uint16_t, dst, src);     break;              \
-        case 4: _UNIT_COPY(uint32_t, dst, src);     break;              \
-        case 8: _UNIT_COPY(uint64_t, dst, src);     break;              \
+        case 1: *((uint8_t*)_dstp)  = *((uint8_t*)_srcp);   break;      \
+        case 2: *((uint16_t*)_dstp) = *((uint16_t*)_srcp);  break;      \
+        case 4: *((uint32_t*)_dstp) = *((uint32_t*)_srcp);  break;      \
+        case 8: *((uint64_t*)_dstp) = *((uint64_t*)_srcp);  break;      \
         case 6: {                                                       \
-            _UNIT_COPY(uint32_t, dst, src);                             \
-            _UNIT_COPY(uint16_t, ((char*)dst+4), ((char*)src+4)); }     \
-            break;                                                      \
+            *((uint32_t*)_dstp) = *((uint32_t*)_srcp);                  \
+            *((uint16_t*)(_dstp + 4)) = *((uint16_t*)(_srcp + 4));      \
+            break; }                                                    \
         case 12: {                                                      \
-            _UNIT_COPY(uint64_t, dst, src);                             \
-            _UNIT_COPY(uint32_t, ((char*)dst+8), ((char*)src+8)); }     \
-            break;                                                      \
+            *((uint64_t*)_dstp) = *((uint64_t*)_srcp);                  \
+            *((uint32_t*)(_dstp + 8)) = *((uint32_t*)(_srcp + 8));      \
+            break; }                                                    \
         case 16: {                                                      \
-            _UNIT_COPY(uint64_t, dst, src);                             \
-            _UNIT_COPY(uint64_t, ((char*)dst+8), ((char*)src+8)); }     \
-            break;                                                      \
+            *((uint64_t*)_dstp) = *((uint64_t*)_srcp);                  \
+            *((uint64_t*)(_dstp + 8)) = *((uint64_t*)(_srcp + 8));      \
+            break; }                                                    \
         case 20: {                                                      \
-            _UNIT_COPY(uint64_t, dst, src);                             \
-            _UNIT_COPY(uint64_t, ((char*)dst+8), ((char*)src+8));       \
-            _UNIT_COPY(uint32_t, ((char*)dst+16), ((char*)src+16));}    \
-            break;                                                      \
+            *((uint64_t*)_dstp) = *((uint64_t*)_srcp);                  \
+            *((uint64_t*)(_dstp + 8)) = *((uint64_t*)(_srcp + 8));      \
+            *((uint32_t*)(_dstp + 16)) = *((uint32_t*)(_srcp + 16));    \
+            break; }                                                    \
         case 24: {                                                      \
-            _UNIT_COPY(uint64_t, dst, src);                             \
-            _UNIT_COPY(uint64_t, ((char*)dst+8), ((char*)src+8));       \
-            _UNIT_COPY(uint64_t, ((char*)dst+16), ((char*)src+16));}    \
-            break;                                                      \
+            *((uint64_t*)_dstp) = *((uint64_t*)_srcp);                  \
+            *((uint64_t*)(_dstp + 8)) = *((uint64_t*)(_srcp + 8));      \
+            *((uint64_t*)(_dstp + 16)) = *((uint64_t*)(_srcp + 16));    \
+            break; }                                                    \
+        case 32: {                                                      \
+            *((uint64_t*)_dstp) = *((uint64_t*)_srcp);                  \
+            *((uint64_t*)(_dstp + 8)) = *((uint64_t*)(_srcp + 8));      \
+            *((uint64_t*)(_dstp + 16)) = *((uint64_t*)(_srcp + 16));    \
+            *((uint64_t*)(_dstp + 24)) = *((uint64_t*)(_srcp + 24));    \
+            break; }                                                    \
+        case 40: {                                                      \
+            *((uint64_t*)_dstp) = *((uint64_t*)_srcp);                  \
+            *((uint64_t*)(_dstp + 8)) = *((uint64_t*)(_srcp + 8));      \
+            *((uint64_t*)(_dstp + 16)) = *((uint64_t*)(_srcp + 16));    \
+            *((uint64_t*)(_dstp + 24)) = *((uint64_t*)(_srcp + 24));    \
+            *((uint64_t*)(_dstp + 32)) = *((uint64_t*)(_srcp + 32));    \
+            break; }                                                    \
+        case 48: {                                                      \
+            *((uint64_t*)_dstp) = *((uint64_t*)_srcp);                  \
+            *((uint64_t*)(_dstp + 8)) = *((uint64_t*)(_srcp + 8));      \
+            *((uint64_t*)(_dstp + 16)) = *((uint64_t*)(_srcp + 16));    \
+            *((uint64_t*)(_dstp + 24)) = *((uint64_t*)(_srcp + 24));    \
+            *((uint64_t*)(_dstp + 32)) = *((uint64_t*)(_srcp + 32));    \
+            *((uint64_t*)(_dstp + 40)) = *((uint64_t*)(_srcp + 40));    \
+            break; }                                                    \
+        case 64: {                                                      \
+            *((uint64_t*)_dstp) = *((uint64_t*)_srcp);                  \
+            *((uint64_t*)(_dstp + 8)) = *((uint64_t*)(_srcp + 8));      \
+            *((uint64_t*)(_dstp + 16)) = *((uint64_t*)(_srcp + 16));    \
+            *((uint64_t*)(_dstp + 24)) = *((uint64_t*)(_srcp + 24));    \
+            *((uint64_t*)(_dstp + 32)) = *((uint64_t*)(_srcp + 32));    \
+            *((uint64_t*)(_dstp + 40)) = *((uint64_t*)(_srcp + 40));    \
+            *((uint64_t*)(_dstp + 48)) = *((uint64_t*)(_srcp + 48));    \
+            *((uint64_t*)(_dstp + 56)) = *((uint64_t*)(_srcp + 56));    \
+            break; }                                                    \
         default:                                                        \
             memcpy(dst,src,size);  break;                               \
         }                                                               \
     }
+#define ztlncpy fastncpy
 
 
 #define STR2LOWER(str) \

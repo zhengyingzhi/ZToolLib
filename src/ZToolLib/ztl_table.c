@@ -5,12 +5,13 @@
 #include "ztl_atomic.h"
 #include "ztl_hash.h"
 #include "ztl_mem.h"
+#include "ztl_palloc.h"
 #include "ztl_table.h"
 #include "ztl_times.h"
 #include "ztl_threads.h"
 
 
-typedef struct table_intl_t {
+typedef struct table_intl_st {
     unsigned long   size, sizemask, used;
     table_node_t*   buckets;
 } table_intl_t;
@@ -26,6 +27,9 @@ struct table_st
     free_pt         kfree;
     free_pt         vfree;
     table_iter_t    iter;
+    ztl_pool_t*     pool;
+    table_node_t    idles;
+    unsigned long   reserve_size;
     ztl_thread_mutex_t  lock;
     ztl_thread_rwlock_t rwlock;
 };
@@ -78,7 +82,7 @@ static int table_expand_if_needed(table_t table)
     if (table->rehashidx != -1)
         return 0;
     if (table->ti[0].size == 0)
-        return table_expand(table, ZTL_TABLE_INIT_SIZE);
+        return table_expand(table, table->reserve_size);
     if (table->ti[0].used >= table->ti[0].size &&
         (table->can_resize || table->ti[0].used / table->ti[0].size > table_force_resize_ratio))
         return table_expand(table, table->ti[0].used << 1);
@@ -89,6 +93,28 @@ static void table_rehash_step(table_t table)
 {
     if (table->iterators == 0)
         table_rehash(table, 1);
+}
+
+static table_node_t table_node_alloc(table_t table)
+{
+    table_node_t node;
+    if (table->idles)
+    {
+        node = table->idles;
+        table->idles = table->idles->next;
+    }
+    else
+    {
+        node = ztl_palloc(table->pool, sizeof(struct table_node_st));
+    }
+    return node;
+}
+
+static void table_node_free(table_t table, table_node_t node)
+{
+    if (table->idles)
+        node->next = table->idles;
+    table->idles = node;
 }
 
 static long long get_ms(void)
@@ -103,10 +129,16 @@ static long long get_ms(void)
 table_t table_new(cmp_pt cmp, hash_pt hash, free_pt kfree, free_pt vfree)
 {
     table_t table;
+    ztl_pool_t* pool;
     ztl_thread_mutexattr_t mattr;
 
-    if (NEW(table) == NULL)
+    pool = ztl_create_pool(4096);
+    if (!pool) {
         return NULL;
+    }
+    table = (table_t)ztl_pcalloc(pool, sizeof(struct table_st));
+    table->pool = pool;
+
     table_reset(&table->ti[0]);
     table_reset(&table->ti[1]);
     table->rehashidx    = -1;
@@ -116,7 +148,9 @@ table_t table_new(cmp_pt cmp, hash_pt hash, free_pt kfree, free_pt vfree)
     table->hash         = hash;
     table->kfree        = kfree;
     table->vfree        = vfree;
-    table->iter         = (table_iter_t)malloc(sizeof(struct table_iter_st));
+    table->iter         = (table_iter_t)ALLOC(sizeof(struct table_iter_st));
+    table->idles        = NULL;
+    table->reserve_size = ZTL_TABLE_INIT_SIZE;
 
     ztl_thread_mutexattr_init(&mattr);
     ztl_thread_mutexattr_settype(&mattr, ZTL_THREAD_MUTEX_RECURSIVE_NP);
@@ -132,24 +166,22 @@ void table_free(table_t* tp)
     if (tp == NULL || *tp == NULL)
         return;
 
+    ztl_pool_t* pool = (*tp)->pool;
     ztl_thread_mutex_destroy(&(*tp)->lock);
     ztl_thread_rwlock_destroy(&(*tp)->rwlock);
     table_clear(*tp);
-    FREE(*tp);
+    ztl_destroy_pool(pool);
+    *tp = NULL;
 }
 
 int table_size(table_t table)
 {
-    if (table == NULL)
-        return 0;
-    return (int)(table->ti[0].size + table->ti[1].size);
+    return table ? (int)(table->ti[0].size + table->ti[1].size) : 0;
 }
 
 int table_length(table_t table)
 {
-    if (table == NULL)
-        return 0;
-    return (int)(table->ti[0].used + table->ti[1].used);
+    return table ? (int)(table->ti[0].used + table->ti[1].used) : 0;
 }
 
 const void* table_node_key(table_node_t node, int* pkeysz)
@@ -296,6 +328,7 @@ int table_expand(table_t table, unsigned long size)
     if ((ti.buckets = CALLOC(1, n * sizeof(table_node_t))) == NULL)
         return -1;
 
+    table->reserve_size = n;
     if (table->ti[0].buckets == NULL)
     {
         table->ti[0] = ti;
@@ -341,7 +374,9 @@ table_node_t table_insert_raw(table_t table, const void* key, int keysz)
         return node;
     if (table_expand_if_needed(table) == -1)
         return NULL;
-    if (NEW0(node) == NULL)
+
+    // if (NEW0(node) == NULL)
+    if ((node = table_node_alloc(table)) == NULL)
         return NULL;
     tip = table->rehashidx != -1 ? &table->ti[1] : &table->ti[0];
     index = table->hash(key, keysz) & tip->sizemask;
@@ -386,8 +421,6 @@ void* table_insert(table_t table, const void* key, int keysz, void* value)
     table_node_t node;
     void* prev;
 
-    if (key == NULL)
-        return NULL;
     if ((node = table_insert_raw(table, key, keysz)) == NULL)
         return NULL;
     prev = node->v.value ? node->v.value : NULL;
@@ -454,7 +487,8 @@ void* table_remove(table_t table, const void* key, int keysz)
                 if (table->kfree)
                     table->kfree((void*)curr->key);
                 value = curr->v.value;
-                FREE(curr);
+                // FREE(curr);
+                table_node_free(table, curr);
                 --table->ti[i].used;
                 return value;
             }
@@ -486,7 +520,8 @@ void table_clear(table_t table)
                     table->kfree((void*)curr->key);
                 if (table->vfree)
                     table->vfree(curr->v.value);
-                FREE(curr);
+                // FREE(curr);
+                table_node_free(table, curr);
                 --table->ti[i].used;
                 curr = next;
             }
@@ -580,7 +615,7 @@ void table_rwlock_unlock(table_t table)
     ztl_thread_rwlock_unlock(&table->rwlock);
 }
 
-
+//////////////////////////////////////////////////////////////////////////
 void table_default_kvfree(void* p)
 {
     if (p)

@@ -166,7 +166,7 @@ bool ztl_array_push_back(ztl_array_t* arr, void* elem)
         return false;
     }
 
-    ztlncpy(lpaddr, elem, arr->eltsize);
+    fastncpy(lpaddr, elem, arr->eltsize);
     return true;
 }
 

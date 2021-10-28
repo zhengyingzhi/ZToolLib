@@ -26,11 +26,11 @@ int64_t lfqueue_memory_size(uint32_t quesize, uint32_t elemsize);
  */
 lfqueue_t* lfqueue_create(uint32_t quesize, uint32_t elemsize);
 
-/* @brief  create a queue on the specified memory address
+/* @brief  create a queue at the specified memory address
  * @param  memory size could be got by calling 'lfqueue_memory_size'
  * @return the queue object
  */
-lfqueue_t* lfqueue_create2(uint32_t quesize, uint32_t elemsize, void* memory, int64_t memsize);
+lfqueue_t* lfqueue_create_at_mem(uint32_t quesize, uint32_t elemsize, void* memory);
 
 
 /* @brief  push an element's pointer at the tail of the queue
@@ -48,12 +48,12 @@ int lfqueue_push(lfqueue_t* que, const void* pdata);
  *          other if the queue was empty
  * @note   must reserve at least elemsize space for pdata
  */
-int lfqueue_pop(lfqueue_t* que, void** ppdata);
+int lfqueue_pop(lfqueue_t* que, void* pdata);
 
 /* @brief  get the data of the queue head
  * @return 0 is success
  */
-int lfqueue_head(lfqueue_t* que, void** ppdata);
+int lfqueue_head(lfqueue_t* que, void* pdata);
 
 
 /* @return the queue size which might be bogus value

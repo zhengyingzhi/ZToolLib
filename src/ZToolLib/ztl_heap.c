@@ -7,12 +7,15 @@
 #include "ztl_mem.h"
 #include "ztl_heap.h"
 #include "ztl_threads.h"
+#include "ztl_utils.h"
+
 
 struct heap_st
 {
     uint32_t    avail, curr;
     void**      h;
-    size_t      offset;
+    int         offset;
+    int         outside_mem;
     int       (*cmp)(const void* x, const void* y);
     
 #if HAVE_MUTEX
@@ -43,7 +46,7 @@ static inline void* heap_get(heap_t* hp, unsigned long i)
 static void heap_set(heap_t* hp, unsigned long i, void* elem)
 {
     hp->h[i - 1] = elem;
-    if ((int)hp->offset >= 0)
+    if (hp->offset >= 0)
     {
         uint32_t* ip = (uint32_t*)elem + hp->offset;
         *ip = i;
@@ -54,7 +57,7 @@ static uint32_t get_index(heap_t* hp, void* elem)
 {
      uint32_t* ip;
 
-    if ((int)hp->offset < 0)
+    if (hp->offset < 0)
         return 0;
     ip = (uint32_t*)elem + hp->offset;
     return *ip;
@@ -120,7 +123,13 @@ static void* _heap_remove(heap_t* hp, uint32_t i)
     return ret;
 }
 
-heap_t* heap_new(int height, size_t offset, int cmp(const void* x, const void* y))
+//////////////////////////////////////////////////////////////////////////
+int heap_memory_size()
+{
+    return ztl_align(sizeof(struct heap_st), 8);
+}
+
+heap_t* heap_new(int height, int offset, int cmp(const void* x, const void* y))
 {
     heap_t* hp;
 
@@ -130,6 +139,18 @@ heap_t* heap_new(int height, size_t offset, int cmp(const void* x, const void* y
         return NULL;
     if (NEW(hp) == NULL)
         return NULL;
+    return heap_new_at_mem(height, offset, cmp, hp);
+}
+
+heap_t* heap_new_at_mem(int height, int offset, int cmp(const void* x, const void* y), void* mem)
+{
+    heap_t* hp;
+    if (height <= 0)
+        height = 8;
+    if (cmp == NULL)
+        return NULL;
+
+    hp = (heap_t*)mem;
     hp->avail = (height << 1) - 1;
     hp->curr = 0;
     if ((hp->h = CALLOC(1, hp->avail * sizeof *hp->h)) == NULL)
@@ -138,6 +159,7 @@ heap_t* heap_new(int height, size_t offset, int cmp(const void* x, const void* y
         return NULL;
     }
     hp->offset = offset;
+    hp->outside_mem = 1;
     hp->cmp = cmp;
 
 #if HAVE_MUTEX
