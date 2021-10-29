@@ -36,9 +36,7 @@ int ztl_thread_cond_timedwait(ztl_thread_cond_t* cond, ztl_thread_mutex_t* mutex
     abstime.tv_sec = t / 1000000;
     abstime.tv_nsec = (t % 1000000) * 1000;
 
-    pthread_mutex_lock(mutex);
     pthread_cond_timedwait(cond, mutex, &abstime);
-    pthread_mutex_unlock(mutex);
     return 0;
 }
 

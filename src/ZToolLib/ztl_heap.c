@@ -139,7 +139,9 @@ heap_t* heap_new(int height, int offset, int cmp(const void* x, const void* y))
         return NULL;
     if (NEW(hp) == NULL)
         return NULL;
-    return heap_new_at_mem(height, offset, cmp, hp);
+    heap_new_at_mem(height, offset, cmp, hp);
+    hp->outside_mem = 0;
+    return hp;
 }
 
 heap_t* heap_new_at_mem(int height, int offset, int cmp(const void* x, const void* y), void* mem)

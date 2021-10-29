@@ -281,12 +281,16 @@ void lefttrim(char* buf)
 
     int i;
     int len = (int)strlen(buf);
-    for (i = 0; i < len; ++i) {
+    for (i = 0; i < len; ++i)
+    {
         if (buf[i] != ' ' && buf[i] != '\r' && buf[i] != '\n' && buf[i] != '\t')
             break;
     }
     if (i > 0)
-        strcpy(buf, buf + i);
+    {
+        memmove(buf, buf + i, len - i);
+        buf[len - i] = 0;
+    }
     return;
 }
 
@@ -296,7 +300,8 @@ void righttrim(char* buf)
         return;
 
     int i;
-    for (i = (int)strlen(buf) - 1; i >= 0; --i) {
+    for (i = (int)strlen(buf) - 1; i >= 0; --i)
+    {
         if (buf[i] != ' ' && buf[i] != '\r' && buf[i] != '\n' && buf[i] != '\t')
             break;
         buf[i] = '\0';

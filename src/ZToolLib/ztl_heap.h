@@ -24,6 +24,7 @@ typedef struct heap_st  heap_t;
  * If heap_remove() will not be used, then a negative value can be provided.
  * cmp: return 1 if x < y when a least heap, return -1 if x < y when a largest heap
  */
+int     heap_memory_size();
 heap_t* heap_new(int height, int offset, int cmp(const void *x, const void *y));
 heap_t* heap_new_at_mem(int height, int offset, int cmp(const void* x, const void* y), void* mem);
 void    heap_free(heap_t* hp);
